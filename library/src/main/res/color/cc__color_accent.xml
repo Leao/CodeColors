@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Defines a color to be used as default by the CodeColorStateList.
+Also defines a drawable, for cases where the library is not supported.
+That way the app will not crash when trying to inflate this as a drawable.
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/cc__color_accent_default"
+          android:drawable="@color/cc__color_accent_default"/>
+</selector>
