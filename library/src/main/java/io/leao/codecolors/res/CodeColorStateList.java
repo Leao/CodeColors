@@ -8,8 +8,6 @@ import android.support.annotation.NonNull;
 import android.util.SparseArray;
 
 import java.lang.ref.WeakReference;
-import java.util.Collections;
-import java.util.Set;
 import java.util.WeakHashMap;
 
 public class CodeColorStateList extends ColorStateList {
@@ -19,7 +17,7 @@ public class CodeColorStateList extends ColorStateList {
 
     private Integer mColor;
 
-    protected Set<Callback> mCallbacks = Collections.newSetFromMap(new WeakHashMap<Callback, Boolean>());
+    protected WeakHashMap<Callback, Boolean> mCallbacks = new WeakHashMap<>();
 
     /**
      * Thread-safe cache of single-color ColorStateLists.
@@ -60,7 +58,7 @@ public class CodeColorStateList extends ColorStateList {
     }
 
     public void addCallback(Callback callback) {
-        mCallbacks.add(callback);
+        mCallbacks.put(callback, true);
     }
 
     public void removeCallback(Callback callback) {
@@ -68,7 +66,7 @@ public class CodeColorStateList extends ColorStateList {
     }
 
     public void invalidateSelf() {
-        for (Callback callback : mCallbacks) {
+        for (Callback callback : mCallbacks.keySet()) {
             if (callback != null) {
                 callback.invalidateColor(this);
             }
