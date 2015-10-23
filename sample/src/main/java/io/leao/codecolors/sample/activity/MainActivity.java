@@ -1,5 +1,6 @@
 package io.leao.codecolors.sample.activity;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -8,7 +9,9 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 
+import io.leao.codecolors.CodeColors;
 import io.leao.codecolors.sample.R;
 
 public class MainActivity extends AppCompatActivity {
@@ -26,6 +29,21 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
+            }
+        });
+
+        Button button = (Button) findViewById(android.R.id.button1);
+        button.setOnClickListener(new View.OnClickListener() {
+            private int mColorResId = R.color.cc__color_primary;
+            private int[] mColors = new int[]{Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW};
+            private int mCurrentColor = 0;
+
+            public void onClick(View v) {
+                int color = mColors[mCurrentColor++];
+                if (mCurrentColor >= mColors.length) {
+                    mCurrentColor = 0;
+                }
+                CodeColors.setCodeColor(mColorResId, color);
             }
         });
     }

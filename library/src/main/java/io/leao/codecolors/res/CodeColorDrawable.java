@@ -5,25 +5,31 @@ import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
+import android.graphics.Outline;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.ColorInt;
+import android.os.Build;
 import android.support.annotation.NonNull;
 
 /**
- * A replica of {@link android.graphics.drawable.ColorDrawable}, but instead of making use of a {@code int} color, it
+ * Inspired in {@link android.graphics.drawable.ColorDrawable}, but instead of making use of a {@code int} color, it
  * makes use of a {@link CodeColorStateList}.
  */
-public class CodeColorDrawable extends Drawable {
+public class CodeColorDrawable extends Drawable implements CodeColorStateList.Callback {
+    private static final int COLOR_DEFAULT = Color.BLUE;
+    private static final int ALPHA_OPAQUE = 255;
+
     private static final PorterDuff.Mode DEFAULT_TINT_MODE = PorterDuff.Mode.SRC_IN;
 
     private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     private CodeColorState mCodeColorState;
-    private PorterDuffColorFilter mTintFilter;
+    private CodePorterDuffColorFilter mTintFilter;
+
+    private int mUseColor;
 
     private boolean mMutated;
 
@@ -34,8 +40,7 @@ public class CodeColorDrawable extends Drawable {
      */
     public CodeColorDrawable(CodeColorStateList color) {
         mCodeColorState = new CodeColorState(color);
-
-        setColor(color.getDefaultColor());
+        updateLocalState();
     }
 
     @Override
@@ -44,14 +49,23 @@ public class CodeColorDrawable extends Drawable {
     }
 
     @Override
+    public Drawable mutate() {
+        if (!mMutated && super.mutate() == this) {
+            mCodeColorState = new CodeColorState(mCodeColorState);
+            mMutated = true;
+        }
+        return this;
+    }
+
+    @Override
     public void draw(Canvas canvas) {
         final ColorFilter colorFilter = mPaint.getColorFilter();
-        if ((mCodeColorState.mUseColor >>> 24) != 0 || colorFilter != null || mTintFilter != null) {
+        if ((mUseColor >>> 24) != 0 || colorFilter != null || mTintFilter != null) {
             if (colorFilter == null) {
                 mPaint.setColorFilter(mTintFilter);
             }
 
-            mPaint.setColor(mCodeColorState.mUseColor);
+            mPaint.setColor(mUseColor);
             canvas.drawRect(getBounds(), mPaint);
 
             // Restore original color filter.
@@ -64,9 +78,8 @@ public class CodeColorDrawable extends Drawable {
      *
      * @return int The color to draw.
      */
-    @ColorInt
-    public int getColor() {
-        return mCodeColorState.mUseColor;
+    public CodeColorStateList getColor() {
+        return mCodeColorState.mColor;
     }
 
     /**
@@ -76,9 +89,24 @@ public class CodeColorDrawable extends Drawable {
      *
      * @param color The color to draw.
      */
-    public void setColor(@ColorInt int color) {
-        if (mCodeColorState.mBaseColor != color || mCodeColorState.mUseColor != color) {
-            mCodeColorState.mBaseColor = mCodeColorState.mUseColor = color;
+    public void setColor(CodeColorStateList color) {
+        if (mCodeColorState.mColor != color) {
+            if (mCodeColorState.mColor != null) {
+                mCodeColorState.mColor.removeCallback(this);
+            }
+            mCodeColorState.mColor = color;
+            if (mCodeColorState.mColor != null) {
+                mCodeColorState.mColor.addCallback(this);
+            }
+            if (updateUseColor(mCodeColorState.mColor, getState(), mCodeColorState.mAlpha)) {
+                invalidateSelf();
+            }
+        }
+    }
+
+    @Override
+    public void invalidateColor(CodeColorStateList color) {
+        if (updateUseColor(color, getState(), mCodeColorState.mAlpha)) {
             invalidateSelf();
         }
     }
@@ -90,7 +118,7 @@ public class CodeColorDrawable extends Drawable {
      */
     @Override
     public int getAlpha() {
-        return mCodeColorState.mUseColor >>> 24;
+        return mUseColor >>> 24;
     }
 
     /**
@@ -100,13 +128,11 @@ public class CodeColorDrawable extends Drawable {
      */
     @Override
     public void setAlpha(int alpha) {
-        alpha += alpha >> 7;   // make it 0..256
-        final int baseAlpha = mCodeColorState.mBaseColor >>> 24;
-        final int useAlpha = baseAlpha * alpha >> 8;
-        final int useColor = (mCodeColorState.mBaseColor << 8 >>> 8) | (useAlpha << 24);
-        if (mCodeColorState.mUseColor != useColor) {
-            mCodeColorState.mUseColor = useColor;
-            invalidateSelf();
+        if (mCodeColorState.mAlpha != alpha) {
+            mCodeColorState.mAlpha = alpha;
+            if (updateUseColor(mCodeColorState.mColor, getState(), alpha)) {
+                invalidateSelf();
+            }
         }
     }
 
@@ -126,30 +152,35 @@ public class CodeColorDrawable extends Drawable {
     @Override
     public void setTintList(ColorStateList tint) {
         mCodeColorState.mTint = tint;
-        mTintFilter = updateTintFilter(tint, mCodeColorState.mTintMode);
-        invalidateSelf();
+        if (updateTintFilter(tint, mCodeColorState.mTintMode)) {
+            invalidateSelf();
+        }
     }
 
     @Override
     public void setTintMode(@NonNull PorterDuff.Mode tintMode) {
         mCodeColorState.mTintMode = tintMode;
-        mTintFilter = updateTintFilter(mCodeColorState.mTint, tintMode);
-        invalidateSelf();
+        if (updateTintFilter(mCodeColorState.mTint, tintMode)) {
+            invalidateSelf();
+        }
     }
 
     @Override
     protected boolean onStateChange(int[] stateSet) {
-        final CodeColorState state = mCodeColorState;
-        if (state.mTint != null && state.mTintMode != null) {
-            mTintFilter = updateTintFilter(state.mTint, state.mTintMode);
-            return true;
+        boolean changed = false;
+        if (updateUseColor(mCodeColorState.mColor, stateSet, mCodeColorState.mAlpha)) {
+            changed = true;
         }
-        return false;
+        if (updateTintFilter(mCodeColorState.mTint, mCodeColorState.mTintMode)) {
+            changed = true;
+        }
+        return changed;
     }
 
     @Override
     public boolean isStateful() {
-        return mCodeColorState.mTint != null && mCodeColorState.mTint.isStateful();
+        return (mCodeColorState.mColor != null && mCodeColorState.mColor.isStateful()) ||
+                (mCodeColorState.mTint != null && mCodeColorState.mTint.isStateful());
     }
 
     @Override
@@ -158,7 +189,7 @@ public class CodeColorDrawable extends Drawable {
             return PixelFormat.TRANSLUCENT;
         }
 
-        switch (mCodeColorState.mUseColor >>> 24) {
+        switch (mUseColor >>> 24) {
             case 255:
                 return PixelFormat.OPAQUE;
             case 0:
@@ -167,11 +198,13 @@ public class CodeColorDrawable extends Drawable {
         return PixelFormat.TRANSLUCENT;
     }
 
-//    @Override
-//    public void getOutline(@NonNull Outline outline) {
-//        outline.setRect(getBounds());
-//        outline.setAlpha(getAlpha() / 255.0f);
-//    }
+    @Override
+    public void getOutline(@NonNull Outline outline) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            outline.setRect(getBounds());
+            outline.setAlpha(getAlpha() / 255.0f);
+        }
+    }
 
     @Override
     public boolean canApplyTheme() {
@@ -186,8 +219,7 @@ public class CodeColorDrawable extends Drawable {
     final static class CodeColorState extends ConstantState {
         int[] mThemeAttrs;
         CodeColorStateList mColor;
-        int mBaseColor; // base color, independent of setAlpha()
-        int mUseColor;  // base color modulated by setAlpha()
+        int mAlpha = ALPHA_OPAQUE;
         int mChangingConfigurations;
         ColorStateList mTint = null;
         PorterDuff.Mode mTintMode = DEFAULT_TINT_MODE;
@@ -198,9 +230,8 @@ public class CodeColorDrawable extends Drawable {
 
         CodeColorState(CodeColorState state) {
             mColor = state.mColor;
+            mAlpha = state.mAlpha;
             mThemeAttrs = state.mThemeAttrs;
-            mBaseColor = state.mBaseColor;
-            mUseColor = state.mUseColor;
             mChangingConfigurations = state.mChangingConfigurations;
             mTint = state.mTint;
             mTintMode = state.mTintMode;
@@ -224,7 +255,6 @@ public class CodeColorDrawable extends Drawable {
 
     private CodeColorDrawable(CodeColorState state, Resources res) {
         mCodeColorState = state;
-
         updateLocalState();
     }
 
@@ -233,20 +263,89 @@ public class CodeColorDrawable extends Drawable {
      * after significant state changes, e.g. from the One True Constructor and
      * after inflating or applying a theme.
      */
-    private void updateLocalState() {
-        mTintFilter = updateTintFilter(mCodeColorState.mTint, mCodeColorState.mTintMode);
+    protected void updateLocalState() {
+        if (mCodeColorState.mColor != null) {
+            mCodeColorState.mColor.addCallback(this);
+        }
+        updateUseColor(mCodeColorState.mColor, getState(), mCodeColorState.mAlpha);
+        updateTintFilter(mCodeColorState.mTint, mCodeColorState.mTintMode);
     }
 
     /**
-     * Ensures the tint filter is consistent with the current tint color and
-     * mode.
+     * Ensures the use color is consistent with the current color state and alpha.
+     *
+     * @return {@code true} if use color changed; false, otherwise.
      */
-    PorterDuffColorFilter updateTintFilter(ColorStateList tint, PorterDuff.Mode tintMode) {
+    protected boolean updateUseColor(CodeColorStateList color, int[] stateSet, int alpha) {
+        // Color.
+        int baseColor = color != null ?
+                color.getColorForState(stateSet, color.getDefaultColor()) :
+                COLOR_DEFAULT;
+        // Alpha.
+        alpha += alpha >> 7;   // make it 0..256
+        int baseAlpha = baseColor >>> 24;
+        int useAlpha = baseAlpha * alpha >> 8;
+        int useColor = (baseColor << 8 >>> 8) | (useAlpha << 24);
+
+        if (mUseColor != useColor) {
+            mUseColor = useColor;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Ensures the tint filter is consistent with the current tint color and mode.
+     *
+     * @return {@code true} if tint filter changed; false, otherwise.
+     */
+    protected boolean updateTintFilter(ColorStateList tint, PorterDuff.Mode tintMode) {
+        CodePorterDuffColorFilter tintFilter;
         if (tint == null || tintMode == null) {
-            return null;
+            tintFilter = null;
+        } else {
+            final int color = tint.getColorForState(getState(), Color.TRANSPARENT);
+            if (mTintFilter == null || mTintFilter.getColor() != color || mTintFilter.getMode() != tintMode) {
+                tintFilter = new CodePorterDuffColorFilter(color, tintMode);
+            } else {
+                tintFilter = mTintFilter;
+            }
         }
 
-        final int color = tint.getColorForState(getState(), Color.TRANSPARENT);
-        return new PorterDuffColorFilter(color, tintMode);
+        if (mTintFilter != tintFilter) {
+            mTintFilter = tintFilter;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Like {@link PorterDuffColorFilter}, but with getters.
+     */
+    private static class CodePorterDuffColorFilter extends PorterDuffColorFilter {
+        private int mColor;
+        private PorterDuff.Mode mMode;
+
+        /**
+         * Create a color filter that uses the specified color and Porter-Duff mode.
+         *
+         * @param color The ARGB source color used with the specified Porter-Duff mode
+         * @param mode  The porter-duff mode that is applied
+         */
+        public CodePorterDuffColorFilter(int color, PorterDuff.Mode mode) {
+            super(color, mode);
+            mColor = color;
+            mMode = mode;
+        }
+
+        public int getColor() {
+            return mColor;
+        }
+
+        public PorterDuff.Mode getMode() {
+            return mMode;
+        }
     }
 }

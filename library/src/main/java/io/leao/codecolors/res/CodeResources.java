@@ -12,6 +12,8 @@ import android.util.TypedValue;
  * Util class to retrieve drawables without tampering with {@link Resources} caches.
  */
 public class CodeResources {
+    public static final int NO_ID = -1;
+
     private static TypedValue sTempValue;
 
     public static long createKey(Resources resources, int resId) {

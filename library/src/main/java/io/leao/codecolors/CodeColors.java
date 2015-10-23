@@ -3,8 +3,10 @@ package io.leao.codecolors;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.util.LongSparseArray;
+import android.util.SparseArray;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -29,6 +31,8 @@ public class CodeColors {
     };
 
     private static boolean sIsActive = false;
+
+    private static final SparseArray<CodeColorStateList> sColorCache = new SparseArray<>();
 
     public static void init(Context context) {
         init(context, new BaseCodeColorFactory());
@@ -64,26 +68,33 @@ public class CodeColors {
             boolean useLayoutDirectionDrawableCache = useLayoutDirectionDrawableCache(sPreloadedDrawables);
 
             for (int i = 0; i < handler.getColorCount(); i++) {
-                long key = CodeResources.createKey(resources, handler.getColorResId(i));
-                CodeColorStateList color = handler.getColor(i);
+                int id = handler.getColorResId(i);
+                if (id <= 0) {
+                    continue;
+                }
 
-                // Load color into cache.
+                CodeColorStateList color = handler.getColor(i);
+                color.setId(id);
+
+                long key = CodeResources.createKey(resources, id);
+
+                // Load color into Resources cache.
                 if (colorsConstantStateGetter != null) {
                     sPreloadedColorStateLists.put(key, colorsConstantStateGetter.invoke(color));
                 } else {
                     sPreloadedColorStateLists.put(key, color);
                 }
+                // Cache colors by id.
+                sColorCache.put(id, color);
 
-                // Load drawable into cache.
+                // Load drawable into Resources cache.
+                Drawable.ConstantState drawableConstantState = new CodeColorDrawable(color).getConstantState();
                 if (useLayoutDirectionDrawableCache) {
                     // Load for both layout directions (LTR and RTL).
-                    ((LongSparseArray[]) sPreloadedDrawables)[0].put(
-                            key, new CodeColorDrawable(color).getConstantState());
-                    ((LongSparseArray[]) sPreloadedDrawables)[1].put(
-                            key, new CodeColorDrawable(color).getConstantState());
+                    ((LongSparseArray[]) sPreloadedDrawables)[0].put(key, drawableConstantState);
+                    ((LongSparseArray[]) sPreloadedDrawables)[1].put(key, drawableConstantState);
                 } else {
-                    ((LongSparseArray) sPreloadedDrawables).put(
-                            key, new CodeColorDrawable(color).getConstantState());
+                    ((LongSparseArray) sPreloadedDrawables).put(key, drawableConstantState);
                 }
             }
         } catch (Exception e) {
@@ -139,5 +150,12 @@ public class CodeColors {
      */
     public static boolean isActive() {
         return sIsActive;
+    }
+
+    public static void setCodeColor(int resId, int color) {
+        CodeColorStateList ccsl = sColorCache.get(resId);
+        if (ccsl != null) {
+            ccsl.setColor(color);
+        }
     }
 }

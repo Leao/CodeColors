@@ -8,17 +8,71 @@ import android.support.annotation.NonNull;
 import android.util.SparseArray;
 
 import java.lang.ref.WeakReference;
+import java.util.Collections;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 public class CodeColorStateList extends ColorStateList {
     private static final int[][] EMPTY = new int[][]{new int[0]};
-    
+
+    private int mId = CodeResources.NO_ID;
+
+    private Integer mColor;
+
+    protected Set<Callback> mCallbacks = Collections.newSetFromMap(new WeakHashMap<Callback, Boolean>());
+
     /**
      * Thread-safe cache of single-color ColorStateLists.
      */
     private static final SparseArray<WeakReference<CodeColorStateList>> sCache = new SparseArray<>();
 
-    public CodeColorStateList(int[][] states, int[] colors) {
+    protected CodeColorStateList(int[][] states, int[] colors) {
         super(states, colors);
+    }
+
+    public void setId(int id) {
+        mId = id;
+    }
+
+    public int getId() {
+        return mId;
+    }
+
+    public void setColor(Integer color) {
+        if (mColor == null || !mColor.equals(color)) {
+            mColor = color;
+            invalidateSelf();
+        }
+    }
+
+    public Integer getColor() {
+        return mColor;
+    }
+
+    @Override
+    public int getColorForState(int[] stateSet, int defaultColor) {
+        return mColor != null ? mColor : super.getColorForState(stateSet, defaultColor);
+    }
+
+    @Override
+    public int getDefaultColor() {
+        return mColor != null ? mColor : super.getDefaultColor();
+    }
+
+    public void addCallback(Callback callback) {
+        mCallbacks.add(callback);
+    }
+
+    public void removeCallback(Callback callback) {
+        mCallbacks.remove(callback);
+    }
+
+    public void invalidateSelf() {
+        for (Callback callback : mCallbacks) {
+            if (callback != null) {
+                callback.invalidateColor(this);
+            }
+        }
     }
 
     /**
@@ -81,4 +135,8 @@ public class CodeColorStateList extends ColorStateList {
             return new CodeColorStateList(stateSpecs, colors);
         }
     };
+
+    public interface Callback {
+        void invalidateColor(CodeColorStateList color);
+    }
 }

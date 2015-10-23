@@ -13,8 +13,10 @@
     tools:context=".activity.MainActivity"
     tools:showIn="@layout/activity_main">
 
-    <TextView
+    <Button
+        android:id="@android:id/button1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"/>
+        android:text="@string/main_change_color"/>
+
 </RelativeLayout>
