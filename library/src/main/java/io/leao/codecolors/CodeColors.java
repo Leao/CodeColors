@@ -88,7 +88,7 @@ public class CodeColors {
                 sColorCache.put(id, color);
 
                 // Load drawable into Resources cache.
-                Drawable.ConstantState drawableConstantState = new CodeColorDrawable(color).getConstantState();
+                Drawable.ConstantState drawableConstantState = CodeColorDrawable.getConstantStateForColor(color);
                 if (useLayoutDirectionDrawableCache) {
                     // Load for both layout directions (LTR and RTL).
                     ((LongSparseArray[]) sPreloadedDrawables)[0].put(key, drawableConstantState);

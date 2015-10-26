@@ -216,7 +216,11 @@ public class CodeColorDrawable extends Drawable implements CodeColorStateList.Ca
         return mCodeColorState;
     }
 
-    final static class CodeColorState extends ConstantState {
+    public static CodeColorState getConstantStateForColor(CodeColorStateList color) {
+        return new CodeColorState(color);
+    }
+
+    protected static class CodeColorState extends ConstantState {
         int[] mThemeAttrs;
         CodeColorStateList mColor;
         int mAlpha = ALPHA_OPAQUE;
