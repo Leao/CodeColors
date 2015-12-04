@@ -1,1 +1,1 @@
-include ':codecolors', ':codecolors-sample'
+include ':codecolors', ':codecolors-plugin', ':codecolors-sample'

@@ -34,7 +34,6 @@ public class MainActivity extends CodeColorsAppCompatActivity {
 
         Button button = (Button) findViewById(android.R.id.button1);
         button.setOnClickListener(new View.OnClickListener() {
-            private int mColorResId = R.color.cc__color_primary;
             private int[] mColors = new int[]{Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW};
             private int mCurrentColor = 0;
 
@@ -43,7 +42,9 @@ public class MainActivity extends CodeColorsAppCompatActivity {
                 if (mCurrentColor >= mColors.length) {
                     mCurrentColor = 0;
                 }
-                CodeColors.setCodeColor(mColorResId, color);
+                CodeColors.setColor(R.color.cc__color_primary_dark, color);
+                CodeColors.setColor(R.color.cc__color_primary, color);
+                CodeColors.setColor(R.color.cc__color_accent, color);
             }
         });
     }

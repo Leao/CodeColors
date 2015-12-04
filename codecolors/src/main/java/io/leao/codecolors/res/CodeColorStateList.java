@@ -17,7 +17,8 @@ public class CodeColorStateList extends ColorStateList {
 
     private Integer mColor;
 
-    protected WeakHashMap<Callback, Boolean> mCallbacks = new WeakHashMap<>();
+    protected WeakHashMap<Callback, Object> mCallbacks = new WeakHashMap<>();
+    protected WeakHashMap<Object, AnchorCallback> mAnchorCallbacks = new WeakHashMap<>();
 
     /**
      * Thread-safe cache of single-color ColorStateLists.
@@ -26,6 +27,11 @@ public class CodeColorStateList extends ColorStateList {
 
     protected CodeColorStateList(int[][] states, int[] colors) {
         super(states, colors);
+    }
+
+    @Override
+    public boolean isStateful() {
+        return true;
     }
 
     public void setId(int id) {
@@ -58,17 +64,33 @@ public class CodeColorStateList extends ColorStateList {
     }
 
     public void addCallback(Callback callback) {
-        mCallbacks.put(callback, true);
+        mCallbacks.put(callback, null);
+    }
+
+    /**
+     * @param anchor the anchor object to which the callback is dependent.
+     * @param callback the callback.
+     */
+    public void addCallback(Object anchor, AnchorCallback callback) {
+        mAnchorCallbacks.put(anchor, callback);
     }
 
     public void removeCallback(Callback callback) {
         mCallbacks.remove(callback);
     }
 
+    @SuppressWarnings("unchecked")
     public void invalidateSelf() {
         for (Callback callback : mCallbacks.keySet()) {
             if (callback != null) {
                 callback.invalidateColor(this);
+            }
+        }
+
+        for (Object anchor : mAnchorCallbacks.keySet()) {
+            AnchorCallback callback = mAnchorCallbacks.get(anchor);
+            if (callback != null) {
+                callback.invalidateColor(anchor, this);
             }
         }
     }
@@ -136,5 +158,9 @@ public class CodeColorStateList extends ColorStateList {
 
     public interface Callback {
         void invalidateColor(CodeColorStateList color);
+    }
+
+    public interface AnchorCallback<T> {
+        void invalidateColor(T anchor, CodeColorStateList color);
     }
 }
