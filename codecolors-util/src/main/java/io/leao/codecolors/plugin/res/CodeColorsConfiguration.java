@@ -581,10 +581,8 @@ public class CodeColorsConfiguration implements Comparable<CodeColorsConfigurati
     public int densityDpi;
 
     public static final int SDK_VERSION_UNDEFINED = 0;
-    public static final int MINOR_VERSION_UNDEFINED = 0;
 
     public int sdkVersion;
-    public int minorVersion;
 
     /**
      * Construct an invalid Configuration.  You must call {@link #setToDefaults}
@@ -601,11 +599,12 @@ public class CodeColorsConfiguration implements Comparable<CodeColorsConfigurati
         setTo(o);
     }
 
-    public CodeColorsConfiguration(float fontScale, int mcc, int mnc, String localeLanguage, String localeCountry,
-                                   String localeVariant, boolean userSetLocale, int touchscreen, int keyboard,
-                                   int keyboardHidden, int hardKeyboardHidden, int navigation, int navigationHidden,
-                                   int orientation, int screenLayout, int uiMode, int screenWidthDp, int screenHeightDp,
-                                   int smallestScreenWidthDp, int densityDpi, int sdkVersion, int minorVersion) {
+    public CodeColorsConfiguration(int sdkVersion, float fontScale, int mcc, int mnc, String localeLanguage,
+                                   String localeCountry, String localeVariant, boolean userSetLocale, int touchscreen,
+                                   int keyboard, int keyboardHidden, int hardKeyboardHidden, int navigation,
+                                   int navigationHidden, int orientation, int screenLayout, int uiMode,
+                                   int screenWidthDp, int screenHeightDp, int smallestScreenWidthDp, int densityDpi) {
+        this.sdkVersion = sdkVersion;
         this.fontScale = fontScale;
         this.mcc = mcc;
         this.mnc = mnc;
@@ -634,11 +633,10 @@ public class CodeColorsConfiguration implements Comparable<CodeColorsConfigurati
         this.screenHeightDp = screenHeightDp;
         this.smallestScreenWidthDp = smallestScreenWidthDp;
         this.densityDpi = densityDpi;
-        this.sdkVersion = sdkVersion;
-        this.minorVersion = minorVersion;
     }
 
     public void setTo(CodeColorsConfiguration o) {
+        sdkVersion = o.sdkVersion;
         fontScale = o.fontScale;
         mcc = o.mcc;
         mnc = o.mnc;
@@ -659,8 +657,6 @@ public class CodeColorsConfiguration implements Comparable<CodeColorsConfigurati
         screenHeightDp = o.screenHeightDp;
         smallestScreenWidthDp = o.smallestScreenWidthDp;
         densityDpi = o.densityDpi;
-        sdkVersion = o.sdkVersion;
-        minorVersion = o.minorVersion;
     }
 
     public String toString() {
@@ -937,6 +933,7 @@ public class CodeColorsConfiguration implements Comparable<CodeColorsConfigurati
      * Set this object to the system defaults.
      */
     public void setToDefaults() {
+        sdkVersion = SDK_VERSION_UNDEFINED;
         fontScale = 1;
         mcc = mnc = 0;
         locale = null;
@@ -954,12 +951,12 @@ public class CodeColorsConfiguration implements Comparable<CodeColorsConfigurati
         screenHeightDp = SCREEN_HEIGHT_DP_UNDEFINED;
         smallestScreenWidthDp = SMALLEST_SCREEN_WIDTH_DP_UNDEFINED;
         densityDpi = DENSITY_DPI_UNDEFINED;
-        sdkVersion = SDK_VERSION_UNDEFINED;
-        minorVersion = MINOR_VERSION_UNDEFINED;
     }
 
     public int compareTo(CodeColorsConfiguration that) {
         int n;
+        n = that.sdkVersion - this.sdkVersion;
+        if (n != 0) return n;
         float a = this.fontScale;
         float b = that.fontScale;
         if (a < b) return -1;
@@ -1006,10 +1003,7 @@ public class CodeColorsConfiguration implements Comparable<CodeColorsConfigurati
         if (n != 0) return n;
         n = this.densityDpi - that.densityDpi;
         if (n != 0) return n;
-        n = this.sdkVersion - that.sdkVersion;
-        if (n != 0) return n;
-        n = this.minorVersion - that.minorVersion;
-        //if (n != 0) return n;
+
         return n;
     }
 
@@ -1029,6 +1023,7 @@ public class CodeColorsConfiguration implements Comparable<CodeColorsConfigurati
 
     public int hashCode() {
         int result = 17;
+        result = 31 * result + sdkVersion;
         result = 31 * result + Float.floatToIntBits(fontScale);
         result = 31 * result + mcc;
         result = 31 * result + mnc;
@@ -1046,8 +1041,6 @@ public class CodeColorsConfiguration implements Comparable<CodeColorsConfigurati
         result = 31 * result + screenHeightDp;
         result = 31 * result + smallestScreenWidthDp;
         result = 31 * result + densityDpi;
-        result = 31 * result + sdkVersion;
-        result = 31 * result + minorVersion;
         return result;
     }
 }

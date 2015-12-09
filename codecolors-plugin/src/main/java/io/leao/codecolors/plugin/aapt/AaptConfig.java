@@ -667,7 +667,6 @@ public class AaptConfig {
     private static boolean parseVersion(String name, CodeColorsConfiguration out) {
         if (kWildcardName.equals(name)) {
             out.sdkVersion = CodeColorsConfiguration.SDK_VERSION_UNDEFINED;
-            out.minorVersion = CodeColorsConfiguration.MINOR_VERSION_UNDEFINED;
             return true;
         }
 
@@ -682,7 +681,6 @@ public class AaptConfig {
         String version = name.substring(1);
         if (version.matches("[0-9]+")) {
             out.sdkVersion = Integer.valueOf(version);
-            out.minorVersion = 0;
             return true;
         }
 

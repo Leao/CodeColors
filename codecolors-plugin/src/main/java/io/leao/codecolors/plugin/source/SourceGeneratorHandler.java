@@ -54,15 +54,14 @@ public class SourceGeneratorHandler {
             }
 
             CodeBlock configurationBlock = CodeBlock.builder()
-                    .add("new $T($Lf, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, " +
-                                    "$L, $L)", CodeColorsConfiguration.class, configuration.fontScale, configuration.mcc,
-                            configuration.mnc, localeLanguage, localeCountry, localeVariant,
+                    .add("new $T($L, $Lf, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L)",
+                            CodeColorsConfiguration.class, configuration.sdkVersion, configuration.fontScale,
+                            configuration.mcc, configuration.mnc, localeLanguage, localeCountry, localeVariant,
                             configuration.userSetLocale, configuration.touchscreen, configuration.keyboard,
                             configuration.keyboardHidden, configuration.hardKeyboardHidden, configuration.navigation,
                             configuration.navigationHidden, configuration.orientation, configuration.screenLayout,
                             configuration.uiMode, configuration.screenWidthDp, configuration.screenHeightDp,
-                            configuration.smallestScreenWidthDp, configuration.densityDpi, configuration.sdkVersion,
-                            configuration.minorVersion)
+                            configuration.smallestScreenWidthDp, configuration.densityDpi)
                     .build();
             configurationArrayInitializer.add(configurationBlock);
 
