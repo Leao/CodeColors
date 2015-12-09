@@ -9,11 +9,7 @@ import org.xml.sax.SAXException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
@@ -48,9 +44,7 @@ public class ResourceDependencyHandler {
     private static final String sDependencyRegex = createDependencyRegex();
 
     private final Set<CodeColorsConfiguration> mConfigurations = new TreeSet<>();
-
-    private final Map<Resource, Map<CodeColorsConfiguration, Set<Resource>>> mResourceConfigurationDependencies =
-            new HashMap<>();
+    private final Resource.Pool mResourcesPool = new Resource.Pool();
 
     public void processDependencies(File resourcesDir) {
         processDependencies(CodeColorsConfiguration.EMPTY, resourcesDir);
@@ -60,8 +54,8 @@ public class ResourceDependencyHandler {
         return mConfigurations;
     }
 
-    public Map<Resource, Map<CodeColorsConfiguration, Set<Resource>>> getDependencies() {
-        return mResourceConfigurationDependencies;
+    public Set<Resource> getResources() {
+        return mResourcesPool.getResources();
     }
 
     private void processDependencies(CodeColorsConfiguration configuration, File resourcesDir) {
@@ -90,13 +84,15 @@ public class ResourceDependencyHandler {
                     parseXmlFile(
                             configuration,
                             file,
-                            new Resource(fileName.substring(0, fileName.indexOf('.')), Resource.Type.DRAWABLE));
+                            mResourcesPool.getOrCreateResource(
+                                    fileName.substring(0, fileName.indexOf('.')), Resource.Type.DRAWABLE));
                 } else if (parentFolder.startsWith(RESOURCE_COLOR)) {
                     String fileName = file.getName();
                     parseXmlFile(
                             configuration,
                             file,
-                            new Resource(fileName.substring(0, fileName.indexOf('.')), Resource.Type.COLOR));
+                            mResourcesPool.getOrCreateResource(
+                                    fileName.substring(0, fileName.indexOf('.')), Resource.Type.COLOR));
                 } else if (parentFolder.startsWith(RESOURCE_VALUES)) {
                     parseXmlFile(configuration, file, null);
                 }
@@ -158,7 +154,7 @@ public class ResourceDependencyHandler {
         }
     }
 
-    private static Resource createResourceFromNode(Resource resource, Node node) {
+    private Resource createResourceFromNode(Resource resource, Node node) {
         if (resource != null) {
             return resource;
         }
@@ -184,7 +180,7 @@ public class ResourceDependencyHandler {
                 }
             }
         }
-        return name != null ? new Resource(name, type) : null;
+        return name != null ? mResourcesPool.getOrCreateResource(name, type) : null;
     }
 
     private static String getNodeNameAttr(Node node) {
@@ -198,11 +194,9 @@ public class ResourceDependencyHandler {
 
     private void addDependencyIfValid(CodeColorsConfiguration configuration, Resource resource, String dependency) {
         if (isValidDependency(dependency)) {
-            // Make sure to add the configuration to the list of configurations.
+            resource.addDependency(configuration, getOrCreateResourceFromDependency(dependency));
+            // Cache configuration as it has dependencies to be processed.
             mConfigurations.add(configuration);
-            // Add dependency to resource's dependencies set.
-            Set<Resource> dependencies = getDependencies(resource, configuration);
-            dependencies.add(createResourceFromDependency(dependency));
         }
     }
 
@@ -210,35 +204,18 @@ public class ResourceDependencyHandler {
         return dependency != null && dependency.matches(sDependencyRegex);
     }
 
-    private Set<Resource> getDependencies(Resource resource, CodeColorsConfiguration configuration) {
-        Map<CodeColorsConfiguration, Set<Resource>> configurationDependencies =
-                mResourceConfigurationDependencies.get(resource);
-        if (configurationDependencies == null) {
-            configurationDependencies = new TreeMap<>();
-            mResourceConfigurationDependencies.put(resource, configurationDependencies);
-        }
-
-        Set<Resource> dependencies = configurationDependencies.get(configuration);
-        if (dependencies == null) {
-            dependencies = new HashSet<>();
-            configurationDependencies.put(configuration, dependencies);
-        }
-
-        return dependencies;
-    }
-
-    private static Resource createResourceFromDependency(String dependency) {
+    private Resource getOrCreateResourceFromDependency(String dependency) {
         String[] dependencyParts = dependency.split("/");
         if (dependencyParts.length == 2 && dependencyParts[0] != null && dependencyParts[1] != null) {
             switch (dependencyParts[0]) {
                 case PREFIX_DRAWABLE:
-                    return new Resource(dependencyParts[1], Resource.Type.DRAWABLE);
+                    return mResourcesPool.getOrCreateResource(dependencyParts[1], Resource.Type.DRAWABLE);
                 case PREFIX_COLOR:
-                    return new Resource(dependencyParts[1], Resource.Type.COLOR);
+                    return mResourcesPool.getOrCreateResource(dependencyParts[1], Resource.Type.COLOR);
                 case PREFIX_ATTR:
-                    return new Resource(dependencyParts[1], Resource.Type.ATTR);
+                    return mResourcesPool.getOrCreateResource(dependencyParts[1], Resource.Type.ATTR);
                 case PREFIX_ANDROID_ATTR:
-                    return new Resource(dependencyParts[1], Resource.Type.ANDROID_ATTR);
+                    return mResourcesPool.getOrCreateResource(dependencyParts[1], Resource.Type.ANDROID_ATTR);
                 default:
                     // Throw.
             }

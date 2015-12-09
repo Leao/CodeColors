@@ -25,13 +25,8 @@ import io.leao.codecolors.plugin.res.CodeColorsConfiguration;
 import io.leao.codecolors.plugin.res.Resource;
 
 public class SourceGeneratorHandler {
-    public static void generateSource(
-            Set<CodeColorsConfiguration> configurations,
-            Map<Resource, Map<CodeColorsConfiguration, Set<Resource>>> resourceConfigurationDependencies,
-            String packageName,
-            String applicationId,
-            File outputDir) {
-
+    public static void generateSource(Set<CodeColorsConfiguration> configurations, Set<Resource> resources,
+                                      String packageName, String applicationId, File outputDir) {
         /*
          * Setup configurations.
          */
@@ -89,13 +84,17 @@ public class SourceGeneratorHandler {
          */
 
         Map<Resource, Map<CodeColorsConfiguration, Integer>> resourceConfigurationDependenciesIndexes =
-                new HashMap<>(resourceConfigurationDependencies.keySet().size());
+                new HashMap<>(resources.size());
 
         List<FieldSpec> resourceDependenciesFields = new ArrayList<>();
 
-        for (Resource resource : resourceConfigurationDependencies.keySet()) {
+        for (Resource resource : resources) {
+            if (!resource.hasDependencies()) {
+                continue;
+            }
+
             Map<CodeColorsConfiguration, Set<Resource>> configurationDependencies =
-                    resourceConfigurationDependencies.get(resource);
+                    resource.getConfigurationDependencies();
 
             Map<CodeColorsConfiguration, Integer> configurationDependenciesIndexes =
                     new HashMap<>(configurationDependencies.keySet().size());
@@ -124,7 +123,7 @@ public class SourceGeneratorHandler {
                     Resource dependency = dependenciesIterator.next();
                     resourceDependenciesInitializer.add(createResourceCodeBlock(packageName, dependency));
                     if (dependenciesIterator.hasNext()) {
-                        resourceDependenciesInitializer.add(",");
+                        resourceDependenciesInitializer.add(", ");
                     } else {
                         break;
                     }
@@ -171,9 +170,12 @@ public class SourceGeneratorHandler {
 
             CodeBlock.Builder putResourceDependenciesBuilder = CodeBlock.builder().indent();
 
-            for (Resource resource : resourceConfigurationDependencies.keySet()) {
-                Map<CodeColorsConfiguration, Set<Resource>> configurationDependencies =
-                        resourceConfigurationDependencies.get(resource);
+            for (Resource resource : resources) {
+                if (!resource.hasDependencies()) {
+                    continue;
+                }
+
+                Map<CodeColorsConfiguration, Set<Resource>> configurationDependencies = resource.getConfigurationDependencies();
 
                 int configurationDependenciesIndex;
                 if (configurationDependencies.containsKey(configuration)) {
@@ -228,41 +230,41 @@ public class SourceGeneratorHandler {
     }
 
     private static CodeBlock createResourceCodeBlock(String packageName, Resource resource) {
-        switch (resource.type) {
+        switch (resource.getType()) {
             case DRAWABLE:
                 return CodeBlock.builder()
-                        .add("$T$L", ClassName.get(packageName, "R"), ".drawable." + resource.name)
+                        .add("$T$L", ClassName.get(packageName, "R"), ".drawable." + resource.getName())
                         .build();
             case COLOR:
                 return CodeBlock.builder()
-                        .add("$T$L", ClassName.get(packageName, "R"), ".color." + resource.name)
+                        .add("$T$L", ClassName.get(packageName, "R"), ".color." + resource.getName())
                         .build();
             case ATTR:
                 return CodeBlock.builder()
-                        .add("$T$L", ClassName.get(packageName, "R"), ".attr." + resource.name)
+                        .add("$T$L", ClassName.get(packageName, "R"), ".attr." + resource.getName())
                         .build();
             case ANDROID_ATTR:
                 return CodeBlock.builder()
-                        .add("$L", "android.R.attr." + resource.name)
+                        .add("$L", "android.R.attr." + resource.getName())
                         .build();
         }
         // Just cause.
-        throw new IllegalStateException("Resource type not supported: " + resource.type);
+        throw new IllegalStateException("Resource type not supported: " + resource.getType());
     }
 
     private static String createResourceVariableName(Resource resource) {
-        switch (resource.type) {
+        switch (resource.getType()) {
             case DRAWABLE:
-                return "Drawable_" + resource.name;
+                return "Drawable_" + resource.getName();
             case COLOR:
-                return "Color_" + resource.name;
+                return "Color_" + resource.getName();
             case ATTR:
-                return "Attr_" + resource.name;
+                return "Attr_" + resource.getName();
             case ANDROID_ATTR:
-                return "AndroidAttr_" + resource.name;
+                return "AndroidAttr_" + resource.getName();
         }
         // Just cause.
-        throw new IllegalStateException("Resource type not supported: " + resource.type);
+        throw new IllegalStateException("Resource type not supported: " + resource.getType());
     }
 
     private static void addGeneratedTimeJavaDoc(TypeSpec.Builder classBuilder) {

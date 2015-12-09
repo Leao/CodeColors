@@ -3,7 +3,6 @@ package io.leao.codecolors.plugin;
 import com.android.build.gradle.AppExtension;
 import com.android.build.gradle.LibraryExtension;
 import com.android.build.gradle.api.BaseVariant;
-import com.android.builder.model.SourceProvider;
 
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
@@ -62,11 +61,8 @@ public class CodeColorsPlugin implements Plugin<Project> {
                 public void execute(PreprocessTask preprocessTask) {
                     preprocessTask.setPackageName(variant.getGenerateBuildConfig().getBuildConfigPackageName());
                     preprocessTask.setApplicationId(variant.getApplicationId());
+                    preprocessTask.addInputDir(variant.getMergeResources().getOutputDir());
                     preprocessTask.setOutputDir(generateOutputDir(project, variant.getName()));
-
-                    for (SourceProvider sourceSet : variant.getSourceSets()) {
-                        preprocessTask.getInputDirs().addAll(sourceSet.getResDirectories());
-                    }
                 }
             });
             return (PreprocessTask) project.getTasks().getByName(name);
@@ -96,6 +92,10 @@ public class CodeColorsPlugin implements Plugin<Project> {
             mApplicationId = applicationId;
         }
 
+        private void addInputDir(File inputDir) {
+            mInputDirs.add(inputDir);
+        }
+
         @InputFiles
         private Set<File> getInputDirs() {
             return mInputDirs;
@@ -117,9 +117,10 @@ public class CodeColorsPlugin implements Plugin<Project> {
             for (File dir : mInputDirs) {
                 dependencyHandler.processDependencies(dir);
             }
+
             SourceGeneratorHandler.generateSource(
                     dependencyHandler.getConfigurations(),
-                    dependencyHandler.getDependencies(),
+                    dependencyHandler.getResources(),
                     mPackageName,
                     mApplicationId,
                     mOutputDir);
