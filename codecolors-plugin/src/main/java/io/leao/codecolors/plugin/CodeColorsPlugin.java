@@ -3,6 +3,7 @@ package io.leao.codecolors.plugin;
 import com.android.build.gradle.AppExtension;
 import com.android.build.gradle.LibraryExtension;
 import com.android.build.gradle.api.BaseVariant;
+import com.android.build.gradle.tasks.MergeResources;
 
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
@@ -13,6 +14,7 @@ import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -38,8 +40,7 @@ public class CodeColorsPlugin implements Plugin<Project> {
         return new Action<BaseVariant>() {
             @Override
             public void execute(final BaseVariant applicationVariant) {
-                PreprocessTask task = PreprocessTask.create(project, applicationVariant);
-                applicationVariant.registerJavaGeneratingTask(task, task.getOutputDir());
+                PreprocessTask.create(project, applicationVariant);
             }
         };
     }
@@ -55,24 +56,43 @@ public class CodeColorsPlugin implements Plugin<Project> {
         private String mApplicationId;
 
         public static PreprocessTask create(final Project project, final BaseVariant variant) {
-            String name = generateTaskName(variant);
-            project.getTasks().create(name, PreprocessTask.class, new Action<PreprocessTask>() {
-                @Override
-                public void execute(PreprocessTask preprocessTask) {
-                    preprocessTask.setPackageName(variant.getGenerateBuildConfig().getBuildConfigPackageName());
-                    preprocessTask.setApplicationId(variant.getApplicationId());
-                    preprocessTask.addInputDir(variant.getMergeResources().getOutputDir());
-                    preprocessTask.setOutputDir(generateOutputDir(project, variant.getName()));
-                }
-            });
-            return (PreprocessTask) project.getTasks().getByName(name);
+            return project
+                    .getTasks()
+                    .create(createTaskName(variant), PreprocessTask.class, new Action<PreprocessTask>() {
+                        @Override
+                        public void execute(PreprocessTask preprocessTask) {
+                            // Package name and application id.
+                            preprocessTask.setPackageName(variant.getGenerateBuildConfig().getBuildConfigPackageName());
+                            preprocessTask.setApplicationId(variant.getApplicationId());
+                            // Merge resource (for input dir and task dependency).
+                            MergeResources mergeResourcesTask = variant.getMergeResources();
+                            preprocessTask.addInputDir(mergeResourcesTask.getOutputDir());
+                            // Output dir.
+                            File outputDir = createOutputDir(project, variant.getName());
+                            preprocessTask.setOutputDir(outputDir);
+
+                            // Adds task to variant as a Java source code generator.
+                            variant.registerJavaGeneratingTask(preprocessTask, outputDir);
+
+                            // Make sure the resources were already merged, before executing the task.
+                            Set<Object> newDependencies = new HashSet<>();
+                            Collection<?> dependencies = preprocessTask.getDependsOn();
+                            if (dependencies != null) {
+                                for (Object dependency : dependencies) {
+                                    newDependencies.add(dependency);
+                                }
+                            }
+                            newDependencies.add(mergeResourcesTask);
+                            preprocessTask.setDependsOn(newDependencies);
+                        }
+                    });
         }
 
-        private static String generateTaskName(BaseVariant variant) {
+        private static String createTaskName(BaseVariant variant) {
             return NAME_BASE + AaptUtil.capitalize(variant.getName());
         }
 
-        private static File generateOutputDir(Project project, String variantName) {
+        private static File createOutputDir(Project project, String variantName) {
             return project.file(new File(project.getBuildDir() + OUTPUT_DIR_BASE + addFileSeparators(variantName)));
         }
 
