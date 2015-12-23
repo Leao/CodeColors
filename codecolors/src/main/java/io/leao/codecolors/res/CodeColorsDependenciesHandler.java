@@ -11,9 +11,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import io.leao.codecolors.plugin.CodeColorsConst;
 import io.leao.codecolors.plugin.res.CodeColorsConfiguration;
 
 public class CodeColorsDependenciesHandler {
+    private static final String CLASS_NAME_BASE = "%s.%s";
+
     private static final String TYPE_ATTR = "attr";
 
     private static final Map<String, Map<CodeColorsConfiguration, Map<Object, Set<Object>>>> sDependencies =
@@ -119,8 +122,9 @@ public class CodeColorsDependenciesHandler {
     @SuppressWarnings("unchecked")
     public static void addPackageDependencies(String packageName)
             throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
-        Class<?> codeColorResourcesClass = Class.forName(packageName + ".CodeColorsDependencies");
-        Field dependenciesField = codeColorResourcesClass.getDeclaredField("sDependencies");
+        Class<?> dependenciesClass =
+                Class.forName(String.format(CLASS_NAME_BASE, packageName, CodeColorsConst.DEPENDENCIES_CLASS_NAME));
+        Field dependenciesField = dependenciesClass.getDeclaredField(CodeColorsConst.DEPENDENCIES_FIELD_NAME);
         dependenciesField.setAccessible(true);
         sDependencies.put(
                 packageName,

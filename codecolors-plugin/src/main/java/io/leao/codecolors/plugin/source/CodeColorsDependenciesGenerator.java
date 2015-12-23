@@ -22,12 +22,11 @@ import java.util.TreeSet;
 
 import javax.lang.model.element.Modifier;
 
+import io.leao.codecolors.plugin.CodeColorsConst;
 import io.leao.codecolors.plugin.res.CodeColorsConfiguration;
 import io.leao.codecolors.plugin.res.Resource;
 
 public class CodeColorsDependenciesGenerator {
-    private static final String SOURCE_CLASS_NAME = "CodeColorsDependencies";
-
     private static final String RESOURCE_ID_BASE = ".%s.%s";
     private static final String ANDROID_RESOURCE_ID_PUBLIC_BASE = "android.R.%s.%s";
     private static final String ANDROID_RESOURCE_ID_PRIVATE_BASE = "android_R_%s_%s";
@@ -233,14 +232,15 @@ public class CodeColorsDependenciesGenerator {
         }
         putConfigurationResourceDependenciesBuilder.unindent();
 
-        FieldSpec dependenciesField = FieldSpec.builder(configurationResourceDependenciesType, "sDependencies")
-                .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
-                .initializer("new $T() {{\n$L}}", configurationResourceDependenciesType,
-                        putConfigurationResourceDependenciesBuilder.build())
-                .build();
+        FieldSpec dependenciesField =
+                FieldSpec.builder(configurationResourceDependenciesType, CodeColorsConst.DEPENDENCIES_FIELD_NAME)
+                        .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
+                        .initializer("new $T() {{\n$L}}", configurationResourceDependenciesType,
+                                putConfigurationResourceDependenciesBuilder.build())
+                        .build();
 
 
-        TypeSpec.Builder codeColorResourcesClass = TypeSpec.classBuilder(SOURCE_CLASS_NAME)
+        TypeSpec.Builder codeColorResourcesClass = TypeSpec.classBuilder(CodeColorsConst.DEPENDENCIES_CLASS_NAME)
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .addFields(privateResourcesFields)
                 .addField(configurationsField)
