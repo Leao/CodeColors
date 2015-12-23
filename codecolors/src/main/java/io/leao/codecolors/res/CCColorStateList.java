@@ -10,10 +10,10 @@ import android.util.SparseArray;
 import java.lang.ref.WeakReference;
 import java.util.WeakHashMap;
 
-public class CodeColorStateList extends ColorStateList {
+public class CcColorStateList extends ColorStateList {
     private static final int[][] EMPTY = new int[][]{new int[0]};
 
-    private int mId = CodeResources.NO_ID;
+    private int mId = CcColorsResources.NO_ID;
 
     private Integer mColor;
 
@@ -23,9 +23,9 @@ public class CodeColorStateList extends ColorStateList {
     /**
      * Thread-safe cache of single-color ColorStateLists.
      */
-    private static final SparseArray<WeakReference<CodeColorStateList>> sCache = new SparseArray<>();
+    private static final SparseArray<WeakReference<CcColorStateList>> sCache = new SparseArray<>();
 
-    protected CodeColorStateList(int[][] states, int[] colors) {
+    protected CcColorStateList(int[][] states, int[] colors) {
         super(states, colors);
     }
 
@@ -96,26 +96,26 @@ public class CodeColorStateList extends ColorStateList {
     }
 
     /**
-     * @return A CodeColorStateList with the same states and colors of the source ColorStateList.
+     * @return A CcColorStateList with the same states and colors of the source ColorStateList.
      */
-    public static CodeColorStateList valueOf(ColorStateList source) {
+    public static CcColorStateList valueOf(ColorStateList source) {
         Parcel parcel = Parcel.obtain();
         source.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
-        CodeColorStateList ccsl = CodeColorStateList.CREATOR.createFromParcel(parcel);
+        CcColorStateList cccsl = CcColorStateList.CREATOR.createFromParcel(parcel);
         parcel.recycle();
-        return ccsl;
+        return cccsl;
     }
 
     /**
      * @return A ColorStateList containing a single color.
      */
     @NonNull
-    public static CodeColorStateList valueOf(@ColorInt int color) {
+    public static CcColorStateList valueOf(@ColorInt int color) {
         synchronized (sCache) {
             final int index = sCache.indexOfKey(color);
             if (index >= 0) {
-                final CodeColorStateList cached = sCache.valueAt(index).get();
+                final CcColorStateList cached = sCache.valueAt(index).get();
                 if (cached != null) {
                     return cached;
                 }
@@ -132,35 +132,35 @@ public class CodeColorStateList extends ColorStateList {
                 }
             }
 
-            final CodeColorStateList ccsl = new CodeColorStateList(EMPTY, new int[]{color});
-            sCache.put(color, new WeakReference<>(ccsl));
-            return ccsl;
+            final CcColorStateList cccsl = new CcColorStateList(EMPTY, new int[]{color});
+            sCache.put(color, new WeakReference<>(cccsl));
+            return cccsl;
         }
     }
 
-    public static final Parcelable.Creator<CodeColorStateList> CREATOR = new Parcelable.Creator<CodeColorStateList>() {
+    public static final Parcelable.Creator<CcColorStateList> CREATOR = new Parcelable.Creator<CcColorStateList>() {
         @Override
-        public CodeColorStateList[] newArray(int size) {
-            return new CodeColorStateList[size];
+        public CcColorStateList[] newArray(int size) {
+            return new CcColorStateList[size];
         }
 
         @Override
-        public CodeColorStateList createFromParcel(Parcel source) {
+        public CcColorStateList createFromParcel(Parcel source) {
             final int N = source.readInt();
             final int[][] stateSpecs = new int[N][];
             for (int i = 0; i < N; i++) {
                 stateSpecs[i] = source.createIntArray();
             }
             final int[] colors = source.createIntArray();
-            return new CodeColorStateList(stateSpecs, colors);
+            return new CcColorStateList(stateSpecs, colors);
         }
     };
 
     public interface Callback {
-        void invalidateColor(CodeColorStateList color);
+        void invalidateColor(CcColorStateList color);
     }
 
     public interface AnchorCallback<T> {
-        void invalidateColor(T anchor, CodeColorStateList color);
+        void invalidateColor(T anchor, CcColorStateList color);
     }
 }

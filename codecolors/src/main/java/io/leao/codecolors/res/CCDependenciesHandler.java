@@ -11,15 +11,15 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import io.leao.codecolors.plugin.CodeColorsConst;
-import io.leao.codecolors.plugin.res.CodeColorsConfiguration;
+import io.leao.codecolors.plugin.CcConst;
+import io.leao.codecolors.plugin.res.CcConfiguration;
 
-public class CodeColorsDependenciesHandler {
+public class CcDependenciesHandler {
     private static final String CLASS_NAME_BASE = "%s.%s";
 
     private static final String TYPE_ATTR = "attr";
 
-    private static final Map<String, Map<CodeColorsConfiguration, Map<Object, Set<Object>>>> sDependencies =
+    private static final Map<String, Map<CcConfiguration, Map<Object, Set<Object>>>> sDependencies =
             new HashMap<>();
     // Keys are either the id or the name of the resource.
     private static final Map<Integer, Object> sKeys = new HashMap<>();
@@ -34,7 +34,7 @@ public class CodeColorsDependenciesHandler {
 
     private int[] mTempArray = new int[1];
 
-    public CodeColorsDependenciesHandler(Context context) {
+    public CcDependenciesHandler(Context context) {
         mContext = context;
         mResources = context.getResources();
         mDependencies = getDependencies(context);
@@ -123,20 +123,20 @@ public class CodeColorsDependenciesHandler {
     public static void addPackageDependencies(String packageName)
             throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
         Class<?> dependenciesClass =
-                Class.forName(String.format(CLASS_NAME_BASE, packageName, CodeColorsConst.DEPENDENCIES_CLASS_NAME));
-        Field dependenciesField = dependenciesClass.getDeclaredField(CodeColorsConst.DEPENDENCIES_FIELD_NAME);
+                Class.forName(String.format(CLASS_NAME_BASE, packageName, CcConst.DEPENDENCIES_CLASS_NAME));
+        Field dependenciesField = dependenciesClass.getDeclaredField(CcConst.DEPENDENCIES_FIELD_NAME);
         dependenciesField.setAccessible(true);
         sDependencies.put(
                 packageName,
-                (Map<CodeColorsConfiguration, Map<Object, Set<Object>>>) dependenciesField.get(null));
+                (Map<CcConfiguration, Map<Object, Set<Object>>>) dependenciesField.get(null));
     }
 
     public static Map<Object, Set<Object>> getDependencies(Context context) {
-        Map<CodeColorsConfiguration, Map<Object, Set<Object>>> configurationDependencies =
+        Map<CcConfiguration, Map<Object, Set<Object>>> configurationDependencies =
                 sDependencies.get(context.getPackageName());
         Configuration contextConfiguration = context.getResources().getConfiguration();
-        for (CodeColorsConfiguration configuration : configurationDependencies.keySet()) {
-            if (CodeColorsConfigurationUtils.areCompatible(configuration, contextConfiguration)) {
+        for (CcConfiguration configuration : configurationDependencies.keySet()) {
+            if (CcConfigurationUtils.areCompatible(configuration, contextConfiguration)) {
                 return configurationDependencies.get(configuration);
             }
         }

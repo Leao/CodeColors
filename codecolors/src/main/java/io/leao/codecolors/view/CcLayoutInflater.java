@@ -13,30 +13,30 @@ import java.util.Set;
 
 import io.leao.codecolors.CodeColors;
 import io.leao.codecolors.R;
-import io.leao.codecolors.res.CodeColorStateList;
-import io.leao.codecolors.res.CodeColorsDependenciesHandler;
+import io.leao.codecolors.res.CcColorStateList;
+import io.leao.codecolors.res.CcDependenciesHandler;
 
-public class CodeColorsLayoutInflater extends LayoutInflater implements LayoutInflater.Factory2 {
+public class CcLayoutInflater extends LayoutInflater implements LayoutInflater.Factory2 {
 
     private static final String[] sClassPrefixes = {"android.widget.", "android.webkit."};
 
     protected Object[] mConstructorArgs;
 
-    protected CodeColorsDependenciesHandler mDependenciesHandler;
+    protected CcDependenciesHandler mDependenciesHandler;
 
-    protected CodeColorsLayoutInflater(Context context) {
+    protected CcLayoutInflater(Context context) {
         super(context);
         init(context);
     }
 
-    protected CodeColorsLayoutInflater(LayoutInflater original, Context newContext) {
+    protected CcLayoutInflater(LayoutInflater original, Context newContext) {
         super(original, newContext);
         init(newContext);
     }
 
     private void init(Context context) {
         // Set factory if needed. If it's already set through cloning, do not reset it.
-        if (!(getFactory() instanceof CodeColorsLayoutInflater)) {
+        if (!(getFactory() instanceof CcLayoutInflater)) {
             setFactory2(this);
         }
 
@@ -51,7 +51,7 @@ public class CodeColorsLayoutInflater extends LayoutInflater implements LayoutIn
             mConstructorArgs = new Object[2];
         }
 
-        mDependenciesHandler = new CodeColorsDependenciesHandler(context);
+        mDependenciesHandler = new CcDependenciesHandler(context);
     }
 
     @Override
@@ -130,20 +130,20 @@ public class CodeColorsLayoutInflater extends LayoutInflater implements LayoutIn
     }
 
     private void addCodeColorCallbacks(Context context, int resourceId, Drawable drawable,
-                                       CodeColorStateList.AnchorCallback callback) {
+                                       CcColorStateList.AnchorCallback callback) {
         Set<Integer> dependencies = mDependenciesHandler.resolveDependencies(resourceId);
         for (Integer dependency : dependencies) {
-            CodeColorStateList codeColor = CodeColors.getColor(dependency);
+            CcColorStateList codeColor = CodeColors.getColor(dependency);
             if (codeColor != null) {
                 codeColor.addCallback(drawable, callback);
             }
         }
     }
 
-    private static final CodeColorStateList.AnchorCallback<Drawable> mDrawableInvalidateCallback =
-            new CodeColorStateList.AnchorCallback<Drawable>() {
+    private static final CcColorStateList.AnchorCallback<Drawable> mDrawableInvalidateCallback =
+            new CcColorStateList.AnchorCallback<Drawable>() {
                 @Override
-                public void invalidateColor(Drawable drawable, CodeColorStateList color) {
+                public void invalidateColor(Drawable drawable, CcColorStateList color) {
                     if (drawable != null) {
                         final int[] state = drawable.getState();
                         // Force a state change to update the color.
@@ -157,10 +157,10 @@ public class CodeColorsLayoutInflater extends LayoutInflater implements LayoutIn
 
     @Override
     public LayoutInflater cloneInContext(Context newContext) {
-        return new CodeColorsLayoutInflater(this, newContext);
+        return new CcLayoutInflater(this, newContext);
     }
 
-    public static CodeColorsLayoutInflater copy(LayoutInflater inflater) {
-        return new CodeColorsLayoutInflater(inflater, inflater.getContext());
+    public static CcLayoutInflater copy(LayoutInflater inflater) {
+        return new CcLayoutInflater(inflater, inflater.getContext());
     }
 }

@@ -10,9 +10,9 @@ import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 
-import io.leao.codecolors.view.CodeColorsLayoutInflater;
+import io.leao.codecolors.view.CcLayoutInflater;
 
-public class CodeColorsAppCompatActivity extends AppCompatActivity {
+public class CcAppCompatActivity extends AppCompatActivity {
     private LayoutInflater mLayoutInflater;
 
     @Override
@@ -37,7 +37,7 @@ public class CodeColorsAppCompatActivity extends AppCompatActivity {
                 LayoutInflater layoutInflater = (LayoutInflater) systemService;
                 // Copy the existing layout inflater and clone it to this context.
                 // That also allows its factory to be reset.
-                mLayoutInflater = CodeColorsLayoutInflater.copy(layoutInflater).cloneInContext(this);
+                mLayoutInflater = CcLayoutInflater.copy(layoutInflater).cloneInContext(this);
             }
             return mLayoutInflater;
         } else {

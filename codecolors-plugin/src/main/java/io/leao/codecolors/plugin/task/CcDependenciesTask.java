@@ -16,9 +16,9 @@ import java.util.Set;
 import io.leao.codecolors.plugin.aapt.AaptUtil;
 import io.leao.codecolors.plugin.res.Resource;
 import io.leao.codecolors.plugin.res.ResourcesDependenciesParser;
-import io.leao.codecolors.plugin.source.CodeColorsDependenciesGenerator;
+import io.leao.codecolors.plugin.source.CcDependenciesGenerator;
 
-public class CodeColorsDependenciesTask extends DefaultTask {
+public class CcDependenciesTask extends DefaultTask {
     private static final String NAME_BASE = "generateCodeColorsDependencies%s";
     private static final String OUTPUT_DIR_BASE = "%s\\generated\\source\\codecolors\\%s";
 
@@ -30,10 +30,10 @@ public class CodeColorsDependenciesTask extends DefaultTask {
 
     private BaseVariant mVariant;
 
-    public static CodeColorsDependenciesTask create(Project project, BaseVariant variant,
+    public static CcDependenciesTask create(Project project, BaseVariant variant,
                                                     SdkDependenciesTask sdkDependenciesTask) {
         String name = String.format(NAME_BASE, AaptUtil.capitalize(variant.getName()));
-        CodeColorsDependenciesTask task = project.getTasks().create(name, CodeColorsDependenciesTask.class);
+        CcDependenciesTask task = project.getTasks().create(name, CcDependenciesTask.class);
         task.initialize(project, variant, sdkDependenciesTask);
         return task;
     }
@@ -78,7 +78,7 @@ public class CodeColorsDependenciesTask extends DefaultTask {
         ResourcesDependenciesParser dependenciesParser = new ResourcesDependenciesParser(resourcesPool);
         dependenciesParser.parseDependencies(mMergeResourcesDir);
 
-        CodeColorsDependenciesGenerator.generateDependencies(
+        CcDependenciesGenerator.generateDependencies(
                 dependenciesParser.getResources(),
                 mVariant.getGenerateBuildConfig().getBuildConfigPackageName(),
                 mVariant.getApplicationId(),

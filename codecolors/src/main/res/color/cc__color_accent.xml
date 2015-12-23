@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-Defines a color to be used as default by the CodeColorStateList.
+Defines a color to be used as default by the CcColorStateList.
 Also defines a drawable, for cases where the library is not supported.
 That way the app will not crash when trying to inflate this as a drawable.
 -->

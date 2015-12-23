@@ -4,7 +4,7 @@ import org.apache.commons.lang.ArrayUtils;
 
 import java.util.Locale;
 
-import io.leao.codecolors.plugin.res.CodeColorsConfiguration;
+import io.leao.codecolors.plugin.res.CcConfiguration;
 
 /**
  * Based on AaptLocaleValue struct in AaptAssets.h, with methods defined in AaptAssets.cpp.
@@ -31,7 +31,7 @@ public class AaptLocaleValue {
         mVariant = variant;
     }
 
-    public void writeTo(CodeColorsConfiguration out) {
+    public void writeTo(CcConfiguration out) {
         Locale.Builder builder = new Locale.Builder();
 
         if (mLanguage != null) {

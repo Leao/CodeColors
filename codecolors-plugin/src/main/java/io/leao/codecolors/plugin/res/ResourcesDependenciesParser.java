@@ -64,14 +64,14 @@ public class ResourcesDependenciesParser {
     }
 
     public void parseDependencies(File resourcesDir) {
-        parseDependencies(CodeColorsConfiguration.EMPTY, resourcesDir);
+        parseDependencies(CcConfiguration.EMPTY, resourcesDir);
     }
 
     public Set<Resource> getResources() {
         return mResourcesPool.getResources();
     }
 
-    private void parseDependencies(CodeColorsConfiguration configuration, File resourcesDir) {
+    private void parseDependencies(CcConfiguration configuration, File resourcesDir) {
         File[] files = resourcesDir.listFiles();
         if (files != null) {
             for (File file : files) {
@@ -87,7 +87,7 @@ public class ResourcesDependenciesParser {
         }
     }
 
-    private void parseFile(CodeColorsConfiguration configuration, File file) {
+    private void parseFile(CcConfiguration configuration, File file) {
         try {
             String type = Files.probeContentType(file.toPath());
             if ("text/xml".equals(type)) {
@@ -115,7 +115,7 @@ public class ResourcesDependenciesParser {
         }
     }
 
-    private void parseXmlFile(CodeColorsConfiguration configuration, File file, Resource resource)
+    private void parseXmlFile(CcConfiguration configuration, File file, Resource resource)
             throws ParserConfigurationException, IOException, SAXException {
         DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
         docBuilderFactory.setNamespaceAware(true);
@@ -125,7 +125,7 @@ public class ResourcesDependenciesParser {
         parseNode(configuration, document.getDocumentElement(), resource);
     }
 
-    public void parseNode(CodeColorsConfiguration configuration, Node node, Resource resource) {
+    public void parseNode(CcConfiguration configuration, Node node, Resource resource) {
         NodeList childNodes = node.getChildNodes();
         int childCount = childNodes.getLength();
 
@@ -198,7 +198,7 @@ public class ResourcesDependenciesParser {
         }
     }
 
-    private void addDependencyIfValid(CodeColorsConfiguration configuration, Resource resource, String dependency) {
+    private void addDependencyIfValid(CcConfiguration configuration, Resource resource, String dependency) {
         if (isValidDependency(dependency)) {
             resource.addDependency(configuration, getOrCreateResourceFromDependency(dependency));
         }

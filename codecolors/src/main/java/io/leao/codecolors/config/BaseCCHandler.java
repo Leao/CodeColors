@@ -5,12 +5,12 @@ import android.content.Context;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.leao.codecolors.res.CodeColorStateList;
+import io.leao.codecolors.res.CcColorStateList;
 
-public class BaseCodeColorHandler implements CodeColorHandler {
+public class BaseCcHandler implements CcHandler {
     private List<Entry> mCodeColors;
 
-    public BaseCodeColorHandler(Context context, CodeColorFactory factory, int[] colorResIds) {
+    public BaseCcHandler(Context context, CcFactory factory, int[] colorResIds) {
         mCodeColors = new ArrayList<>(colorResIds.length);
         for (int colorResId : colorResIds) {
             mCodeColors.add(new Entry(colorResId, factory.getColor(context, colorResId)));
@@ -27,15 +27,15 @@ public class BaseCodeColorHandler implements CodeColorHandler {
     }
 
     @Override
-    public CodeColorStateList getColor(int index) {
+    public CcColorStateList getColor(int index) {
         return mCodeColors.get(index).color;
     }
 
     private static class Entry {
         public int resId;
-        public CodeColorStateList color;
+        public CcColorStateList color;
 
-        public Entry(int resId, CodeColorStateList color) {
+        public Entry(int resId, CcColorStateList color) {
             this.resId = resId;
             this.color = color;
         }

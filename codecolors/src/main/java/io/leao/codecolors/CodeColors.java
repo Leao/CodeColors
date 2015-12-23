@@ -13,14 +13,14 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
-import io.leao.codecolors.config.BaseCodeColorFactory;
-import io.leao.codecolors.config.BaseCodeColorHandler;
-import io.leao.codecolors.config.CodeColorFactory;
-import io.leao.codecolors.config.CodeColorHandler;
-import io.leao.codecolors.res.CodeColorDrawable;
-import io.leao.codecolors.res.CodeColorStateList;
-import io.leao.codecolors.res.CodeColorsDependenciesHandler;
-import io.leao.codecolors.res.CodeResources;
+import io.leao.codecolors.config.BaseCcFactory;
+import io.leao.codecolors.config.BaseCcHandler;
+import io.leao.codecolors.config.CcFactory;
+import io.leao.codecolors.config.CcHandler;
+import io.leao.codecolors.res.CcColorStateList;
+import io.leao.codecolors.res.CcColorDrawable;
+import io.leao.codecolors.res.CcDependenciesHandler;
+import io.leao.codecolors.res.CcColorsResources;
 
 public abstract class CodeColors {
     private static final String LOG_TAG = CodeColors.class.getSimpleName();
@@ -33,24 +33,24 @@ public abstract class CodeColors {
 
     private static boolean sIsActive = false;
 
-    private static final SparseArray<CodeColorStateList> sColorCache = new SparseArray<>();
+    private static final SparseArray<CcColorStateList> sColorCache = new SparseArray<>();
 
     public static void init(Context context) {
-        init(context, new BaseCodeColorFactory());
+        init(context, new BaseCcFactory());
     }
 
-    public static void init(Context context, CodeColorFactory factory) {
+    public static void init(Context context, CcFactory factory) {
         init(context, factory, sDefaultCodeColorResIds);
     }
 
-    public static void init(Context context, CodeColorFactory factory, int[] colorResIds) {
-        init(context, new BaseCodeColorHandler(context, factory, colorResIds));
+    public static void init(Context context, CcFactory factory, int[] colorResIds) {
+        init(context, new BaseCcHandler(context, factory, colorResIds));
     }
 
     @SuppressWarnings("unchecked")
-    public static void init(Context context, CodeColorHandler handler) {
+    public static void init(Context context, CcHandler handler) {
         try {
-            CodeColorsDependenciesHandler.addPackageDependencies(context.getPackageName());
+            CcDependenciesHandler.addPackageDependencies(context.getPackageName());
 
             Resources resources = context.getResources();
             // The SparseArray that holds the entries of preloaded colors.
@@ -76,10 +76,10 @@ public abstract class CodeColors {
                     continue;
                 }
 
-                CodeColorStateList color = handler.getColor(i);
+                CcColorStateList color = handler.getColor(i);
                 color.setId(id);
 
-                long key = CodeResources.createKey(resources, id);
+                long key = CcColorsResources.createKey(resources, id);
 
                 // Load color into Resources cache.
                 if (colorsConstantStateGetter != null) {
@@ -91,7 +91,7 @@ public abstract class CodeColors {
                 sColorCache.put(id, color);
 
                 // Load drawable into Resources cache.
-                Drawable.ConstantState drawableConstantState = CodeColorDrawable.getConstantStateForColor(color);
+                Drawable.ConstantState drawableConstantState = CcColorDrawable.getConstantStateForColor(color);
                 if (useLayoutDirectionDrawableCache) {
                     // Load for both layout directions (LTR and RTL).
                     ((LongSparseArray[]) sPreloadedDrawables)[0].put(key, drawableConstantState);
@@ -155,14 +155,14 @@ public abstract class CodeColors {
         return sIsActive;
     }
 
-    public static CodeColorStateList getColor(int resId) {
+    public static CcColorStateList getColor(int resId) {
         return sColorCache.get(resId);
     }
 
     public static void setColor(int resId, int color) {
-        CodeColorStateList ccsl = getColor(resId);
-        if (ccsl != null) {
-            ccsl.setColor(color);
+        CcColorStateList cccsl = getColor(resId);
+        if (cccsl != null) {
+            cccsl.setColor(color);
         }
     }
 }

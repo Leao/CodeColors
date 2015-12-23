@@ -3,10 +3,10 @@ package io.leao.codecolors.plugin.res;
 import java.io.Serializable;
 import java.util.Locale;
 
-public class CodeColorsConfiguration implements Comparable<CodeColorsConfiguration>, Serializable {
+public class CcConfiguration implements Comparable<CcConfiguration>, Serializable {
     private static final long serialVersionUID = 4890164482199714776L;
 
-    public static final CodeColorsConfiguration EMPTY = new CodeColorsConfiguration();
+    public static final CcConfiguration EMPTY = new CcConfiguration();
 
     /**
      * Current user preference for the scaling factor for fonts, relative
@@ -591,22 +591,22 @@ public class CodeColorsConfiguration implements Comparable<CodeColorsConfigurati
      * Construct an invalid Configuration.  You must call {@link #setToDefaults}
      * for this object to be valid.  {@more}
      */
-    public CodeColorsConfiguration() {
+    public CcConfiguration() {
         setToDefaults();
     }
 
     /**
      * Makes a deep copy suitable for modification.
      */
-    public CodeColorsConfiguration(CodeColorsConfiguration o) {
+    public CcConfiguration(CcConfiguration o) {
         setTo(o);
     }
 
-    public CodeColorsConfiguration(int sdkVersion, float fontScale, int mcc, int mnc, String localeLanguage,
-                                   String localeCountry, String localeVariant, boolean userSetLocale, int touchscreen,
-                                   int keyboard, int keyboardHidden, int hardKeyboardHidden, int navigation,
-                                   int navigationHidden, int orientation, int screenLayout, int uiMode,
-                                   int screenWidthDp, int screenHeightDp, int smallestScreenWidthDp, int densityDpi) {
+    public CcConfiguration(int sdkVersion, float fontScale, int mcc, int mnc, String localeLanguage,
+                           String localeCountry, String localeVariant, boolean userSetLocale, int touchscreen,
+                           int keyboard, int keyboardHidden, int hardKeyboardHidden, int navigation,
+                           int navigationHidden, int orientation, int screenLayout, int uiMode,
+                           int screenWidthDp, int screenHeightDp, int smallestScreenWidthDp, int densityDpi) {
         this.sdkVersion = sdkVersion;
         this.fontScale = fontScale;
         this.mcc = mcc;
@@ -638,7 +638,7 @@ public class CodeColorsConfiguration implements Comparable<CodeColorsConfigurati
         this.densityDpi = densityDpi;
     }
 
-    public void setTo(CodeColorsConfiguration o) {
+    public void setTo(CcConfiguration o) {
         sdkVersion = o.sdkVersion;
         fontScale = o.fontScale;
         mcc = o.mcc;
@@ -956,7 +956,7 @@ public class CodeColorsConfiguration implements Comparable<CodeColorsConfigurati
         densityDpi = DENSITY_DPI_UNDEFINED;
     }
 
-    public int compareTo(CodeColorsConfiguration that) {
+    public int compareTo(CcConfiguration that) {
         int n;
         n = that.sdkVersion - this.sdkVersion;
         if (n != 0) return n;
@@ -1010,7 +1010,7 @@ public class CodeColorsConfiguration implements Comparable<CodeColorsConfigurati
         return n;
     }
 
-    public boolean equals(CodeColorsConfiguration that) {
+    public boolean equals(CcConfiguration that) {
         if (that == null) return false;
         if (that == this) return true;
         return this.compareTo(that) == 0;
@@ -1018,7 +1018,7 @@ public class CodeColorsConfiguration implements Comparable<CodeColorsConfigurati
 
     public boolean equals(Object that) {
         try {
-            return equals((CodeColorsConfiguration) that);
+            return equals((CcConfiguration) that);
         } catch (ClassCastException e) {
         }
         return false;

@@ -20,8 +20,8 @@ public class Resource implements Serializable {
     private Type mType;
     private boolean mIsPublic;
 
-    private Map<CodeColorsConfiguration, Set<Resource>> mConfigurationDependencies;
-    private Map<CodeColorsConfiguration, Set<Resource>> mConfigurationDependents;
+    private Map<CcConfiguration, Set<Resource>> mConfigurationDependencies;
+    private Map<CcConfiguration, Set<Resource>> mConfigurationDependents;
 
     private Resource(String name, Type type, boolean isPublic) {
         mName = name;
@@ -45,7 +45,7 @@ public class Resource implements Serializable {
         return mIsPublic;
     }
 
-    public void addDependency(CodeColorsConfiguration configuration, Resource dependency) {
+    public void addDependency(CcConfiguration configuration, Resource dependency) {
         if (dependency.equals(this)) {
             return; // Circular dependency.
         }
@@ -66,11 +66,11 @@ public class Resource implements Serializable {
         return mConfigurationDependencies != null;
     }
 
-    public Map<CodeColorsConfiguration, Set<Resource>> getConfigurationDependencies() {
+    public Map<CcConfiguration, Set<Resource>> getConfigurationDependencies() {
         return mConfigurationDependencies;
     }
 
-    private Set<Resource> getDependencies(CodeColorsConfiguration configuration) {
+    private Set<Resource> getDependencies(CcConfiguration configuration) {
         if (mConfigurationDependencies == null) {
             mConfigurationDependencies = new TreeMap<>();
         }
@@ -86,12 +86,12 @@ public class Resource implements Serializable {
         return mConfigurationDependents != null;
     }
 
-    private void addDependent(CodeColorsConfiguration configuration, Resource dependent) {
+    private void addDependent(CcConfiguration configuration, Resource dependent) {
         Set<Resource> dependents = getDependents(configuration);
         dependents.add(dependent);
     }
 
-    private Set<Resource> getDependents(CodeColorsConfiguration configuration) {
+    private Set<Resource> getDependents(CcConfiguration configuration) {
         if (mConfigurationDependents == null) {
             mConfigurationDependents = new TreeMap<>();
         }

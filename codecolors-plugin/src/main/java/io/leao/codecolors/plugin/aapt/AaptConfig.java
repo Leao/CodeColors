@@ -1,6 +1,7 @@
 package io.leao.codecolors.plugin.aapt;
 
-import io.leao.codecolors.plugin.res.CodeColorsConfiguration;
+
+import io.leao.codecolors.plugin.res.CcConfiguration;
 
 /**
  * Based on AaptConfig.cpp.
@@ -8,10 +9,10 @@ import io.leao.codecolors.plugin.res.CodeColorsConfiguration;
 public class AaptConfig {
     private static final String kWildcardName = "any";
 
-    public static CodeColorsConfiguration parse(String str) {
+    public static CcConfiguration parse(String str) {
         String[] parts = AaptUtil.splitAndLowerCase(str, "-");
 
-        CodeColorsConfiguration config = new CodeColorsConfiguration();
+        CcConfiguration config = new CcConfiguration();
         AaptLocaleValue locale = new AaptLocaleValue();
         int index = 0;
         int N = parts.length;
@@ -199,7 +200,7 @@ public class AaptConfig {
         return null;
     }
 
-    private static boolean parseMcc(String name, CodeColorsConfiguration out) {
+    private static boolean parseMcc(String name, CcConfiguration out) {
         if (kWildcardName.equals(name)) {
             out.mcc = 0;
             return true;
@@ -225,7 +226,7 @@ public class AaptConfig {
         return false;
     }
 
-    private static boolean parseMnc(String name, CodeColorsConfiguration out) {
+    private static boolean parseMnc(String name, CcConfiguration out) {
         if (name.equals(kWildcardName)) {
             out.mnc = 0;
             return true;
@@ -243,206 +244,206 @@ public class AaptConfig {
         if (code.length() <= 3 && code.matches("[0-9]+")) {
             out.mnc = Integer.valueOf(code);
             if (out.mnc == 0) {
-                out.mnc = CodeColorsConfiguration.MNC_ZERO;
+                out.mnc = CcConfiguration.MNC_ZERO;
             }
         }
 
         return false;
     }
 
-    private static boolean parseLayoutDirection(String name, CodeColorsConfiguration out) {
+    private static boolean parseLayoutDirection(String name, CcConfiguration out) {
         if (kWildcardName.equals(name)) {
-            out.screenLayout = (out.screenLayout & ~CodeColorsConfiguration.SCREENLAYOUT_LAYOUTDIR_MASK)
-                    | CodeColorsConfiguration.SCREENLAYOUT_LAYOUTDIR_UNDEFINED;
+            out.screenLayout = (out.screenLayout & ~CcConfiguration.SCREENLAYOUT_LAYOUTDIR_MASK)
+                    | CcConfiguration.SCREENLAYOUT_LAYOUTDIR_UNDEFINED;
             return true;
         } else if ("ldltr".equals(name)) {
-            out.screenLayout = (out.screenLayout & ~CodeColorsConfiguration.SCREENLAYOUT_LAYOUTDIR_MASK)
-                    | CodeColorsConfiguration.SCREENLAYOUT_LAYOUTDIR_LTR;
+            out.screenLayout = (out.screenLayout & ~CcConfiguration.SCREENLAYOUT_LAYOUTDIR_MASK)
+                    | CcConfiguration.SCREENLAYOUT_LAYOUTDIR_LTR;
             return true;
         } else if ("ldrtl".equals(name)) {
-            out.screenLayout = (out.screenLayout & ~CodeColorsConfiguration.SCREENLAYOUT_LAYOUTDIR_MASK)
-                    | CodeColorsConfiguration.SCREENLAYOUT_LAYOUTDIR_RTL;
+            out.screenLayout = (out.screenLayout & ~CcConfiguration.SCREENLAYOUT_LAYOUTDIR_MASK)
+                    | CcConfiguration.SCREENLAYOUT_LAYOUTDIR_RTL;
             return true;
         }
 
         return false;
     }
 
-    private static boolean parseScreenLayoutSize(String name, CodeColorsConfiguration out) {
+    private static boolean parseScreenLayoutSize(String name, CcConfiguration out) {
         if (kWildcardName.equals(name)) {
-            out.screenLayout = (out.screenLayout & ~CodeColorsConfiguration.SCREENLAYOUT_SIZE_MASK)
-                    | CodeColorsConfiguration.SCREENLAYOUT_SIZE_UNDEFINED;
+            out.screenLayout = (out.screenLayout & ~CcConfiguration.SCREENLAYOUT_SIZE_MASK)
+                    | CcConfiguration.SCREENLAYOUT_SIZE_UNDEFINED;
             return true;
         } else if ("small".equals(name)) {
-            out.screenLayout = (out.screenLayout & ~CodeColorsConfiguration.SCREENLAYOUT_SIZE_MASK)
-                    | CodeColorsConfiguration.SCREENLAYOUT_SIZE_SMALL;
+            out.screenLayout = (out.screenLayout & ~CcConfiguration.SCREENLAYOUT_SIZE_MASK)
+                    | CcConfiguration.SCREENLAYOUT_SIZE_SMALL;
             return true;
         } else if ("normal".equals(name)) {
-            out.screenLayout = (out.screenLayout & ~CodeColorsConfiguration.SCREENLAYOUT_SIZE_MASK)
-                    | CodeColorsConfiguration.SCREENLAYOUT_SIZE_NORMAL;
+            out.screenLayout = (out.screenLayout & ~CcConfiguration.SCREENLAYOUT_SIZE_MASK)
+                    | CcConfiguration.SCREENLAYOUT_SIZE_NORMAL;
             return true;
         } else if ("large".equals(name)) {
-            out.screenLayout = (out.screenLayout & ~CodeColorsConfiguration.SCREENLAYOUT_SIZE_MASK)
-                    | CodeColorsConfiguration.SCREENLAYOUT_SIZE_LARGE;
+            out.screenLayout = (out.screenLayout & ~CcConfiguration.SCREENLAYOUT_SIZE_MASK)
+                    | CcConfiguration.SCREENLAYOUT_SIZE_LARGE;
             return true;
         } else if ("xlarge".equals(name)) {
-            out.screenLayout = (out.screenLayout & ~CodeColorsConfiguration.SCREENLAYOUT_SIZE_MASK)
-                    | CodeColorsConfiguration.SCREENLAYOUT_SIZE_XLARGE;
+            out.screenLayout = (out.screenLayout & ~CcConfiguration.SCREENLAYOUT_SIZE_MASK)
+                    | CcConfiguration.SCREENLAYOUT_SIZE_XLARGE;
             return true;
         }
 
         return false;
     }
 
-    private static boolean parseScreenLayoutLong(String name, CodeColorsConfiguration out) {
+    private static boolean parseScreenLayoutLong(String name, CcConfiguration out) {
         if (kWildcardName.equals(name)) {
-            out.screenLayout = (out.screenLayout & ~CodeColorsConfiguration.SCREENLAYOUT_LONG_MASK)
-                    | CodeColorsConfiguration.SCREENLAYOUT_LONG_UNDEFINED;
+            out.screenLayout = (out.screenLayout & ~CcConfiguration.SCREENLAYOUT_LONG_MASK)
+                    | CcConfiguration.SCREENLAYOUT_LONG_UNDEFINED;
             return true;
         } else if ("long".equals(name)) {
-            out.screenLayout = (out.screenLayout & ~CodeColorsConfiguration.SCREENLAYOUT_LONG_MASK)
-                    | CodeColorsConfiguration.SCREENLAYOUT_LONG_YES;
+            out.screenLayout = (out.screenLayout & ~CcConfiguration.SCREENLAYOUT_LONG_MASK)
+                    | CcConfiguration.SCREENLAYOUT_LONG_YES;
             return true;
         } else if ("notlong".equals(name)) {
-            out.screenLayout = (out.screenLayout & ~CodeColorsConfiguration.SCREENLAYOUT_LONG_MASK)
-                    | CodeColorsConfiguration.SCREENLAYOUT_LONG_NO;
+            out.screenLayout = (out.screenLayout & ~CcConfiguration.SCREENLAYOUT_LONG_MASK)
+                    | CcConfiguration.SCREENLAYOUT_LONG_NO;
             return true;
         }
 
         return false;
     }
 
-    private static boolean parseScreenRound(String name, CodeColorsConfiguration out) {
+    private static boolean parseScreenRound(String name, CcConfiguration out) {
         if (kWildcardName.equals(name)) {
-            out.screenLayout = (out.screenLayout & ~CodeColorsConfiguration.SCREENLAYOUT_ROUND_MASK)
-                    | CodeColorsConfiguration.SCREENLAYOUT_ROUND_UNDEFINED;
+            out.screenLayout = (out.screenLayout & ~CcConfiguration.SCREENLAYOUT_ROUND_MASK)
+                    | CcConfiguration.SCREENLAYOUT_ROUND_UNDEFINED;
             return true;
         } else if ("round".equals(name)) {
-            out.screenLayout = (out.screenLayout & ~CodeColorsConfiguration.SCREENLAYOUT_ROUND_MASK)
-                    | CodeColorsConfiguration.SCREENLAYOUT_ROUND_YES;
+            out.screenLayout = (out.screenLayout & ~CcConfiguration.SCREENLAYOUT_ROUND_MASK)
+                    | CcConfiguration.SCREENLAYOUT_ROUND_YES;
             return true;
         } else if ("notround".equals(name)) {
-            out.screenLayout = (out.screenLayout & ~CodeColorsConfiguration.SCREENLAYOUT_ROUND_MASK)
-                    | CodeColorsConfiguration.SCREENLAYOUT_ROUND_NO;
+            out.screenLayout = (out.screenLayout & ~CcConfiguration.SCREENLAYOUT_ROUND_MASK)
+                    | CcConfiguration.SCREENLAYOUT_ROUND_NO;
             return true;
         }
 
         return false;
     }
 
-    private static boolean parseOrientation(String name, CodeColorsConfiguration out) {
+    private static boolean parseOrientation(String name, CcConfiguration out) {
         if (kWildcardName.equals(name)) {
-            out.orientation = CodeColorsConfiguration.ORIENTATION_UNDEFINED;
+            out.orientation = CcConfiguration.ORIENTATION_UNDEFINED;
             return true;
         } else if ("port".equals(name)) {
-            out.orientation = CodeColorsConfiguration.ORIENTATION_PORTRAIT;
+            out.orientation = CcConfiguration.ORIENTATION_PORTRAIT;
             return true;
         } else if ("land".equals(name)) {
-            out.orientation = CodeColorsConfiguration.ORIENTATION_LANDSCAPE;
+            out.orientation = CcConfiguration.ORIENTATION_LANDSCAPE;
             return true;
         } else if ("square".equals(name)) {
-            out.orientation = CodeColorsConfiguration.ORIENTATION_SQUARE;
+            out.orientation = CcConfiguration.ORIENTATION_SQUARE;
             return true;
         }
 
         return false;
     }
 
-    private static boolean parseUiModeType(String name, CodeColorsConfiguration out) {
+    private static boolean parseUiModeType(String name, CcConfiguration out) {
         if (kWildcardName.equals(name)) {
-            out.uiMode = (out.uiMode & ~CodeColorsConfiguration.UI_MODE_TYPE_MASK) |
-                    CodeColorsConfiguration.UI_MODE_TYPE_UNDEFINED;
+            out.uiMode = (out.uiMode & ~CcConfiguration.UI_MODE_TYPE_MASK) |
+                    CcConfiguration.UI_MODE_TYPE_UNDEFINED;
             return true;
         } else if ("desk".equals(name)) {
-            out.uiMode = (out.uiMode & ~CodeColorsConfiguration.UI_MODE_TYPE_MASK) |
-                    CodeColorsConfiguration.UI_MODE_TYPE_DESK;
+            out.uiMode = (out.uiMode & ~CcConfiguration.UI_MODE_TYPE_MASK) |
+                    CcConfiguration.UI_MODE_TYPE_DESK;
             return true;
         } else if ("car".equals(name)) {
-            out.uiMode = (out.uiMode & ~CodeColorsConfiguration.UI_MODE_TYPE_MASK) |
-                    CodeColorsConfiguration.UI_MODE_TYPE_CAR;
+            out.uiMode = (out.uiMode & ~CcConfiguration.UI_MODE_TYPE_MASK) |
+                    CcConfiguration.UI_MODE_TYPE_CAR;
             return true;
         } else if ("television".equals(name)) {
-            out.uiMode = (out.uiMode & ~CodeColorsConfiguration.UI_MODE_TYPE_MASK) |
-                    CodeColorsConfiguration.UI_MODE_TYPE_TELEVISION;
+            out.uiMode = (out.uiMode & ~CcConfiguration.UI_MODE_TYPE_MASK) |
+                    CcConfiguration.UI_MODE_TYPE_TELEVISION;
             return true;
         } else if ("appliance".equals(name)) {
-            out.uiMode = (out.uiMode & ~CodeColorsConfiguration.UI_MODE_TYPE_MASK) |
-                    CodeColorsConfiguration.UI_MODE_TYPE_APPLIANCE;
+            out.uiMode = (out.uiMode & ~CcConfiguration.UI_MODE_TYPE_MASK) |
+                    CcConfiguration.UI_MODE_TYPE_APPLIANCE;
             return true;
         } else if ("watch".equals(name)) {
-            out.uiMode = (out.uiMode & ~CodeColorsConfiguration.UI_MODE_TYPE_MASK) |
-                    CodeColorsConfiguration.UI_MODE_TYPE_WATCH;
+            out.uiMode = (out.uiMode & ~CcConfiguration.UI_MODE_TYPE_MASK) |
+                    CcConfiguration.UI_MODE_TYPE_WATCH;
             return true;
         }
 
         return false;
     }
 
-    private static boolean parseUiModeNight(String name, CodeColorsConfiguration out) {
+    private static boolean parseUiModeNight(String name, CcConfiguration out) {
         if (kWildcardName.equals(name)) {
-            out.uiMode = (out.uiMode & ~CodeColorsConfiguration.UI_MODE_NIGHT_MASK) |
-                    CodeColorsConfiguration.UI_MODE_NIGHT_UNDEFINED;
+            out.uiMode = (out.uiMode & ~CcConfiguration.UI_MODE_NIGHT_MASK) |
+                    CcConfiguration.UI_MODE_NIGHT_UNDEFINED;
             return true;
         } else if ("night".equals(name)) {
-            out.uiMode = (out.uiMode & ~CodeColorsConfiguration.UI_MODE_NIGHT_MASK) |
-                    CodeColorsConfiguration.UI_MODE_NIGHT_YES;
+            out.uiMode = (out.uiMode & ~CcConfiguration.UI_MODE_NIGHT_MASK) |
+                    CcConfiguration.UI_MODE_NIGHT_YES;
             return true;
         } else if ("notnight".equals(name)) {
-            out.uiMode = (out.uiMode & ~CodeColorsConfiguration.UI_MODE_NIGHT_MASK) |
-                    CodeColorsConfiguration.UI_MODE_NIGHT_NO;
+            out.uiMode = (out.uiMode & ~CcConfiguration.UI_MODE_NIGHT_MASK) |
+                    CcConfiguration.UI_MODE_NIGHT_NO;
             return true;
         }
 
         return false;
     }
 
-    private static boolean parseDensity(String name, CodeColorsConfiguration out) {
+    private static boolean parseDensity(String name, CcConfiguration out) {
         if (kWildcardName.equals(name)) {
-            out.densityDpi = CodeColorsConfiguration.DENSITY_DPI_UNDEFINED;
+            out.densityDpi = CcConfiguration.DENSITY_DPI_UNDEFINED;
             return true;
         }
 
         if ("anydpi".equals(name)) {
-            out.densityDpi = CodeColorsConfiguration.DENSITY_DPI_ANY;
+            out.densityDpi = CcConfiguration.DENSITY_DPI_ANY;
             return true;
         }
 
         if ("nodpi".equals(name)) {
-            out.densityDpi = CodeColorsConfiguration.DENSITY_DPI_NONE;
+            out.densityDpi = CcConfiguration.DENSITY_DPI_NONE;
             return true;
         }
 
         if ("ldpi".equals(name)) {
-            out.densityDpi = CodeColorsConfiguration.DENSITY_DPI_LOW;
+            out.densityDpi = CcConfiguration.DENSITY_DPI_LOW;
             return true;
         }
 
         if ("mdpi".equals(name)) {
-            out.densityDpi = CodeColorsConfiguration.DENSITY_DPI_MEDIUM;
+            out.densityDpi = CcConfiguration.DENSITY_DPI_MEDIUM;
             return true;
         }
 
         if ("tvdpi".equals(name)) {
-            out.densityDpi = CodeColorsConfiguration.DENSITY_DPI_TV;
+            out.densityDpi = CcConfiguration.DENSITY_DPI_TV;
             return true;
         }
 
         if ("hdpi".equals(name)) {
-            out.densityDpi = CodeColorsConfiguration.DENSITY_DPI_HIGH;
+            out.densityDpi = CcConfiguration.DENSITY_DPI_HIGH;
             return true;
         }
         if ("xhdpi".equals(name)) {
-            out.densityDpi = CodeColorsConfiguration.DENSITY_DPI_XHIGH;
+            out.densityDpi = CcConfiguration.DENSITY_DPI_XHIGH;
             return true;
         }
 
         if ("xxhdpi".equals(name)) {
-            out.densityDpi = CodeColorsConfiguration.DENSITY_DPI_XXHIGH;
+            out.densityDpi = CcConfiguration.DENSITY_DPI_XXHIGH;
             return true;
         }
 
         if ("xxxhdpi".equals(name)) {
-            out.densityDpi = CodeColorsConfiguration.DENSITY_DPI_XXXHIGH;
+            out.densityDpi = CcConfiguration.DENSITY_DPI_XXXHIGH;
             return true;
         }
 
@@ -466,90 +467,90 @@ public class AaptConfig {
         return false;
     }
 
-    private static boolean parseTouchscreen(String name, CodeColorsConfiguration out) {
+    private static boolean parseTouchscreen(String name, CcConfiguration out) {
         if (kWildcardName.equals(name)) {
-            out.touchscreen = CodeColorsConfiguration.TOUCHSCREEN_UNDEFINED;
+            out.touchscreen = CcConfiguration.TOUCHSCREEN_UNDEFINED;
             return true;
         } else if ("notouch".equals(name)) {
-            out.touchscreen = CodeColorsConfiguration.TOUCHSCREEN_NOTOUCH;
+            out.touchscreen = CcConfiguration.TOUCHSCREEN_NOTOUCH;
             return true;
         } else if ("stylus".equals(name)) {
-            out.touchscreen = CodeColorsConfiguration.TOUCHSCREEN_STYLUS;
+            out.touchscreen = CcConfiguration.TOUCHSCREEN_STYLUS;
             return true;
         } else if ("finger".equals(name)) {
-            out.touchscreen = CodeColorsConfiguration.TOUCHSCREEN_FINGER;
+            out.touchscreen = CcConfiguration.TOUCHSCREEN_FINGER;
             return true;
         }
 
         return false;
     }
 
-    private static boolean parseKeysHidden(String name, CodeColorsConfiguration out) {
+    private static boolean parseKeysHidden(String name, CcConfiguration out) {
         if (kWildcardName.equals(name)) {
-            out.keyboardHidden = CodeColorsConfiguration.KEYBOARDHIDDEN_UNDEFINED;
+            out.keyboardHidden = CcConfiguration.KEYBOARDHIDDEN_UNDEFINED;
             return true;
         } else if ("keysexposed".equals(name)) {
-            out.keyboardHidden = CodeColorsConfiguration.KEYBOARDHIDDEN_NO;
+            out.keyboardHidden = CcConfiguration.KEYBOARDHIDDEN_NO;
             return true;
         } else if ("keyshidden".equals(name)) {
-            out.keyboardHidden = CodeColorsConfiguration.KEYBOARDHIDDEN_YES;
+            out.keyboardHidden = CcConfiguration.KEYBOARDHIDDEN_YES;
             return true;
         } else if ("keyssoft".equals(name)) {
-            out.keyboardHidden = CodeColorsConfiguration.KEYBOARDHIDDEN_SOFT;
+            out.keyboardHidden = CcConfiguration.KEYBOARDHIDDEN_SOFT;
             return true;
         }
 
         return false;
     }
 
-    private static boolean parseKeyboard(String name, CodeColorsConfiguration out) {
+    private static boolean parseKeyboard(String name, CcConfiguration out) {
         if (kWildcardName.equals(name)) {
-            out.keyboard = CodeColorsConfiguration.KEYBOARD_UNDEFINED;
+            out.keyboard = CcConfiguration.KEYBOARD_UNDEFINED;
             return true;
         } else if ("nokeys".equals(name)) {
-            out.keyboard = CodeColorsConfiguration.KEYBOARD_NOKEYS;
+            out.keyboard = CcConfiguration.KEYBOARD_NOKEYS;
             return true;
         } else if ("qwerty".equals(name)) {
-            out.keyboard = CodeColorsConfiguration.KEYBOARD_QWERTY;
+            out.keyboard = CcConfiguration.KEYBOARD_QWERTY;
             return true;
         } else if ("12key".equals(name)) {
-            out.keyboard = CodeColorsConfiguration.KEYBOARD_12KEY;
+            out.keyboard = CcConfiguration.KEYBOARD_12KEY;
             return true;
         }
 
         return false;
     }
 
-    private static boolean parseNavHidden(String name, CodeColorsConfiguration out) {
+    private static boolean parseNavHidden(String name, CcConfiguration out) {
         if (kWildcardName.equals(name)) {
-            out.navigationHidden = CodeColorsConfiguration.NAVIGATIONHIDDEN_UNDEFINED;
+            out.navigationHidden = CcConfiguration.NAVIGATIONHIDDEN_UNDEFINED;
             return true;
         } else if ("navexposed".equals(name)) {
-            out.navigationHidden = CodeColorsConfiguration.NAVIGATIONHIDDEN_NO;
+            out.navigationHidden = CcConfiguration.NAVIGATIONHIDDEN_NO;
             return true;
         } else if ("navhidden".equals(name)) {
-            out.navigationHidden = CodeColorsConfiguration.NAVIGATIONHIDDEN_YES;
+            out.navigationHidden = CcConfiguration.NAVIGATIONHIDDEN_YES;
             return true;
         }
 
         return false;
     }
 
-    private static boolean parseNavigation(String name, CodeColorsConfiguration out) {
+    private static boolean parseNavigation(String name, CcConfiguration out) {
         if (kWildcardName.equals(name)) {
-            out.navigation = CodeColorsConfiguration.NAVIGATION_UNDEFINED;
+            out.navigation = CcConfiguration.NAVIGATION_UNDEFINED;
             return true;
         } else if ("nonav".equals(name)) {
-            out.navigation = CodeColorsConfiguration.NAVIGATION_NONAV;
+            out.navigation = CcConfiguration.NAVIGATION_NONAV;
             return true;
         } else if ("dpad".equals(name)) {
-            out.navigation = CodeColorsConfiguration.NAVIGATION_DPAD;
+            out.navigation = CcConfiguration.NAVIGATION_DPAD;
             return true;
         } else if ("trackball".equals(name)) {
-            out.navigation = CodeColorsConfiguration.NAVIGATION_TRACKBALL;
+            out.navigation = CcConfiguration.NAVIGATION_TRACKBALL;
             return true;
         } else if ("wheel".equals(name)) {
-            out.navigation = CodeColorsConfiguration.NAVIGATION_WHEEL;
+            out.navigation = CcConfiguration.NAVIGATION_WHEEL;
             return true;
         }
 
@@ -557,12 +558,12 @@ public class AaptConfig {
     }
 
     /**
-     * Probably deprecated. CodeColorsConfiguration doesn't hold absolute screen size.
+     * Probably deprecated. CcConfiguration doesn't hold absolute screen size.
      */
-    private static boolean parseScreenSize(String name, CodeColorsConfiguration out) {
+    private static boolean parseScreenSize(String name, CcConfiguration out) {
         if (kWildcardName.equals(name)) {
-            out.screenWidthDp = CodeColorsConfiguration.SCREEN_WIDTH_DP_UNDEFINED;
-            out.screenHeightDp = CodeColorsConfiguration.SCREEN_HEIGHT_DP_UNDEFINED;
+            out.screenWidthDp = CcConfiguration.SCREEN_WIDTH_DP_UNDEFINED;
+            out.screenHeightDp = CcConfiguration.SCREEN_HEIGHT_DP_UNDEFINED;
             return true;
         }
 
@@ -592,9 +593,9 @@ public class AaptConfig {
         return false;
     }
 
-    private static boolean parseSmallestScreenWidthDp(String name, CodeColorsConfiguration out) {
+    private static boolean parseSmallestScreenWidthDp(String name, CcConfiguration out) {
         if (kWildcardName.equals(name)) {
-            out.smallestScreenWidthDp = CodeColorsConfiguration.SMALLEST_SCREEN_WIDTH_DP_UNDEFINED;
+            out.smallestScreenWidthDp = CcConfiguration.SMALLEST_SCREEN_WIDTH_DP_UNDEFINED;
             return true;
         }
 
@@ -616,9 +617,9 @@ public class AaptConfig {
         return false;
     }
 
-    private static boolean parseScreenWidthDp(String name, CodeColorsConfiguration out) {
+    private static boolean parseScreenWidthDp(String name, CcConfiguration out) {
         if (kWildcardName.equals(name)) {
-            out.screenWidthDp = CodeColorsConfiguration.SCREEN_WIDTH_DP_UNDEFINED;
+            out.screenWidthDp = CcConfiguration.SCREEN_WIDTH_DP_UNDEFINED;
             return true;
         }
 
@@ -640,9 +641,9 @@ public class AaptConfig {
         return false;
     }
 
-    private static boolean parseScreenHeightDp(String name, CodeColorsConfiguration out) {
+    private static boolean parseScreenHeightDp(String name, CcConfiguration out) {
         if (kWildcardName.equals(name)) {
-            out.screenHeightDp = CodeColorsConfiguration.SCREEN_HEIGHT_DP_UNDEFINED;
+            out.screenHeightDp = CcConfiguration.SCREEN_HEIGHT_DP_UNDEFINED;
             return true;
         }
 
@@ -664,9 +665,9 @@ public class AaptConfig {
         return false;
     }
 
-    private static boolean parseVersion(String name, CodeColorsConfiguration out) {
+    private static boolean parseVersion(String name, CcConfiguration out) {
         if (kWildcardName.equals(name)) {
-            out.sdkVersion = CodeColorsConfiguration.SDK_VERSION_UNDEFINED;
+            out.sdkVersion = CcConfiguration.SDK_VERSION_UNDEFINED;
             return true;
         }
 

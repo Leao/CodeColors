@@ -22,11 +22,11 @@ import java.util.TreeSet;
 
 import javax.lang.model.element.Modifier;
 
-import io.leao.codecolors.plugin.CodeColorsConst;
-import io.leao.codecolors.plugin.res.CodeColorsConfiguration;
+import io.leao.codecolors.plugin.CcConst;
+import io.leao.codecolors.plugin.res.CcConfiguration;
 import io.leao.codecolors.plugin.res.Resource;
 
-public class CodeColorsDependenciesGenerator {
+public class CcDependenciesGenerator {
     private static final String RESOURCE_ID_BASE = ".%s.%s";
     private static final String ANDROID_RESOURCE_ID_PUBLIC_BASE = "android.R.%s.%s";
     private static final String ANDROID_RESOURCE_ID_PRIVATE_BASE = "android_R_%s_%s";
@@ -37,11 +37,11 @@ public class CodeColorsDependenciesGenerator {
          * Setup resources and collect all different configurations.
          */
 
-        Set<CodeColorsConfiguration> configurations = new TreeSet<>();
+        Set<CcConfiguration> configurations = new TreeSet<>();
 
         List<FieldSpec> privateResourcesFields = new ArrayList<>();
 
-        Map<Resource, Map<CodeColorsConfiguration, Integer>> resourceConfigurationDependenciesIndexes =
+        Map<Resource, Map<CcConfiguration, Integer>> resourceConfigurationDependenciesIndexes =
                 new HashMap<>(resources.size());
 
         List<FieldSpec> resourceDependenciesFields = new ArrayList<>();
@@ -63,10 +63,10 @@ public class CodeColorsDependenciesGenerator {
                 continue;
             }
 
-            Map<CodeColorsConfiguration, Set<Resource>> configurationDependencies =
+            Map<CcConfiguration, Set<Resource>> configurationDependencies =
                     resource.getConfigurationDependencies();
 
-            Map<CodeColorsConfiguration, Integer> configurationDependenciesIndexes =
+            Map<CcConfiguration, Integer> configurationDependenciesIndexes =
                     new HashMap<>(configurationDependencies.keySet().size());
             resourceConfigurationDependenciesIndexes.put(resource, configurationDependenciesIndexes);
 
@@ -75,10 +75,10 @@ public class CodeColorsDependenciesGenerator {
                     .indent();
 
             int configurationDependenciesIndex = 0;
-            Iterator<CodeColorsConfiguration> configurationDependenciesIterator =
+            Iterator<CcConfiguration> configurationDependenciesIterator =
                     configurationDependencies.keySet().iterator();
             while (configurationDependenciesIterator.hasNext()) {
-                CodeColorsConfiguration configuration = configurationDependenciesIterator.next();
+                CcConfiguration configuration = configurationDependenciesIterator.next();
 
                 // Collect configurations.
                 configurations.add(configuration);
@@ -124,12 +124,12 @@ public class CodeColorsDependenciesGenerator {
          */
 
         CodeBlock.Builder configurationsInitializer = CodeBlock.builder()
-                .add("new $T[]{\n", CodeColorsConfiguration.class)
+                .add("new $T[]{\n", CcConfiguration.class)
                 .indent();
 
-        Iterator<CodeColorsConfiguration> configurationsIterator = configurations.iterator();
+        Iterator<CcConfiguration> configurationsIterator = configurations.iterator();
         while (configurationsIterator.hasNext()) {
-            CodeColorsConfiguration configuration = configurationsIterator.next();
+            CcConfiguration configuration = configurationsIterator.next();
 
             // Put configuration resource dependencies code block.
             CodeBlock.Builder putConfigurationResourceDependenciesBuilder = CodeBlock.builder();
@@ -147,7 +147,7 @@ public class CodeColorsDependenciesGenerator {
 
             CodeBlock configurationBlock = CodeBlock.builder()
                     .add("new $T($L, $Lf, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L)",
-                            CodeColorsConfiguration.class, configuration.sdkVersion, configuration.fontScale,
+                            CcConfiguration.class, configuration.sdkVersion, configuration.fontScale,
                             configuration.mcc, configuration.mnc, localeLanguage, localeCountry, localeVariant,
                             configuration.userSetLocale, configuration.touchscreen, configuration.keyboard,
                             configuration.keyboardHidden, configuration.hardKeyboardHidden, configuration.navigation,
@@ -165,7 +165,7 @@ public class CodeColorsDependenciesGenerator {
             }
         }
 
-        FieldSpec configurationsField = FieldSpec.builder(CodeColorsConfiguration[].class, "sConfigurations")
+        FieldSpec configurationsField = FieldSpec.builder(CcConfiguration[].class, "sConfigurations")
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
                 .initializer(configurationsInitializer.unindent().add("}").build())
                 .build();
@@ -180,10 +180,10 @@ public class CodeColorsDependenciesGenerator {
                 ClassName.get(Object.class),
                 ParameterizedTypeName.get(Set.class, Object.class));
 
-        // HashMap<CodeColorsConfiguration, HashMap<Integer, Set<Integer>>>.
+        // HashMap<CcConfiguration, HashMap<Integer, Set<Integer>>>.
         ParameterizedTypeName configurationResourceDependenciesType = ParameterizedTypeName.get(
                 ClassName.get(HashMap.class),
-                ClassName.get(CodeColorsConfiguration.class),
+                ClassName.get(CcConfiguration.class),
                 resourceDependenciesType);
 
         // Put configuration resource dependencies code block.
@@ -191,7 +191,7 @@ public class CodeColorsDependenciesGenerator {
         putConfigurationResourceDependenciesBuilder.indent();
 
         int configurationIndex = 0;
-        for (CodeColorsConfiguration configuration : configurations) {
+        for (CcConfiguration configuration : configurations) {
 
             CodeBlock.Builder putResourceDependenciesBuilder = CodeBlock.builder().indent();
 
@@ -200,7 +200,8 @@ public class CodeColorsDependenciesGenerator {
                     continue;
                 }
 
-                Map<CodeColorsConfiguration, Set<Resource>> configurationDependencies = resource.getConfigurationDependencies();
+                Map<CcConfiguration, Set<Resource>> configurationDependencies =
+                        resource.getConfigurationDependencies();
 
                 int configurationDependenciesIndex;
                 if (configurationDependencies.containsKey(configuration)) {
@@ -233,14 +234,14 @@ public class CodeColorsDependenciesGenerator {
         putConfigurationResourceDependenciesBuilder.unindent();
 
         FieldSpec dependenciesField =
-                FieldSpec.builder(configurationResourceDependenciesType, CodeColorsConst.DEPENDENCIES_FIELD_NAME)
+                FieldSpec.builder(configurationResourceDependenciesType, CcConst.DEPENDENCIES_FIELD_NAME)
                         .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
                         .initializer("new $T() {{\n$L}}", configurationResourceDependenciesType,
                                 putConfigurationResourceDependenciesBuilder.build())
                         .build();
 
 
-        TypeSpec.Builder codeColorResourcesClass = TypeSpec.classBuilder(CodeColorsConst.DEPENDENCIES_CLASS_NAME)
+        TypeSpec.Builder codeColorResourcesClass = TypeSpec.classBuilder(CcConst.DEPENDENCIES_CLASS_NAME)
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .addFields(privateResourcesFields)
                 .addField(configurationsField)

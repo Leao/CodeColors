@@ -11,10 +11,10 @@ import android.view.View;
 import android.widget.Button;
 
 import io.leao.codecolors.CodeColors;
-import io.leao.codecolors.app.CodeColorsAppCompatActivity;
+import io.leao.codecolors.app.CcAppCompatActivity;
 import io.leao.codecolors.sample.R;
 
-public class MainActivity extends CodeColorsAppCompatActivity {
+public class MainActivity extends CcAppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

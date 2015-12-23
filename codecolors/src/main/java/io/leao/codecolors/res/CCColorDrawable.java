@@ -16,9 +16,9 @@ import android.support.annotation.NonNull;
 
 /**
  * Inspired in {@link android.graphics.drawable.ColorDrawable}, but instead of making use of a {@code int} color, it
- * makes use of a {@link CodeColorStateList}.
+ * makes use of a {@link CcColorStateList}.
  */
-public class CodeColorDrawable extends Drawable implements CodeColorStateList.Callback {
+public class CcColorDrawable extends Drawable implements CcColorStateList.Callback {
     private static final int COLOR_DEFAULT = Color.BLUE;
     private static final int ALPHA_OPAQUE = 255;
 
@@ -38,7 +38,7 @@ public class CodeColorDrawable extends Drawable implements CodeColorStateList.Ca
      *
      * @param color The color to draw.
      */
-    public CodeColorDrawable(CodeColorStateList color) {
+    public CcColorDrawable(CcColorStateList color) {
         mCodeColorState = new CodeColorState(color);
         updateLocalState();
     }
@@ -78,7 +78,7 @@ public class CodeColorDrawable extends Drawable implements CodeColorStateList.Ca
      *
      * @return int The color to draw.
      */
-    public CodeColorStateList getColor() {
+    public CcColorStateList getColor() {
         return mCodeColorState.mColor;
     }
 
@@ -89,7 +89,7 @@ public class CodeColorDrawable extends Drawable implements CodeColorStateList.Ca
      *
      * @param color The color to draw.
      */
-    public void setColor(CodeColorStateList color) {
+    public void setColor(CcColorStateList color) {
         if (mCodeColorState.mColor != color) {
             if (mCodeColorState.mColor != null) {
                 mCodeColorState.mColor.removeCallback(this);
@@ -105,7 +105,7 @@ public class CodeColorDrawable extends Drawable implements CodeColorStateList.Ca
     }
 
     @Override
-    public void invalidateColor(CodeColorStateList color) {
+    public void invalidateColor(CcColorStateList color) {
         if (updateUseColor(color, getState(), mCodeColorState.mAlpha)) {
             invalidateSelf();
         }
@@ -216,19 +216,19 @@ public class CodeColorDrawable extends Drawable implements CodeColorStateList.Ca
         return mCodeColorState;
     }
 
-    public static CodeColorState getConstantStateForColor(CodeColorStateList color) {
+    public static CodeColorState getConstantStateForColor(CcColorStateList color) {
         return new CodeColorState(color);
     }
 
     protected static class CodeColorState extends ConstantState {
         int[] mThemeAttrs;
-        CodeColorStateList mColor;
+        CcColorStateList mColor;
         int mAlpha = ALPHA_OPAQUE;
         int mChangingConfigurations;
         ColorStateList mTint = null;
         PorterDuff.Mode mTintMode = DEFAULT_TINT_MODE;
 
-        CodeColorState(CodeColorStateList color) {
+        CodeColorState(CcColorStateList color) {
             mColor = color;
         }
 
@@ -243,12 +243,12 @@ public class CodeColorDrawable extends Drawable implements CodeColorStateList.Ca
 
         @Override
         public Drawable newDrawable() {
-            return new CodeColorDrawable(this, null);
+            return new CcColorDrawable(this, null);
         }
 
         @Override
         public Drawable newDrawable(Resources res) {
-            return new CodeColorDrawable(this, res);
+            return new CcColorDrawable(this, res);
         }
 
         @Override
@@ -257,7 +257,7 @@ public class CodeColorDrawable extends Drawable implements CodeColorStateList.Ca
         }
     }
 
-    private CodeColorDrawable(CodeColorState state, Resources res) {
+    private CcColorDrawable(CodeColorState state, Resources res) {
         mCodeColorState = state;
         updateLocalState();
     }
@@ -280,7 +280,7 @@ public class CodeColorDrawable extends Drawable implements CodeColorStateList.Ca
      *
      * @return {@code true} if use color changed; false, otherwise.
      */
-    protected boolean updateUseColor(CodeColorStateList color, int[] stateSet, int alpha) {
+    protected boolean updateUseColor(CcColorStateList color, int[] stateSet, int alpha) {
         // Color.
         int baseColor = color != null ?
                 color.getColorForState(stateSet, color.getDefaultColor()) :
