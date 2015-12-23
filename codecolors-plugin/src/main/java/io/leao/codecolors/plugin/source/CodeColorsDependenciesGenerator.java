@@ -18,20 +18,113 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.lang.model.element.Modifier;
 
 import io.leao.codecolors.plugin.res.CodeColorsConfiguration;
 import io.leao.codecolors.plugin.res.Resource;
 
-public class SourceGeneratorHandler {
-    public static void generateSource(Set<CodeColorsConfiguration> configurations, Set<Resource> resources,
-                                      String packageName, String applicationId, File outputDir) {
+public class CodeColorsDependenciesGenerator {
+    private static final String SOURCE_CLASS_NAME = "CodeColorsDependencies";
+
+    private static final String RESOURCE_ID_BASE = ".%s.%s";
+    private static final String ANDROID_RESOURCE_ID_PUBLIC_BASE = "android.R.%s.%s";
+    private static final String ANDROID_RESOURCE_ID_PRIVATE_BASE = "android_R_%s_%s";
+
+    public static void generateDependencies(Set<Resource> resources, String packageName, String applicationId,
+                                            File outputDir) {
+        /*
+         * Setup resources and collect all different configurations.
+         */
+
+        Set<CodeColorsConfiguration> configurations = new TreeSet<>();
+
+        List<FieldSpec> privateResourcesFields = new ArrayList<>();
+
+        Map<Resource, Map<CodeColorsConfiguration, Integer>> resourceConfigurationDependenciesIndexes =
+                new HashMap<>(resources.size());
+
+        List<FieldSpec> resourceDependenciesFields = new ArrayList<>();
+
+        for (Resource resource : resources) {
+            // Initialize private resource ids.
+            if (!resource.isPublic() && resource.hasDependents()) {
+                privateResourcesFields.add(
+                        FieldSpec.builder(
+                                String.class,
+                                getAndroidResourceId(resource),
+                                Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
+                                .initializer("\"android:$L/$L\"", resource.getType().getName(), resource.getName())
+                                .build());
+            }
+
+            // Skip everything else if resource doesn't have dependencies.
+            if (!resource.hasDependencies()) {
+                continue;
+            }
+
+            Map<CodeColorsConfiguration, Set<Resource>> configurationDependencies =
+                    resource.getConfigurationDependencies();
+
+            Map<CodeColorsConfiguration, Integer> configurationDependenciesIndexes =
+                    new HashMap<>(configurationDependencies.keySet().size());
+            resourceConfigurationDependenciesIndexes.put(resource, configurationDependenciesIndexes);
+
+            CodeBlock.Builder resourceDependenciesInitializer = CodeBlock.builder()
+                    .add("new $T[]{\n", HashSet.class)
+                    .indent();
+
+            int configurationDependenciesIndex = 0;
+            Iterator<CodeColorsConfiguration> configurationDependenciesIterator =
+                    configurationDependencies.keySet().iterator();
+            while (configurationDependenciesIterator.hasNext()) {
+                CodeColorsConfiguration configuration = configurationDependenciesIterator.next();
+
+                // Collect configurations.
+                configurations.add(configuration);
+
+                // Fill indexes of dependencies for a specific configuration.
+                configurationDependenciesIndexes.put(configuration, configurationDependenciesIndex++);
+
+                resourceDependenciesInitializer.add("new $T($T.asList(new $T[]{",
+                        ParameterizedTypeName.get(HashSet.class, Object.class),
+                        Arrays.class,
+                        Object.class);
+
+                Iterator<Resource> dependenciesIterator = configurationDependencies.get(configuration).iterator();
+                while (dependenciesIterator.hasNext()) {
+                    Resource dependency = dependenciesIterator.next();
+                    addResourceId(resourceDependenciesInitializer, dependency, packageName);
+                    if (dependenciesIterator.hasNext()) {
+                        resourceDependenciesInitializer.add(", ");
+                    } else {
+                        break;
+                    }
+                }
+
+                if (configurationDependenciesIterator.hasNext()) {
+                    resourceDependenciesInitializer.add("})),\n");
+                } else {
+                    resourceDependenciesInitializer.add("}))\n");
+                    break;
+                }
+            }
+
+            resourceDependenciesFields.add(
+                    FieldSpec.builder(
+                            ArrayTypeName.of(ParameterizedTypeName.get(HashSet.class, Object.class)),
+                            createResourceVariableName(resource),
+                            Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
+                            .initializer(resourceDependenciesInitializer.unindent().add("}").build())
+                            .build());
+        }
+
         /*
          * Setup configurations.
          */
 
-        CodeBlock.Builder configurationArrayInitializer = CodeBlock.builder()
+        CodeBlock.Builder configurationsInitializer = CodeBlock.builder()
                 .add("new $T[]{\n", CodeColorsConfiguration.class)
                 .indent();
 
@@ -63,86 +156,20 @@ public class SourceGeneratorHandler {
                             configuration.uiMode, configuration.screenWidthDp, configuration.screenHeightDp,
                             configuration.smallestScreenWidthDp, configuration.densityDpi)
                     .build();
-            configurationArrayInitializer.add(configurationBlock);
+            configurationsInitializer.add(configurationBlock);
 
             if (configurationsIterator.hasNext()) {
-                configurationArrayInitializer.add(",\n");
+                configurationsInitializer.add(",\n");
             } else {
-                configurationArrayInitializer.add("\n");
-                break; // THAT optimization.
+                configurationsInitializer.add("\n");
+                break;
             }
         }
 
-        FieldSpec configurationArrayField = FieldSpec.builder(CodeColorsConfiguration[].class, "sConfigurations")
+        FieldSpec configurationsField = FieldSpec.builder(CodeColorsConfiguration[].class, "sConfigurations")
                 .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
-                .initializer(configurationArrayInitializer.unindent().add("}").build())
+                .initializer(configurationsInitializer.unindent().add("}").build())
                 .build();
-
-        /*
-         * Setup resources and their dependencies.
-         */
-
-        Map<Resource, Map<CodeColorsConfiguration, Integer>> resourceConfigurationDependenciesIndexes =
-                new HashMap<>(resources.size());
-
-        List<FieldSpec> resourceDependenciesFields = new ArrayList<>();
-
-        for (Resource resource : resources) {
-            if (!resource.hasDependencies()) {
-                continue;
-            }
-
-            Map<CodeColorsConfiguration, Set<Resource>> configurationDependencies =
-                    resource.getConfigurationDependencies();
-
-            Map<CodeColorsConfiguration, Integer> configurationDependenciesIndexes =
-                    new HashMap<>(configurationDependencies.keySet().size());
-            resourceConfigurationDependenciesIndexes.put(resource, configurationDependenciesIndexes);
-
-            CodeBlock.Builder resourceDependenciesInitializer = CodeBlock.builder()
-                    .add("new $T[]{\n", HashSet.class)
-                    .indent();
-
-            int configurationDependenciesIndex = 0;
-            Iterator<CodeColorsConfiguration> configurationDependenciesIterator =
-                    configurationDependencies.keySet().iterator();
-            while (configurationDependenciesIterator.hasNext()) {
-                CodeColorsConfiguration configuration = configurationDependenciesIterator.next();
-
-                // Fill indexes of dependencies for a specific configuration.
-                configurationDependenciesIndexes.put(configuration, configurationDependenciesIndex++);
-
-                resourceDependenciesInitializer.add("new $T($T.asList(new $T[]{",
-                        ParameterizedTypeName.get(HashSet.class, Integer.class),
-                        Arrays.class,
-                        Integer.class);
-
-                Iterator<Resource> dependenciesIterator = configurationDependencies.get(configuration).iterator();
-                while (dependenciesIterator.hasNext()) {
-                    Resource dependency = dependenciesIterator.next();
-                    resourceDependenciesInitializer.add(createResourceCodeBlock(packageName, dependency));
-                    if (dependenciesIterator.hasNext()) {
-                        resourceDependenciesInitializer.add(", ");
-                    } else {
-                        break;
-                    }
-                }
-
-                if (configurationDependenciesIterator.hasNext()) {
-                    resourceDependenciesInitializer.add("})),\n");
-                } else {
-                    resourceDependenciesInitializer.add("}))\n");
-                    break; // THAT optimization.
-                }
-            }
-
-            resourceDependenciesFields.add(FieldSpec.builder(
-                    ArrayTypeName.of(ParameterizedTypeName.get(HashSet.class, Integer.class)),
-                    createResourceVariableName(resource))
-                    .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
-                    .initializer(resourceDependenciesInitializer.unindent().add("}").build())
-                    .build());
-        }
 
         /*
          * Configurations with resource and dependencies.
@@ -151,8 +178,8 @@ public class SourceGeneratorHandler {
         // HashMap<Integer, Set<Integer>>.
         ParameterizedTypeName resourceDependenciesType = ParameterizedTypeName.get(
                 ClassName.get(HashMap.class),
-                ClassName.get(Integer.class),
-                ParameterizedTypeName.get(Set.class, Integer.class));
+                ClassName.get(Object.class),
+                ParameterizedTypeName.get(Set.class, Object.class));
 
         // HashMap<CodeColorsConfiguration, HashMap<Integer, Set<Integer>>>.
         ParameterizedTypeName configurationResourceDependenciesType = ParameterizedTypeName.get(
@@ -186,8 +213,9 @@ public class SourceGeneratorHandler {
 
                 putResourceDependenciesBuilder
                         .add("put(\n")
-                        .indent()
-                        .add(createResourceCodeBlock(packageName, resource))
+                        .indent();
+                addResourceId(putResourceDependenciesBuilder, resource, packageName);
+                putResourceDependenciesBuilder
                         .add(",\n")
                         .add("$L[$L]", createResourceVariableName(resource), configurationDependenciesIndex)
                         .unindent()
@@ -211,9 +239,11 @@ public class SourceGeneratorHandler {
                         putConfigurationResourceDependenciesBuilder.build())
                 .build();
 
-        TypeSpec.Builder codeColorResourcesClass = TypeSpec.classBuilder("CodeColorResources")
+
+        TypeSpec.Builder codeColorResourcesClass = TypeSpec.classBuilder(SOURCE_CLASS_NAME)
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-                .addField(configurationArrayField)
+                .addFields(privateResourcesFields)
+                .addField(configurationsField)
                 .addFields(resourceDependenciesFields)
                 .addField(dependenciesField);
         addGeneratedTimeJavaDoc(codeColorResourcesClass);
@@ -228,35 +258,41 @@ public class SourceGeneratorHandler {
         }
     }
 
-    private static CodeBlock createResourceCodeBlock(String packageName, Resource resource) {
+    private static void addResourceId(CodeBlock.Builder codeBlockBuilder, Resource resource, String packageName) {
         switch (resource.getType()) {
             case DRAWABLE:
-                return CodeBlock.builder()
-                        .add("$T$L", ClassName.get(packageName, "R"), ".drawable." + resource.getName())
-                        .build();
             case COLOR:
-                return CodeBlock.builder()
-                        .add("$T$L", ClassName.get(packageName, "R"), ".color." + resource.getName())
-                        .build();
             case ATTR:
-                return CodeBlock.builder()
-                        .add("$T$L", ClassName.get(packageName, "R"), ".attr." + resource.getName())
-                        .build();
+                codeBlockBuilder.add(
+                        "$T$L",
+                        ClassName.get(packageName, "R"),
+                        String.format(RESOURCE_ID_BASE, resource.getType().getName(), resource.getName()));
+                return;
+            case ANDROID_DRAWABLE:
+            case ANDROID_COLOR:
             case ANDROID_ATTR:
-                return CodeBlock.builder()
-                        .add("$L", "android.R.attr." + resource.getName())
-                        .build();
+                codeBlockBuilder.add(getAndroidResourceId(resource));
+                return;
         }
         // Just cause.
         throw new IllegalStateException("Resource type not supported: " + resource.getType());
+    }
+
+    private static String getAndroidResourceId(Resource resource) {
+        String nameBase = resource.isPublic() ? ANDROID_RESOURCE_ID_PUBLIC_BASE : ANDROID_RESOURCE_ID_PRIVATE_BASE;
+        return String.format(nameBase, resource.getType().getName(), resource.getName());
     }
 
     private static String createResourceVariableName(Resource resource) {
         switch (resource.getType()) {
             case DRAWABLE:
                 return "Drawable_" + resource.getName();
+            case ANDROID_DRAWABLE:
+                return "AndroidDrawable_" + resource.getName();
             case COLOR:
                 return "Color_" + resource.getName();
+            case ANDROID_COLOR:
+                return "AndroidColor_" + resource.getName();
             case ATTR:
                 return "Attr_" + resource.getName();
             case ANDROID_ATTR:

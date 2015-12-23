@@ -1,8 +1,11 @@
 package io.leao.codecolors.plugin.res;
 
+import java.io.Serializable;
 import java.util.Locale;
 
-public class CodeColorsConfiguration implements Comparable<CodeColorsConfiguration> {
+public class CodeColorsConfiguration implements Comparable<CodeColorsConfiguration>, Serializable {
+    private static final long serialVersionUID = 4890164482199714776L;
+
     public static final CodeColorsConfiguration EMPTY = new CodeColorsConfiguration();
 
     /**

@@ -26,4 +26,10 @@
         android:layout_height="50dip"
         android:background="@drawable/embedded_drawable_background"/>
 
+    <View
+        android:layout_below="@android:id/button2"
+        android:layout_width="100dip"
+        android:layout_height="100dip"
+        android:background="?android:attr/actionModeFindDrawable"/>
+
 </RelativeLayout>

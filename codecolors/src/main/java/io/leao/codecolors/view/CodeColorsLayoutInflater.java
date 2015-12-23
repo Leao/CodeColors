@@ -4,18 +4,17 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
-import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 
 import java.lang.reflect.Field;
-import java.util.Map;
 import java.util.Set;
 
 import io.leao.codecolors.CodeColors;
 import io.leao.codecolors.R;
 import io.leao.codecolors.res.CodeColorStateList;
+import io.leao.codecolors.res.CodeColorsDependenciesHandler;
 
 public class CodeColorsLayoutInflater extends LayoutInflater implements LayoutInflater.Factory2 {
 
@@ -23,10 +22,7 @@ public class CodeColorsLayoutInflater extends LayoutInflater implements LayoutIn
 
     protected Object[] mConstructorArgs;
 
-    protected Map<Integer, Set<Integer>> mDependencies;
-    private SparseIntArray mAttrResourceId = new SparseIntArray();
-
-    private int[] mTempArray = new int[1];
+    protected CodeColorsDependenciesHandler mDependenciesHandler;
 
     protected CodeColorsLayoutInflater(Context context) {
         super(context);
@@ -55,7 +51,7 @@ public class CodeColorsLayoutInflater extends LayoutInflater implements LayoutIn
             mConstructorArgs = new Object[2];
         }
 
-        mDependencies = CodeColors.getDependencies(context);
+        mDependenciesHandler = new CodeColorsDependenciesHandler(context);
     }
 
     @Override
@@ -135,43 +131,11 @@ public class CodeColorsLayoutInflater extends LayoutInflater implements LayoutIn
 
     private void addCodeColorCallbacks(Context context, int resourceId, Drawable drawable,
                                        CodeColorStateList.AnchorCallback callback) {
-        CodeColorStateList codeColor;
-        // Add callback if the resource itself is a CodeColor.
-        codeColor = CodeColors.getColor(resourceId);
-        if (codeColor != null) {
-            codeColor.addCallback(drawable, callback);
-        }
-        // Add callback for all resource's CodeColor dependencies.
-        // That may require to resolve some attributes.
-        Set<Integer> dependencies = mDependencies.get(resourceId);
-        if (dependencies != null) {
-            for (Integer dependency : dependencies) {
-                codeColor = CodeColors.getColor(dependency);
-                if (codeColor == null) {
-                    if (mAttrResourceId.indexOfKey(dependency) < 0) {
-                        mTempArray[0] = dependency;
-                        TypedArray ta = context.obtainStyledAttributes(mTempArray);
-                        int dependencyId = 0;
-                        try {
-                            dependencyId = ta.getResourceId(0, dependencyId);
-                        } finally {
-                            ta.recycle();
-                        }
-                        if (dependencyId != 0) {
-                            codeColor = CodeColors.getColor(dependencyId);
-                        }
-                        if (codeColor != null) {
-                            mAttrResourceId.append(dependency, dependencyId);
-                        } else {
-                            mAttrResourceId.append(dependency, 0);
-                        }
-                    } else {
-                        codeColor = CodeColors.getColor(mAttrResourceId.get(dependency));
-                    }
-                }
-                if (codeColor != null) {
-                    codeColor.addCallback(drawable, callback);
-                }
+        Set<Integer> dependencies = mDependenciesHandler.resolveDependencies(resourceId);
+        for (Integer dependency : dependencies) {
+            CodeColorStateList codeColor = CodeColors.getColor(dependency);
+            if (codeColor != null) {
+                codeColor.addCallback(drawable, callback);
             }
         }
     }

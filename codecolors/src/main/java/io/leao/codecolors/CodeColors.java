@@ -2,7 +2,6 @@ package io.leao.codecolors;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
-import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
@@ -13,18 +12,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 import io.leao.codecolors.config.BaseCodeColorFactory;
 import io.leao.codecolors.config.BaseCodeColorHandler;
 import io.leao.codecolors.config.CodeColorFactory;
 import io.leao.codecolors.config.CodeColorHandler;
-import io.leao.codecolors.plugin.res.CodeColorsConfiguration;
 import io.leao.codecolors.res.CodeColorDrawable;
 import io.leao.codecolors.res.CodeColorStateList;
-import io.leao.codecolors.res.CodeColorsConfigurationUtils;
+import io.leao.codecolors.res.CodeColorsDependenciesHandler;
 import io.leao.codecolors.res.CodeResources;
 
 public abstract class CodeColors {
@@ -39,9 +34,6 @@ public abstract class CodeColors {
     private static boolean sIsActive = false;
 
     private static final SparseArray<CodeColorStateList> sColorCache = new SparseArray<>();
-
-    private static final Map<String, Map<CodeColorsConfiguration, Map<Integer, Set<Integer>>>> sDependencies =
-            new HashMap<>();
 
     public static void init(Context context) {
         init(context, new BaseCodeColorFactory());
@@ -58,7 +50,7 @@ public abstract class CodeColors {
     @SuppressWarnings("unchecked")
     public static void init(Context context, CodeColorHandler handler) {
         try {
-            addPackageDependencies(context.getPackageName());
+            CodeColorsDependenciesHandler.addPackageDependencies(context.getPackageName());
 
             Resources resources = context.getResources();
             // The SparseArray that holds the entries of preloaded colors.
@@ -115,29 +107,6 @@ public abstract class CodeColors {
 
         // Code colors successfully injected.
         sIsActive = true;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static void addPackageDependencies(String packageName)
-            throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
-        Class<?> codeColorResourcesClass = Class.forName(packageName + ".CodeColorResources");
-        Field dependenciesField = codeColorResourcesClass.getDeclaredField("sDependencies");
-        dependenciesField.setAccessible(true);
-        sDependencies.put(
-                packageName,
-                (Map<CodeColorsConfiguration, Map<Integer, Set<Integer>>>) dependenciesField.get(null));
-    }
-
-    public static Map<Integer, Set<Integer>> getDependencies(Context context) {
-        Map<CodeColorsConfiguration, Map<Integer, Set<Integer>>> configurationDependencies =
-                sDependencies.get(context.getPackageName());
-        Configuration contextConfiguration = context.getResources().getConfiguration();
-        for (CodeColorsConfiguration configuration : configurationDependencies.keySet()) {
-            if (CodeColorsConfigurationUtils.areCompatible(configuration, contextConfiguration)) {
-                return configurationDependencies.get(configuration);
-            }
-        }
-        return configurationDependencies.get(configurationDependencies.keySet().iterator().next());
     }
 
     protected static Method getColorsConstantStateGetter(Field preloadedColorStateListsField)

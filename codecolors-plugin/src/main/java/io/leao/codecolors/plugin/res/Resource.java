@@ -1,21 +1,32 @@
 package io.leao.codecolors.plugin.res;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-public class Resource {
+public class Resource implements Serializable {
+    private static final long serialVersionUID = -397054342376654475L;
+
     private String mName;
     private Type mType;
+    private boolean mIsPublic;
 
     private Map<CodeColorsConfiguration, Set<Resource>> mConfigurationDependencies;
     private Map<CodeColorsConfiguration, Set<Resource>> mConfigurationDependents;
 
-    private Resource(String name, Type type) {
+    private Resource(String name, Type type, boolean isPublic) {
         mName = name;
         mType = type;
+        mIsPublic = isPublic;
     }
 
     public String getName() {
@@ -24,6 +35,14 @@ public class Resource {
 
     public Type getType() {
         return mType;
+    }
+
+    public void setIsPublic(boolean isPublic) {
+        mIsPublic = isPublic;
+    }
+
+    public boolean isPublic() {
+        return mIsPublic;
     }
 
     public void addDependency(CodeColorsConfiguration configuration, Resource dependency) {
@@ -63,6 +82,10 @@ public class Resource {
         return dependencies;
     }
 
+    public boolean hasDependents() {
+        return mConfigurationDependents != null;
+    }
+
     private void addDependent(CodeColorsConfiguration configuration, Resource dependent) {
         Set<Resource> dependents = getDependents(configuration);
         dependents.add(dependent);
@@ -99,24 +122,69 @@ public class Resource {
     }
 
     public enum Type {
-        DRAWABLE, COLOR, ATTR, ANDROID_ATTR
+        DRAWABLE("drawable"),
+        ANDROID_DRAWABLE("drawable"),
+        COLOR("color"),
+        ANDROID_COLOR("color"),
+        ATTR("attr"),
+        ANDROID_ATTR("attr");
+
+        private String mName;
+
+        Type(String name) {
+            mName = name;
+        }
+
+        public String getName() {
+            return mName;
+        }
     }
 
     public static class Pool {
-        private final Map<Resource, Resource> mResources = new HashMap<>();
+        private Map<Resource, Resource> mResources;
+
+        public Pool() {
+            mResources = new HashMap<>();
+        }
+
+        @SuppressWarnings("unchecked")
+        public Pool(File input) {
+            try {
+                ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream(input));
+                mResources = (Map<Resource, Resource>) inputStream.readObject();
+                inputStream.close();
+            } catch (Exception e) {
+                mResources = new HashMap<>();
+                System.out.println("Failed to read resources from " + input.getPath() + ": " + e.getMessage());
+            }
+        }
 
         public Set<Resource> getResources() {
             return mResources.keySet();
         }
 
         public Resource getOrCreateResource(String name, Resource.Type type) {
-            Resource key = new Resource(name, type);
+            return getOrCreateResource(name, type, true);
+        }
+
+        public Resource getOrCreateResource(String name, Resource.Type type, boolean isPublic) {
+            Resource key = new Resource(name, type, isPublic);
             Resource value = mResources.get(key);
             if (value == null) {
                 value = key;
                 mResources.put(key, value);
             }
             return value;
+        }
+
+        public void writeTo(File output) {
+            try {
+                ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(output));
+                outputStream.writeObject(mResources);
+                outputStream.close();
+            } catch (IOException e) {
+                System.out.println("Failed to write resources to " + output.getPath() + ": " + e.getMessage());
+            }
         }
     }
 }

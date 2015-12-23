@@ -9,8 +9,8 @@ import org.xml.sax.SAXException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -19,7 +19,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import io.leao.codecolors.plugin.aapt.AaptConfig;
 
-public class ResourceDependencyHandler {
+public class ResourcesDependenciesParser {
     private static final String NAMESPACE_ANDROID = "http://schemas.android.com/apk/res/android";
 
     private static final String RESOURCE_DRAWABLE = "drawable";
@@ -34,47 +34,60 @@ public class ResourceDependencyHandler {
     private static final String ATTRIBUTE_TYPE = "type";
 
     private static final String PREFIX_DRAWABLE = "@drawable";
+    private static final String PREFIX_ANDROID_DRAWABLE = "@android:drawable";
     private static final String PREFIX_COLOR = "@color";
+    private static final String PREFIX_ANDROID_COLOR = "@android:color";
     private static final String PREFIX_ATTR = "?attr";
     private static final String PREFIX_ANDROID_ATTR = "?android:attr";
 
-    private static final String[] RESOURCES_PREFIXES =
-            {PREFIX_DRAWABLE, PREFIX_COLOR, PREFIX_ATTR, PREFIX_ANDROID_ATTR};
+    private static final String[] RESOURCES_PREFIXES = {
+            PREFIX_DRAWABLE,
+            PREFIX_ANDROID_DRAWABLE,
+            PREFIX_COLOR,
+            PREFIX_ANDROID_COLOR,
+            PREFIX_ATTR,
+            PREFIX_ANDROID_ATTR
+    };
+
+    private static final Set<String> sDependencyAttributes = new HashSet<String>() {{
+        add(ATTRIBUTE_DRAWABLE);
+        add(ATTRIBUTE_COLOR);
+        add(ATTRIBUTE_TINT);
+    }};
 
     private static final String sDependencyRegex = createDependencyRegex();
 
-    private final Set<CodeColorsConfiguration> mConfigurations = new TreeSet<>();
-    private final Resource.Pool mResourcesPool = new Resource.Pool();
+    private final Resource.Pool mResourcesPool;
 
-    public void processDependencies(File resourcesDir) {
-        processDependencies(CodeColorsConfiguration.EMPTY, resourcesDir);
+    public ResourcesDependenciesParser(Resource.Pool resourcesPool) {
+        mResourcesPool = resourcesPool;
     }
 
-    public Set<CodeColorsConfiguration> getConfigurations() {
-        return mConfigurations;
+    public void parseDependencies(File resourcesDir) {
+        parseDependencies(CodeColorsConfiguration.EMPTY, resourcesDir);
     }
 
     public Set<Resource> getResources() {
         return mResourcesPool.getResources();
     }
 
-    private void processDependencies(CodeColorsConfiguration configuration, File resourcesDir) {
+    private void parseDependencies(CodeColorsConfiguration configuration, File resourcesDir) {
         File[] files = resourcesDir.listFiles();
         if (files != null) {
             for (File file : files) {
                 if (file.isFile()) {
-                    processFile(configuration, file);
+                    parseFile(configuration, file);
                 } else {
                     String name = file.getName();
                     String[] parts = name.split("\\-", 2);
                     String qualifier = parts.length > 1 ? parts[1] : "";
-                    processDependencies(AaptConfig.parse(qualifier), file);
+                    parseDependencies(AaptConfig.parse(qualifier), file);
                 }
             }
         }
     }
 
-    private void processFile(CodeColorsConfiguration configuration, File file) {
+    private void parseFile(CodeColorsConfiguration configuration, File file) {
         try {
             String type = Files.probeContentType(file.toPath());
             if ("text/xml".equals(type)) {
@@ -122,16 +135,9 @@ public class ResourceDependencyHandler {
             for (int j = 0; j < attributes.getLength(); j++) {
                 Node attribute = attributes.item(j);
 
-                if (NAMESPACE_ANDROID.equals(attribute.getNamespaceURI())) {
-                    switch (attribute.getLocalName()) {
-                        case ATTRIBUTE_DRAWABLE:
-                        case ATTRIBUTE_TINT:
-                        case ATTRIBUTE_COLOR:
-                            addDependencyIfValid(configuration, resource, attribute.getNodeValue());
-                            break;
-                        default:
-                            break;
-                    }
+                if (NAMESPACE_ANDROID.equals(attribute.getNamespaceURI()) &&
+                        sDependencyAttributes.contains(attribute.getLocalName())) {
+                    addDependencyIfValid(configuration, resource, attribute.getNodeValue());
                 }
             }
 
@@ -195,8 +201,6 @@ public class ResourceDependencyHandler {
     private void addDependencyIfValid(CodeColorsConfiguration configuration, Resource resource, String dependency) {
         if (isValidDependency(dependency)) {
             resource.addDependency(configuration, getOrCreateResourceFromDependency(dependency));
-            // Cache configuration as it has dependencies to be processed.
-            mConfigurations.add(configuration);
         }
     }
 
@@ -210,8 +214,12 @@ public class ResourceDependencyHandler {
             switch (dependencyParts[0]) {
                 case PREFIX_DRAWABLE:
                     return mResourcesPool.getOrCreateResource(dependencyParts[1], Resource.Type.DRAWABLE);
+                case PREFIX_ANDROID_DRAWABLE:
+                    return mResourcesPool.getOrCreateResource(dependencyParts[1], Resource.Type.ANDROID_DRAWABLE);
                 case PREFIX_COLOR:
                     return mResourcesPool.getOrCreateResource(dependencyParts[1], Resource.Type.COLOR);
+                case PREFIX_ANDROID_COLOR:
+                    return mResourcesPool.getOrCreateResource(dependencyParts[1], Resource.Type.ANDROID_COLOR);
                 case PREFIX_ATTR:
                     return mResourcesPool.getOrCreateResource(dependencyParts[1], Resource.Type.ATTR);
                 case PREFIX_ANDROID_ATTR:
@@ -220,7 +228,8 @@ public class ResourceDependencyHandler {
                     // Throw.
             }
         }
-        throw new IllegalStateException("Error: impossible to map resource name " + dependency + " to any R variable.");
+        throw new IllegalStateException(
+                "Error: impossible to map resource with name " + dependency + " to a valid Resource.");
     }
 
     private static String createDependencyRegex() {
