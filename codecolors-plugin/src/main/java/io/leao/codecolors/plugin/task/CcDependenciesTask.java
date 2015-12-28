@@ -31,7 +31,7 @@ public class CcDependenciesTask extends DefaultTask {
     private BaseVariant mVariant;
 
     public static CcDependenciesTask create(Project project, BaseVariant variant,
-                                                    SdkDependenciesTask sdkDependenciesTask) {
+                                            SdkDependenciesTask sdkDependenciesTask) {
         String name = String.format(NAME_BASE, AaptUtil.capitalize(variant.getName()));
         CcDependenciesTask task = project.getTasks().create(name, CcDependenciesTask.class);
         task.initialize(project, variant, sdkDependenciesTask);
@@ -55,8 +55,7 @@ public class CcDependenciesTask extends DefaultTask {
         addDependsOn(mergeResourcesTask);
 
         // Output directory, the source package directory.
-        String outputDirPath = String.format(OUTPUT_DIR_BASE, project.getBuildDir(), variant.getName());
-        mOutputDir = project.file(new File(outputDirPath));
+        mOutputDir = project.file(String.format(OUTPUT_DIR_BASE, project.getBuildDir(), variant.getName()));
     }
 
     @InputFiles

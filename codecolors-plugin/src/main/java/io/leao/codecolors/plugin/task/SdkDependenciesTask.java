@@ -34,13 +34,11 @@ public class SdkDependenciesTask extends DefaultTask {
     }
 
     protected void initialize(Project project, BaseExtension extension) {
-        String inputDirPath =
-                String.format(INPUT_DIR_BASE, extension.getSdkDirectory(), extension.getCompileSdkVersion());
-        mInputDir = project.file(new File(inputDirPath));
+        mInputDir = project.file(
+                String.format(INPUT_DIR_BASE, extension.getSdkDirectory(), extension.getCompileSdkVersion()));
 
         // Output directory.
-        String outputFilePath = String.format(OUTPUT_FILE_BASE, project.getBuildDir());
-        mOutputFile = project.file(new File(outputFilePath));
+        mOutputFile = project.file(String.format(OUTPUT_FILE_BASE, project.getBuildDir()));
     }
 
     @InputDirectory
