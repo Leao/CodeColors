@@ -35,6 +35,8 @@ public class CcDependenciesTask extends DefaultTask {
         String name = String.format(NAME_BASE, AaptUtil.capitalize(variant.getName()));
         CcDependenciesTask task = project.getTasks().create(name, CcDependenciesTask.class);
         task.initialize(project, variant, sdkDependenciesTask);
+        // Adds task to variant as a Java source code generator.
+        variant.registerJavaGeneratingTask(task, task.getOutputDir());
         return task;
     }
 
@@ -55,9 +57,6 @@ public class CcDependenciesTask extends DefaultTask {
         // Output directory, the source package directory.
         String outputDirPath = String.format(OUTPUT_DIR_BASE, project.getBuildDir(), variant.getName());
         mOutputDir = project.file(new File(outputDirPath));
-
-        // Adds task to variant as a Java source code generator.
-        mVariant.registerJavaGeneratingTask(this, mOutputDir);
     }
 
     @InputFiles
