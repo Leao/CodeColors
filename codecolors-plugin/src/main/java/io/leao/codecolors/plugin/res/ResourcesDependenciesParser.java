@@ -1,25 +1,22 @@
 package io.leao.codecolors.plugin.res;
 
-import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
 import io.leao.codecolors.plugin.aapt.AaptConfig;
+import io.leao.codecolors.plugin.file.FileCrawler;
+import io.leao.codecolors.plugin.file.FileCrawlerXmlFileCallback;
+import io.leao.codecolors.plugin.xml.XmlCrawler;
 
-public class ResourcesDependenciesParser {
+public class ResourcesDependenciesParser
+        extends FileCrawlerXmlFileCallback<CcConfiguration>
+        implements XmlCrawler.Callback<ResourcesDependenciesParser.XmlCrawlerTrail> {
     private static final String NAMESPACE_ANDROID = "http://schemas.android.com/apk/res/android";
 
     private static final String RESOURCE_DRAWABLE = "drawable";
@@ -64,80 +61,59 @@ public class ResourcesDependenciesParser {
     }
 
     public void parseDependencies(File resourcesDir) {
-        parseDependencies(CcConfiguration.EMPTY, resourcesDir);
+        FileCrawler.crawl(resourcesDir, CcConfiguration.EMPTY, this);
     }
 
     public Set<Resource> getResources() {
         return mResourcesPool.getResources();
     }
 
-    private void parseDependencies(CcConfiguration configuration, File resourcesDir) {
-        File[] files = resourcesDir.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isFile()) {
-                    parseFile(configuration, file);
-                } else {
-                    String name = file.getName();
-                    String[] parts = name.split("\\-", 2);
-                    String qualifier = parts.length > 1 ? parts[1] : "";
-                    parseDependencies(AaptConfig.parse(qualifier), file);
-                }
-            }
+    /**
+     * @param trail the {@link CcConfiguration} for the folder where the file is located.
+     */
+    @Override
+    public void parseFile(File file, CcConfiguration trail) {
+        File folder = file.getParentFile();
+        String folderName = folder.getName().toLowerCase();
+        if (folderName.startsWith(RESOURCE_DRAWABLE)) {
+            String fileName = file.getName();
+            crawlXmlFile(
+                    file,
+                    trail,
+                    mResourcesPool.getOrCreateResource(
+                            fileName.substring(0, fileName.indexOf('.')), Resource.Type.DRAWABLE));
+
+        } else if (folderName.startsWith(RESOURCE_COLOR)) {
+            String fileName = file.getName();
+            crawlXmlFile(
+                    file,
+                    trail,
+                    mResourcesPool.getOrCreateResource(
+                            fileName.substring(0, fileName.indexOf('.')), Resource.Type.COLOR));
+        } else if (folderName.startsWith(RESOURCE_VALUES)) {
+            crawlXmlFile(file, trail, null);
         }
     }
 
-    private void parseFile(CcConfiguration configuration, File file) {
-        try {
-            String type = Files.probeContentType(file.toPath());
-            if ("text/xml".equals(type)) {
-                String parentFolder = file.getParentFile().getName().toLowerCase();
-                if (parentFolder.startsWith(RESOURCE_DRAWABLE)) {
-                    String fileName = file.getName();
-                    parseXmlFile(
-                            configuration,
-                            file,
-                            mResourcesPool.getOrCreateResource(
-                                    fileName.substring(0, fileName.indexOf('.')), Resource.Type.DRAWABLE));
-                } else if (parentFolder.startsWith(RESOURCE_COLOR)) {
-                    String fileName = file.getName();
-                    parseXmlFile(
-                            configuration,
-                            file,
-                            mResourcesPool.getOrCreateResource(
-                                    fileName.substring(0, fileName.indexOf('.')), Resource.Type.COLOR));
-                } else if (parentFolder.startsWith(RESOURCE_VALUES)) {
-                    parseXmlFile(configuration, file, null);
-                }
-            }
-        } catch (ParserConfigurationException | SAXException | IOException e) {
-            System.out.println("Error processing file " + file.getName() + ": " + e.toString());
-        }
+    @Override
+    public CcConfiguration createTrail(File folder, CcConfiguration trail) {
+        return AaptConfig.parse(ResourceFileUtils.getQualifier(folder));
     }
 
-    private void parseXmlFile(CcConfiguration configuration, File file, Resource resource)
-            throws ParserConfigurationException, IOException, SAXException {
-        DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
-        docBuilderFactory.setNamespaceAware(true);
-        DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-        Document document = docBuilder.parse(file);
-
-        parseNode(configuration, document.getDocumentElement(), resource);
+    private void crawlXmlFile(File file, CcConfiguration configuration, Resource resource) {
+        XmlCrawler.crawl(file, new XmlCrawlerTrail(configuration, resource), this);
     }
 
-    public void parseNode(CcConfiguration configuration, Node node, Resource resource) {
-        NodeList childNodes = node.getChildNodes();
-        int childCount = childNodes.getLength();
-
+    @Override
+    public boolean parseNode(Node node, NodeList childNodes, int childCount, XmlCrawlerTrail trail) {
         // Extract dependencies from attributes and text content.
-        if (resource != null) {
+        if (trail.resource != null) {
             NamedNodeMap attributes = node.getAttributes();
-            for (int j = 0; j < attributes.getLength(); j++) {
-                Node attribute = attributes.item(j);
-
+            for (int i = 0; i < attributes.getLength(); i++) {
+                Node attribute = attributes.item(i);
                 if (NAMESPACE_ANDROID.equals(attribute.getNamespaceURI()) &&
                         sDependencyAttributes.contains(attribute.getLocalName())) {
-                    addDependencyIfValid(configuration, resource, attribute.getNodeValue());
+                    addDependencyIfValid(trail.configuration, trail.resource, attribute.getNodeValue());
                 }
             }
 
@@ -145,22 +121,20 @@ public class ResourcesDependenciesParser {
                 Node childNode = node.getFirstChild();
                 if (childNode.getNodeType() == Node.TEXT_NODE) {
                     // If the last node is a text node, try to add it as dependency and end parsing.
-                    addDependencyIfValid(configuration, resource, childNode.getTextContent());
-                    return;
+                    addDependencyIfValid(trail.configuration, trail.resource, childNode.getTextContent());
+                    return true; // Stop node crawl.
                 }
             }
         }
-
-        // Parse the remaining nodes.
-        for (int i = 0; i < childCount; i++) {
-            Node childNode = childNodes.item(i);
-            if (childNode.getNodeType() == Node.ELEMENT_NODE) {
-                parseNode(configuration, childNode, createResourceFromNode(resource, childNode));
-            }
-        }
+        return false; // Continue node crawl.
     }
 
-    private Resource createResourceFromNode(Resource resource, Node node) {
+    @Override
+    public XmlCrawlerTrail createTrail(Node node, XmlCrawlerTrail trail) {
+        return new XmlCrawlerTrail(trail.configuration, createResourceFromNodeIfNeeded(node, trail.resource));
+    }
+
+    private Resource createResourceFromNodeIfNeeded(Node node, Resource resource) {
         if (resource != null) {
             return resource;
         }
@@ -242,5 +216,15 @@ public class ResourcesDependenciesParser {
         }
         dependencyRegex += ")/\\w+$";
         return dependencyRegex;
+    }
+
+    public static class XmlCrawlerTrail {
+        public CcConfiguration configuration;
+        public Resource resource;
+
+        public XmlCrawlerTrail(CcConfiguration configuration, Resource resource) {
+            this.configuration = configuration;
+            this.resource = resource;
+        }
     }
 }

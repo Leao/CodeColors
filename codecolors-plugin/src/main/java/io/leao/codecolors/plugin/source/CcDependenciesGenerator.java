@@ -311,6 +311,5 @@ public class CcDependenciesGenerator {
 
         classBuilder.addJavadoc("Generated at $L:$L:$L.\n", String.format("%02d", hours),
                 String.format("%02d", minutes), String.format("%02d", seconds));
-
     }
 }
