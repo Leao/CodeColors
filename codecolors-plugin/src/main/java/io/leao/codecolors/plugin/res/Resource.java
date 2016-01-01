@@ -1,17 +1,14 @@
 package io.leao.codecolors.plugin.res;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+
+import io.leao.codecolors.plugin.file.FileUtils;
 
 public class Resource implements Serializable {
     private static final long serialVersionUID = -397054342376654475L;
@@ -141,7 +138,7 @@ public class Resource implements Serializable {
     }
 
     public static class Pool {
-        private Map<Resource, Resource> mResources;
+        private HashMap<Resource, Resource> mResources;
 
         public Pool() {
             mResources = new HashMap<>();
@@ -149,13 +146,9 @@ public class Resource implements Serializable {
 
         @SuppressWarnings("unchecked")
         public Pool(File input) {
-            try {
-                ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream(input));
-                mResources = (Map<Resource, Resource>) inputStream.readObject();
-                inputStream.close();
-            } catch (Exception e) {
+            mResources = (HashMap<Resource, Resource>) FileUtils.readFrom(input);
+            if (mResources == null) {
                 mResources = new HashMap<>();
-                System.out.println("Failed to read resources from " + input.getPath() + ": " + e.getMessage());
             }
         }
 
@@ -178,13 +171,7 @@ public class Resource implements Serializable {
         }
 
         public void writeTo(File output) {
-            try {
-                ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(output));
-                outputStream.writeObject(mResources);
-                outputStream.close();
-            } catch (IOException e) {
-                System.out.println("Failed to write resources to " + output.getPath() + ": " + e.getMessage());
-            }
+            FileUtils.writeTo(output, mResources);
         }
     }
 }

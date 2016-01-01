@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 import io.leao.codecolors.plugin.aapt.AaptConfig;
 import io.leao.codecolors.plugin.file.FileCrawler;
 import io.leao.codecolors.plugin.file.FileCrawlerXmlFileCallback;
+import io.leao.codecolors.plugin.file.FileUtils;
 import io.leao.codecolors.plugin.xml.NodeUtils;
 import io.leao.codecolors.plugin.xml.XmlCrawler;
 
@@ -98,7 +99,7 @@ public class ResourcesDependenciesParser
 
     @Override
     public CcConfiguration createTrail(File folder, CcConfiguration trail) {
-        return AaptConfig.parse(ResourceFileUtils.getQualifier(folder));
+        return AaptConfig.parse(FileUtils.getQualifier(folder));
     }
 
     private void crawlXmlFile(File file, CcConfiguration configuration, Resource resource) {
