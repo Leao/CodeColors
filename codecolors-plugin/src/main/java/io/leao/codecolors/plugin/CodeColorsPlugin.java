@@ -10,6 +10,7 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 
 import io.leao.codecolors.plugin.task.CcDependenciesTask;
+import io.leao.codecolors.plugin.task.JavaGeneratingTask;
 import io.leao.codecolors.plugin.task.SdkDependenciesTask;
 
 /**
@@ -33,10 +34,10 @@ public class CodeColorsPlugin implements Plugin<Project> {
         return new Action<BaseVariant>() {
             @Override
             public void execute(final BaseVariant variant) {
-                CcDependenciesTask.create(
-                        project,
-                        variant,
-                        SdkDependenciesTask.create(project, extension, variant));
+                SdkDependenciesTask sdkDependenciesTask = SdkDependenciesTask.create(project, extension, variant);
+
+                CcDependenciesTask ccDependenciesTask = new CcDependenciesTask(project, variant, sdkDependenciesTask);
+                JavaGeneratingTask.register(ccDependenciesTask);
             }
         };
     }
