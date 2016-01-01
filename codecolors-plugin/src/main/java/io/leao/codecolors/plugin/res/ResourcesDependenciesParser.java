@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 import io.leao.codecolors.plugin.aapt.AaptConfig;
 import io.leao.codecolors.plugin.file.FileCrawler;
 import io.leao.codecolors.plugin.file.FileCrawlerXmlFileCallback;
+import io.leao.codecolors.plugin.xml.NodeUtils;
 import io.leao.codecolors.plugin.xml.XmlCrawler;
 
 public class ResourcesDependenciesParser
@@ -143,33 +144,22 @@ public class ResourcesDependenciesParser
         Resource.Type type = null;
         String currentNodeName = node.getNodeName();
         if (currentNodeName.startsWith(RESOURCE_DRAWABLE)) {
-            name = getNodeNameAttr(node);
+            name = NodeUtils.getAttributeValue(node, ATTRIBUTE_NAME);
             type = Resource.Type.DRAWABLE;
         } else if (currentNodeName.startsWith(RESOURCE_COLOR)) {
-            name = getNodeNameAttr(node);
+            name = NodeUtils.getAttributeValue(node, ATTRIBUTE_NAME);
             type = Resource.Type.COLOR;
         } else if (currentNodeName.startsWith(RESOURCE_ITEM)) {
-            Node typeAttr = node.getAttributes().getNamedItem(ATTRIBUTE_TYPE);
-            if (typeAttr != null) {
-                if (RESOURCE_DRAWABLE.equals(typeAttr.getNodeValue())) {
-                    name = getNodeNameAttr(node);
-                    type = Resource.Type.DRAWABLE;
-                } else if (RESOURCE_COLOR.equals(typeAttr.getNodeValue())) {
-                    name = getNodeNameAttr(node);
-                    type = Resource.Type.COLOR;
-                }
+            String typeValue = NodeUtils.getAttributeValue(node, ATTRIBUTE_TYPE);
+            if (RESOURCE_DRAWABLE.equals(typeValue)) {
+                name = NodeUtils.getAttributeValue(node, ATTRIBUTE_NAME);
+                type = Resource.Type.DRAWABLE;
+            } else if (RESOURCE_COLOR.equals(typeValue)) {
+                name = NodeUtils.getAttributeValue(node, ATTRIBUTE_NAME);
+                type = Resource.Type.COLOR;
             }
         }
         return name != null ? mResourcesPool.getOrCreateResource(name, type) : null;
-    }
-
-    private static String getNodeNameAttr(Node node) {
-        Node nameAttr = node.getAttributes().getNamedItem(ATTRIBUTE_NAME);
-        if (nameAttr != null) {
-            return nameAttr.getNodeValue();
-        } else {
-            return null;
-        }
     }
 
     private void addDependencyIfValid(CcConfiguration configuration, Resource resource, String dependency) {
