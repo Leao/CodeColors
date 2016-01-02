@@ -275,7 +275,6 @@ public class CcDependenciesGenerator {
                 codeBlockBuilder.add(getAndroidResourceId(resource));
                 return;
         }
-        // Just cause.
         throw new IllegalStateException("Resource type not supported: " + resource.getType());
     }
 
@@ -299,7 +298,6 @@ public class CcDependenciesGenerator {
             case ANDROID_ATTR:
                 return "AndroidAttr_" + resource.getName();
         }
-        // Just cause.
         throw new IllegalStateException("Resource type not supported: " + resource.getType());
     }
 
