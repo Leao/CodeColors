@@ -14,7 +14,7 @@ public class CcColorStateList extends ColorStateList {
     private static final int DEFAULT_COLOR = Color.RED;
     private static final int[][] EMPTY = new int[][]{new int[0]};
 
-    private int mId = CcColorsResources.NO_ID;
+    private int mId = CcResources.NO_ID;
 
     private ColorStateList mDefaultColor;
     private CcConfigurationParcelable mConfiguration;

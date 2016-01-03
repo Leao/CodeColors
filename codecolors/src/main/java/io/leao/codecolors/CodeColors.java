@@ -16,7 +16,7 @@ import io.leao.codecolors.manager.CcColorsManager;
 import io.leao.codecolors.manager.CcDependenciesManager;
 import io.leao.codecolors.res.CcColorDrawable;
 import io.leao.codecolors.res.CcColorStateList;
-import io.leao.codecolors.res.CcColorsResources;
+import io.leao.codecolors.res.CcResources;
 
 public abstract class CodeColors {
     private static final String LOG_TAG = CodeColors.class.getSimpleName();
@@ -54,7 +54,7 @@ public abstract class CodeColors {
             for (Integer colorResId : colorsManager.getColors()) {
                 CcColorStateList color = colorsManager.getColor(colorResId);
 
-                long key = CcColorsResources.createKey(resources, colorResId);
+                long key = CcResources.createKey(resources, colorResId);
 
                 // Load color into Resources cache.
                 if (colorsConstantStateGetter != null) {
