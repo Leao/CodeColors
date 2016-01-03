@@ -1,32 +1,31 @@
 package io.leao.codecolors.res;
 
 import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
-import android.util.SparseArray;
 
-import java.lang.ref.WeakReference;
 import java.util.WeakHashMap;
 
+import io.leao.codecolors.plugin.res.CcConfiguration;
+
 public class CcColorStateList extends ColorStateList {
+    private static final int DEFAULT_COLOR = Color.RED;
     private static final int[][] EMPTY = new int[][]{new int[0]};
 
     private int mId = CcColorsResources.NO_ID;
 
-    private Integer mColor;
+    private ColorStateList mDefaultColor;
+    private CcConfigurationParcelable mConfiguration;
+
+    private ColorStateList mColor;
 
     protected WeakHashMap<Callback, Object> mCallbacks = new WeakHashMap<>();
     protected WeakHashMap<Object, AnchorCallback> mAnchorCallbacks = new WeakHashMap<>();
 
-    /**
-     * Thread-safe cache of single-color ColorStateLists.
-     */
-    private static final SparseArray<WeakReference<CcColorStateList>> sCache = new SparseArray<>();
-
-    protected CcColorStateList(int[][] states, int[] colors) {
-        super(states, colors);
+    public CcColorStateList() {
+        super(EMPTY, new int[]{DEFAULT_COLOR});
     }
 
     @Override
@@ -42,25 +41,46 @@ public class CcColorStateList extends ColorStateList {
         return mId;
     }
 
+    public CcConfiguration getConfiguration() {
+        return mConfiguration;
+    }
+
+    public void setDefaultColor(@NonNull CcConfiguration configuration, @NonNull ColorStateList defaultColor) {
+        if (mConfiguration == null) {
+            mConfiguration = new CcConfigurationParcelable(configuration);
+        } else {
+            mConfiguration.setTo(configuration);
+        }
+        mDefaultColor = defaultColor;
+    }
+
+    public Integer getColor() {
+        return getColorInternal().getDefaultColor();
+    }
+
+    @Override
+    public int getColorForState(int[] stateSet, int defaultColor) {
+        return getColorInternal().getColorForState(stateSet, defaultColor);
+    }
+
     public void setColor(Integer color) {
+        setColor(ColorStateList.valueOf(color));
+    }
+
+    public void setColor(ColorStateList color) {
         if (mColor == null || !mColor.equals(color)) {
             mColor = color;
             invalidateSelf();
         }
     }
 
-    public Integer getColor() {
-        return mColor;
-    }
-
-    @Override
-    public int getColorForState(int[] stateSet, int defaultColor) {
-        return mColor != null ? mColor : super.getColorForState(stateSet, defaultColor);
-    }
-
     @Override
     public int getDefaultColor() {
-        return mColor != null ? mColor : super.getDefaultColor();
+        return getColorInternal().getDefaultColor();
+    }
+
+    private ColorStateList getColorInternal() {
+        return mColor != null ? mColor : mDefaultColor;
     }
 
     public void addCallback(Callback callback) {
@@ -68,7 +88,7 @@ public class CcColorStateList extends ColorStateList {
     }
 
     /**
-     * @param anchor the anchor object to which the callback is dependent.
+     * @param anchor   the anchor object to which the callback is dependent.
      * @param callback the callback.
      */
     public void addCallback(Object anchor, AnchorCallback callback) {
@@ -95,46 +115,21 @@ public class CcColorStateList extends ColorStateList {
         }
     }
 
-    /**
-     * @return A CcColorStateList with the same states and colors of the source ColorStateList.
-     */
-    public static CcColorStateList valueOf(ColorStateList source) {
-        Parcel parcel = Parcel.obtain();
-        source.writeToParcel(parcel, 0);
-        parcel.setDataPosition(0);
-        CcColorStateList cccsl = CcColorStateList.CREATOR.createFromParcel(parcel);
-        parcel.recycle();
-        return cccsl;
-    }
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        if (mConfiguration != null) {
+            dest.writeByte((byte) 1);
+            mConfiguration.writeToParcel(dest, 0);
+            mDefaultColor.writeToParcel(dest, 0);
+        } else {
+            dest.writeByte((byte) 0);
+        }
 
-    /**
-     * @return A ColorStateList containing a single color.
-     */
-    @NonNull
-    public static CcColorStateList valueOf(@ColorInt int color) {
-        synchronized (sCache) {
-            final int index = sCache.indexOfKey(color);
-            if (index >= 0) {
-                final CcColorStateList cached = sCache.valueAt(index).get();
-                if (cached != null) {
-                    return cached;
-                }
-
-                // Prune missing entry.
-                sCache.removeAt(index);
-            }
-
-            // Prune the cache before adding new items.
-            final int N = sCache.size();
-            for (int i = N - 1; i >= 0; i--) {
-                if (sCache.valueAt(i).get() == null) {
-                    sCache.removeAt(i);
-                }
-            }
-
-            final CcColorStateList cccsl = new CcColorStateList(EMPTY, new int[]{color});
-            sCache.put(color, new WeakReference<>(cccsl));
-            return cccsl;
+        if (mColor != null) {
+            dest.writeByte((byte) 1);
+            mColor.writeToParcel(dest, 0);
+        } else {
+            dest.writeByte((byte) 0);
         }
     }
 
@@ -146,13 +141,16 @@ public class CcColorStateList extends ColorStateList {
 
         @Override
         public CcColorStateList createFromParcel(Parcel source) {
-            final int N = source.readInt();
-            final int[][] stateSpecs = new int[N][];
-            for (int i = 0; i < N; i++) {
-                stateSpecs[i] = source.createIntArray();
+            CcColorStateList cccsl = new CcColorStateList();
+            if (source.readByte() == 1) {
+                cccsl.setDefaultColor(
+                        CcConfigurationParcelable.CREATOR.createFromParcel(source),
+                        ColorStateList.CREATOR.createFromParcel(source));
             }
-            final int[] colors = source.createIntArray();
-            return new CcColorStateList(stateSpecs, colors);
+            if (source.readByte() == 1) {
+                cccsl.setColor(ColorStateList.CREATOR.createFromParcel(source));
+            }
+            return cccsl;
         }
     };
 
@@ -162,5 +160,10 @@ public class CcColorStateList extends ColorStateList {
 
     public interface AnchorCallback<T> {
         void invalidateColor(T anchor, CcColorStateList color);
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getName() + "@" + Integer.toHexString(hashCode());
     }
 }

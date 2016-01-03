@@ -23,7 +23,7 @@ public class MainActivity extends CcAppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -42,9 +42,9 @@ public class MainActivity extends CcAppCompatActivity {
                 if (mCurrentColor >= mColors.length) {
                     mCurrentColor = 0;
                 }
-                CodeColors.setColor(R.color.cc__color_primary_dark, color);
-                CodeColors.setColor(R.color.cc__color_primary, color);
-                CodeColors.setColor(R.color.cc__color_accent, color);
+                CodeColors.setColor(MainActivity.this, R.color.cc__color_primary_dark, color);
+                CodeColors.setColor(MainActivity.this, R.color.cc__color_primary, color);
+                CodeColors.setColor(MainActivity.this, R.color.cc__color_accent, color);
             }
         });
     }

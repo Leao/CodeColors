@@ -956,10 +956,21 @@ public class CcConfiguration implements Comparable<CcConfiguration>, Serializabl
         densityDpi = DENSITY_DPI_UNDEFINED;
     }
 
+    /**
+     * Sorts {@link CcConfiguration}s in the reverse order of the default android sort.
+     */
+    @Override
     public int compareTo(CcConfiguration that) {
+        return androidCompareTo(that) * -1; // Sort in the reverse of the default android order.
+    }
+
+    /**
+     * The default android Configuration compareTo (plus sdk version comparison).
+     * <p>
+     * However, we want to sort the configurations in reverse order.
+     */
+    private int androidCompareTo(CcConfiguration that) {
         int n;
-        n = that.sdkVersion - this.sdkVersion;
-        if (n != 0) return n;
         float a = this.fontScale;
         float b = that.fontScale;
         if (a < b) return -1;
@@ -1005,6 +1016,8 @@ public class CcConfiguration implements Comparable<CcConfiguration>, Serializabl
         n = this.smallestScreenWidthDp - that.smallestScreenWidthDp;
         if (n != 0) return n;
         n = this.densityDpi - that.densityDpi;
+        if (n != 0) return n;
+        n = this.sdkVersion - that.sdkVersion;
         if (n != 0) return n;
 
         return n;

@@ -1,7 +1,6 @@
-package io.leao.codecolors.res;
+package io.leao.codecolors.manager;
 
 import android.content.Context;
-import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 
@@ -10,17 +9,22 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 import io.leao.codecolors.plugin.CcConst;
 import io.leao.codecolors.plugin.res.CcConfiguration;
+import io.leao.codecolors.res.CcConfigurationUtils;
 
-public class CcDependenciesHandler {
+public class CcDependenciesManager {
     private static final String CLASS_NAME_BASE = "%s.%s";
 
     private static final String TYPE_ATTR = "attr";
 
-    private static final Map<String, Map<CcConfiguration, Map<Object, Set<Object>>>> sDependencies =
+    private static final Map<String, Map<CcConfiguration, Map<Object, Set<Object>>>> sPackageConfigurationDependencies =
             new HashMap<>();
+
+    private static final Map<Context, CcDependenciesManager> sManagers = new WeakHashMap<>();
+
     // Keys are either the id or the name of the resource.
     private static final Map<Integer, Object> sKeys = new HashMap<>();
     private static final Map<Object, Integer> sResolvedKeys = new HashMap<>();
@@ -34,7 +38,16 @@ public class CcDependenciesHandler {
 
     private int[] mTempArray = new int[1];
 
-    public CcDependenciesHandler(Context context) {
+    public static CcDependenciesManager obtain(Context context) {
+        CcDependenciesManager manager = sManagers.get(context);
+        if (manager == null) {
+            manager = new CcDependenciesManager(context);
+            sManagers.put(context, manager);
+        }
+        return manager;
+    }
+
+    protected CcDependenciesManager(Context context) {
         mContext = context;
         mResources = context.getResources();
         mDependencies = getDependencies(context);
@@ -126,20 +139,15 @@ public class CcDependenciesHandler {
                 Class.forName(String.format(CLASS_NAME_BASE, packageName, CcConst.DEPENDENCIES_CLASS_NAME));
         Field dependenciesField = dependenciesClass.getDeclaredField(CcConst.DEPENDENCIES_FIELD_NAME);
         dependenciesField.setAccessible(true);
-        sDependencies.put(
+        sPackageConfigurationDependencies.put(
                 packageName,
                 (Map<CcConfiguration, Map<Object, Set<Object>>>) dependenciesField.get(null));
     }
 
     public static Map<Object, Set<Object>> getDependencies(Context context) {
         Map<CcConfiguration, Map<Object, Set<Object>>> configurationDependencies =
-                sDependencies.get(context.getPackageName());
-        Configuration contextConfiguration = context.getResources().getConfiguration();
-        for (CcConfiguration configuration : configurationDependencies.keySet()) {
-            if (CcConfigurationUtils.areCompatible(configuration, contextConfiguration)) {
-                return configurationDependencies.get(configuration);
-            }
-        }
-        return configurationDependencies.values().iterator().next();
+                sPackageConfigurationDependencies.get(context.getPackageName());
+        return configurationDependencies.get(
+                CcConfigurationUtils.getBestConfiguration(context, configurationDependencies.keySet()));
     }
 }

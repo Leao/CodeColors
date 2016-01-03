@@ -21,7 +21,7 @@ public class FileUtils {
         }
     }
 
-    public static void writeTo(File output, Serializable object) {
+    public static void writeTo(Serializable object, File output) {
         try {
             ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(output));
             outputStream.writeObject(object);
@@ -32,8 +32,11 @@ public class FileUtils {
     }
 
     public static String getQualifier(File folder) {
-        String name = folder.getName();
-        String[] parts = name.split("\\-", 2);
+        return getQualifier(folder.getName());
+    }
+
+    public static String getQualifier(String folderName) {
+        String[] parts = folderName.split("\\-", 2);
         return parts.length > 1 ? parts[1] : "";
     }
 }

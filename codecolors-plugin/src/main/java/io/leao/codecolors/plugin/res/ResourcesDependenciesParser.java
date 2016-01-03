@@ -13,7 +13,7 @@ import io.leao.codecolors.plugin.aapt.AaptConfig;
 import io.leao.codecolors.plugin.file.FileCrawler;
 import io.leao.codecolors.plugin.file.FileCrawlerXmlFileCallback;
 import io.leao.codecolors.plugin.file.FileUtils;
-import io.leao.codecolors.plugin.xml.NodeUtils;
+import io.leao.codecolors.plugin.xml.XmlUtils;
 import io.leao.codecolors.plugin.xml.XmlCrawler;
 
 public class ResourcesDependenciesParser
@@ -107,7 +107,7 @@ public class ResourcesDependenciesParser
     }
 
     @Override
-    public boolean parseNode(Node node, NodeList childNodes, int childCount, XmlCrawlerTrail trail) {
+    public boolean parseNode(Node node, NodeList children, int childCount, XmlCrawlerTrail trail) {
         // Extract dependencies from attributes and text content.
         if (trail.resource != null) {
             NamedNodeMap attributes = node.getAttributes();
@@ -145,18 +145,18 @@ public class ResourcesDependenciesParser
         Resource.Type type = null;
         String currentNodeName = node.getNodeName();
         if (currentNodeName.startsWith(RESOURCE_DRAWABLE)) {
-            name = NodeUtils.getAttributeValue(node, ATTRIBUTE_NAME);
+            name = XmlUtils.getAttributeValue(node, ATTRIBUTE_NAME);
             type = Resource.Type.DRAWABLE;
         } else if (currentNodeName.startsWith(RESOURCE_COLOR)) {
-            name = NodeUtils.getAttributeValue(node, ATTRIBUTE_NAME);
+            name = XmlUtils.getAttributeValue(node, ATTRIBUTE_NAME);
             type = Resource.Type.COLOR;
         } else if (currentNodeName.startsWith(RESOURCE_ITEM)) {
-            String typeValue = NodeUtils.getAttributeValue(node, ATTRIBUTE_TYPE);
+            String typeValue = XmlUtils.getAttributeValue(node, ATTRIBUTE_TYPE);
             if (RESOURCE_DRAWABLE.equals(typeValue)) {
-                name = NodeUtils.getAttributeValue(node, ATTRIBUTE_NAME);
+                name = XmlUtils.getAttributeValue(node, ATTRIBUTE_NAME);
                 type = Resource.Type.DRAWABLE;
             } else if (RESOURCE_COLOR.equals(typeValue)) {
-                name = NodeUtils.getAttributeValue(node, ATTRIBUTE_NAME);
+                name = XmlUtils.getAttributeValue(node, ATTRIBUTE_NAME);
                 type = Resource.Type.COLOR;
             }
         }

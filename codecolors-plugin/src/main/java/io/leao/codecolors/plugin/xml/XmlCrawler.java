@@ -13,7 +13,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 public class XmlCrawler {
-    public static <T> void crawl(File file, T trail, Callback<T> callback) {
+    public static <T> Document crawl(File file, T trail, Callback<T> callback) {
         try {
             DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
             docBuilderFactory.setNamespaceAware(true);
@@ -21,8 +21,11 @@ public class XmlCrawler {
             Document document = docBuilder.parse(file);
 
             crawl(document.getDocumentElement(), trail, callback);
+
+            return document;
         } catch (ParserConfigurationException | SAXException | IOException e) {
             System.out.println("Error crawling file " + file.getName() + ": " + e.toString());
+            return null;
         }
     }
 
@@ -45,7 +48,7 @@ public class XmlCrawler {
         /**
          * @return true to stop node crawl; false to continue node crawl.
          */
-        boolean parseNode(Node node, NodeList childNodes, int childCount, T trail);
+        boolean parseNode(Node node, NodeList children, int childCount, T trail);
 
         T createTrail(Node node, T trail);
     }

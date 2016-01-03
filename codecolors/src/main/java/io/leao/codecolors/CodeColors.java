@@ -6,51 +6,30 @@ import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.util.LongSparseArray;
-import android.util.SparseArray;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
-import io.leao.codecolors.config.BaseCcFactory;
-import io.leao.codecolors.config.BaseCcHandler;
-import io.leao.codecolors.config.CcFactory;
-import io.leao.codecolors.config.CcHandler;
-import io.leao.codecolors.res.CcColorStateList;
+import io.leao.codecolors.manager.CcColorsManager;
+import io.leao.codecolors.manager.CcDependenciesManager;
 import io.leao.codecolors.res.CcColorDrawable;
-import io.leao.codecolors.res.CcDependenciesHandler;
+import io.leao.codecolors.res.CcColorStateList;
 import io.leao.codecolors.res.CcColorsResources;
 
 public abstract class CodeColors {
     private static final String LOG_TAG = CodeColors.class.getSimpleName();
 
-    private static final int[] sDefaultCodeColorResIds = new int[]{
-            R.color.cc__color_accent,
-            R.color.cc__color_primary,
-            R.color.cc__color_primary_dark
-    };
-
     private static boolean sIsActive = false;
 
-    private static final SparseArray<CcColorStateList> sColorCache = new SparseArray<>();
-
-    public static void init(Context context) {
-        init(context, new BaseCcFactory());
-    }
-
-    public static void init(Context context, CcFactory factory) {
-        init(context, factory, sDefaultCodeColorResIds);
-    }
-
-    public static void init(Context context, CcFactory factory, int[] colorResIds) {
-        init(context, new BaseCcHandler(context, factory, colorResIds));
-    }
-
     @SuppressWarnings("unchecked")
-    public static void init(Context context, CcHandler handler) {
+    public static void init(Context context) {
         try {
-            CcDependenciesHandler.addPackageDependencies(context.getPackageName());
+            // Initialize colors and dependencies.
+            String packageName = context.getPackageName();
+            CcColorsManager.addPackageColors(packageName);
+            CcDependenciesManager.addPackageDependencies(packageName);
 
             Resources resources = context.getResources();
             // The SparseArray that holds the entries of preloaded colors.
@@ -70,16 +49,12 @@ public abstract class CodeColors {
             // If sPreloadedDrawables type is not supported, useLayoutDirectionDrawableCache throws an exception.
             boolean useLayoutDirectionDrawableCache = useLayoutDirectionDrawableCache(sPreloadedDrawables);
 
-            for (int i = 0; i < handler.getColorCount(); i++) {
-                int id = handler.getColorResId(i);
-                if (id <= 0) {
-                    continue;
-                }
+            CcColorsManager colorsManager = CcColorsManager.obtain(context);
 
-                CcColorStateList color = handler.getColor(i);
-                color.setId(id);
+            for (Integer colorResId : colorsManager.getColors()) {
+                CcColorStateList color = colorsManager.getColor(colorResId);
 
-                long key = CcColorsResources.createKey(resources, id);
+                long key = CcColorsResources.createKey(resources, colorResId);
 
                 // Load color into Resources cache.
                 if (colorsConstantStateGetter != null) {
@@ -87,8 +62,6 @@ public abstract class CodeColors {
                 } else {
                     sPreloadedColorStateLists.put(key, color);
                 }
-                // Cache colors by id.
-                sColorCache.put(id, color);
 
                 // Load drawable into Resources cache.
                 Drawable.ConstantState drawableConstantState = CcColorDrawable.getConstantStateForColor(color);
@@ -155,14 +128,11 @@ public abstract class CodeColors {
         return sIsActive;
     }
 
-    public static CcColorStateList getColor(int resId) {
-        return sColorCache.get(resId);
+    public static CcColorStateList getColor(Context context, int resId) {
+        return CcColorsManager.obtain(context).getColor(resId);
     }
 
-    public static void setColor(int resId, int color) {
-        CcColorStateList cccsl = getColor(resId);
-        if (cccsl != null) {
-            cccsl.setColor(color);
-        }
+    public static void setColor(Context context, int resId, int color) {
+        CcColorsManager.obtain(context).setColor(resId, color);
     }
 }

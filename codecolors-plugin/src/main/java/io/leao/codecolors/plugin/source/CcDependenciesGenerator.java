@@ -123,52 +123,7 @@ public class CcDependenciesGenerator {
          * Setup configurations.
          */
 
-        CodeBlock.Builder configurationsInitializer = CodeBlock.builder()
-                .add("new $T[]{\n", CcConfiguration.class)
-                .indent();
-
-        Iterator<CcConfiguration> configurationsIterator = configurations.iterator();
-        while (configurationsIterator.hasNext()) {
-            CcConfiguration configuration = configurationsIterator.next();
-
-            // Put configuration resource dependencies code block.
-            CodeBlock.Builder putConfigurationResourceDependenciesBuilder = CodeBlock.builder();
-            putConfigurationResourceDependenciesBuilder.indent();
-
-            // Configuration initialization code block.
-            String localeLanguage, localeCountry, localeVariant;
-            if (configuration.locale != null) {
-                localeLanguage = configuration.locale.getLanguage();
-                localeCountry = configuration.locale.getCountry();
-                localeVariant = configuration.locale.getVariant();
-            } else {
-                localeLanguage = localeCountry = localeVariant = null;
-            }
-
-            CodeBlock configurationBlock = CodeBlock.builder()
-                    .add("new $T($L, $Lf, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L, $L)",
-                            CcConfiguration.class, configuration.sdkVersion, configuration.fontScale,
-                            configuration.mcc, configuration.mnc, localeLanguage, localeCountry, localeVariant,
-                            configuration.userSetLocale, configuration.touchscreen, configuration.keyboard,
-                            configuration.keyboardHidden, configuration.hardKeyboardHidden, configuration.navigation,
-                            configuration.navigationHidden, configuration.orientation, configuration.screenLayout,
-                            configuration.uiMode, configuration.screenWidthDp, configuration.screenHeightDp,
-                            configuration.smallestScreenWidthDp, configuration.densityDpi)
-                    .build();
-            configurationsInitializer.add(configurationBlock);
-
-            if (configurationsIterator.hasNext()) {
-                configurationsInitializer.add(",\n");
-            } else {
-                configurationsInitializer.add("\n");
-                break;
-            }
-        }
-
-        FieldSpec configurationsField = FieldSpec.builder(CcConfiguration[].class, "sConfigurations")
-                .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
-                .initializer(configurationsInitializer.unindent().add("}").build())
-                .build();
+        FieldSpec configurationsField = GeneratorUtils.getConfigurationsField(configurations);
 
         /*
          * Configurations with resource and dependencies.
@@ -247,7 +202,8 @@ public class CcDependenciesGenerator {
                 .addField(configurationsField)
                 .addFields(resourceDependenciesFields)
                 .addField(dependenciesField);
-        addGeneratedTimeJavaDoc(codeColorResourcesClass);
+
+        GeneratorUtils.addGeneratedTimeJavaDoc(codeColorResourcesClass);
 
         JavaFile javaFile = JavaFile.builder(applicationId, codeColorResourcesClass.build())
                 .build();
@@ -299,15 +255,5 @@ public class CcDependenciesGenerator {
                 return "AndroidAttr_" + resource.getName();
         }
         throw new IllegalStateException("Resource type not supported: " + resource.getType());
-    }
-
-    private static void addGeneratedTimeJavaDoc(TypeSpec.Builder classBuilder) {
-        long time = System.currentTimeMillis();
-        int seconds = (int) (time / 1000) % 60;
-        int minutes = (int) ((time / (1000 * 60)) % 60);
-        int hours = (int) ((time / (1000 * 60 * 60)) % 24);
-
-        classBuilder.addJavadoc("Generated at $L:$L:$L.\n", String.format("%02d", hours),
-                String.format("%02d", minutes), String.format("%02d", seconds));
     }
 }

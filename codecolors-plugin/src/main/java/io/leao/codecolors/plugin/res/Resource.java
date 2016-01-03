@@ -171,7 +171,7 @@ public class Resource implements Serializable {
         }
 
         public void writeTo(File output) {
-            FileUtils.writeTo(output, mResources);
+            FileUtils.writeTo(mResources, output);
         }
     }
 }

@@ -11,10 +11,10 @@ import android.widget.ImageView;
 import java.lang.reflect.Field;
 import java.util.Set;
 
-import io.leao.codecolors.CodeColors;
 import io.leao.codecolors.R;
+import io.leao.codecolors.manager.CcColorsManager;
+import io.leao.codecolors.manager.CcDependenciesManager;
 import io.leao.codecolors.res.CcColorStateList;
-import io.leao.codecolors.res.CcDependenciesHandler;
 
 public class CcLayoutInflater extends LayoutInflater implements LayoutInflater.Factory2 {
 
@@ -22,7 +22,8 @@ public class CcLayoutInflater extends LayoutInflater implements LayoutInflater.F
 
     protected Object[] mConstructorArgs;
 
-    protected CcDependenciesHandler mDependenciesHandler;
+    protected CcColorsManager mColorsManager;
+    protected CcDependenciesManager mDependenciesManager;
 
     protected CcLayoutInflater(Context context) {
         super(context);
@@ -51,7 +52,10 @@ public class CcLayoutInflater extends LayoutInflater implements LayoutInflater.F
             mConstructorArgs = new Object[2];
         }
 
-        mDependenciesHandler = new CcDependenciesHandler(context);
+        mColorsManager = CcColorsManager.obtain(context);
+        mColorsManager.onNewContext(context);
+
+        mDependenciesManager = CcDependenciesManager.obtain(context);
     }
 
     @Override
@@ -111,14 +115,14 @@ public class CcLayoutInflater extends LayoutInflater implements LayoutInflater.F
                         Drawable backgroundDrawable = view.getBackground();
                         if (backgroundDrawable != null) {
                             int resourceId = ta.getResourceId(attr, 0);
-                            addCodeColorCallbacks(context, resourceId, backgroundDrawable, mDrawableInvalidateCallback);
+                            addCodeColorCallbacks(resourceId, backgroundDrawable, mDrawableInvalidateCallback);
                         }
                     } else if (attr == R.styleable.CodeColors_android_src) {
                         if (view instanceof ImageView) {
                             Drawable srcDrawable = ((ImageView) view).getDrawable();
                             if (srcDrawable != null) {
                                 int resourceId = ta.getResourceId(attr, 0);
-                                addCodeColorCallbacks(context, resourceId, srcDrawable, mDrawableInvalidateCallback);
+                                addCodeColorCallbacks(resourceId, srcDrawable, mDrawableInvalidateCallback);
                             }
                         }
                     }
@@ -129,11 +133,10 @@ public class CcLayoutInflater extends LayoutInflater implements LayoutInflater.F
         }
     }
 
-    private void addCodeColorCallbacks(Context context, int resourceId, Drawable drawable,
-                                       CcColorStateList.AnchorCallback callback) {
-        Set<Integer> dependencies = mDependenciesHandler.resolveDependencies(resourceId);
+    private void addCodeColorCallbacks(int resourceId, Drawable drawable, CcColorStateList.AnchorCallback callback) {
+        Set<Integer> dependencies = mDependenciesManager.resolveDependencies(resourceId);
         for (Integer dependency : dependencies) {
-            CcColorStateList codeColor = CodeColors.getColor(dependency);
+            CcColorStateList codeColor = mColorsManager.getColor(dependency);
             if (codeColor != null) {
                 codeColor.addCallback(drawable, callback);
             }

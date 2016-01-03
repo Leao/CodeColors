@@ -1,7 +1,12 @@
 package io.leao.codecolors.res;
 
+import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Build;
+import android.os.Parcel;
+
+import java.util.Locale;
+import java.util.Set;
 
 import io.leao.codecolors.plugin.res.CcConfiguration;
 
@@ -59,5 +64,80 @@ public class CcConfigurationUtils {
         }
 
         return compatible;
+    }
+
+    public static CcConfiguration getBestConfiguration(Context context, Set<CcConfiguration> configurations) {
+        return getBestConfiguration(context.getResources().getConfiguration(), configurations);
+    }
+
+    public static CcConfiguration getBestConfiguration(Configuration contextConfiguration,
+                                                       Set<CcConfiguration> configurations) {
+        CcConfiguration lastConfiguration = null;
+        for (CcConfiguration configuration : configurations) {
+            if (CcConfigurationUtils.areCompatible(configuration, contextConfiguration)) {
+                return configuration;
+            }
+            lastConfiguration = configuration;
+        }
+        return lastConfiguration;
+    }
+
+    public static void writeToParcel(CcConfiguration configuration, Parcel dest, int flags) {
+        dest.writeFloat(configuration.fontScale);
+        dest.writeInt(configuration.mcc);
+        dest.writeInt(configuration.mnc);
+        if (configuration.locale == null) {
+            dest.writeInt(0);
+        } else {
+            dest.writeInt(1);
+            dest.writeString(configuration.locale.getLanguage());
+            dest.writeString(configuration.locale.getCountry());
+            dest.writeString(configuration.locale.getVariant());
+        }
+        if (configuration.userSetLocale) {
+            dest.writeInt(1);
+        } else {
+            dest.writeInt(0);
+        }
+        dest.writeInt(configuration.touchscreen);
+        dest.writeInt(configuration.keyboard);
+        dest.writeInt(configuration.keyboardHidden);
+        dest.writeInt(configuration.hardKeyboardHidden);
+        dest.writeInt(configuration.navigation);
+        dest.writeInt(configuration.navigationHidden);
+        dest.writeInt(configuration.orientation);
+        dest.writeInt(configuration.screenLayout);
+        dest.writeInt(configuration.uiMode);
+        dest.writeInt(configuration.screenWidthDp);
+        dest.writeInt(configuration.screenHeightDp);
+        dest.writeInt(configuration.smallestScreenWidthDp);
+        dest.writeInt(configuration.densityDpi);
+        dest.writeInt(configuration.sdkVersion);
+    }
+
+    public static CcConfiguration readFromParcel(Parcel source) {
+        CcConfiguration configuration = new CcConfiguration();
+        configuration.fontScale = source.readFloat();
+        configuration.mcc = source.readInt();
+        configuration.mnc = source.readInt();
+        if (source.readInt() != 0) {
+            configuration.locale = new Locale(source.readString(), source.readString(), source.readString());
+        }
+        configuration.userSetLocale = (source.readInt() == 1);
+        configuration.touchscreen = source.readInt();
+        configuration.keyboard = source.readInt();
+        configuration.keyboardHidden = source.readInt();
+        configuration.hardKeyboardHidden = source.readInt();
+        configuration.navigation = source.readInt();
+        configuration.navigationHidden = source.readInt();
+        configuration.orientation = source.readInt();
+        configuration.screenLayout = source.readInt();
+        configuration.uiMode = source.readInt();
+        configuration.screenWidthDp = source.readInt();
+        configuration.screenHeightDp = source.readInt();
+        configuration.smallestScreenWidthDp = source.readInt();
+        configuration.densityDpi = source.readInt();
+        configuration.sdkVersion = source.readInt();
+        return configuration;
     }
 }
