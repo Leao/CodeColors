@@ -1,18 +1,14 @@
 package io.leao.codecolors.plugin.res;
 
-import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import java.io.File;
-import java.io.IOException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
+import io.leao.codecolors.plugin.xml.XmlCrawler;
+import io.leao.codecolors.plugin.xml.XmlUtils;
 
-public class PublicResourcesParser {
+public class PublicResourcesParser implements XmlCrawler.Callback<Void> {
     private static final String RESOURCE_PUBLIC = "public";
 
     private static final String ATTRIBUTE_NAME = "name";
@@ -29,52 +25,31 @@ public class PublicResourcesParser {
     }
 
     public void parsePublicResources(File file) {
-        try {
-            parseXmlFile(file);
-        } catch (ParserConfigurationException | IOException | SAXException e) {
-            System.out.println("Error processing file " + file.getName() + ": " + e.toString());
-        }
+        XmlCrawler.crawl(file, null, this);
     }
 
-    private void parseXmlFile(File file) throws ParserConfigurationException, IOException, SAXException {
-        DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
-        docBuilderFactory.setNamespaceAware(true);
-        DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-        Document document = docBuilder.parse(file);
-
-        parseNode(document.getDocumentElement());
-    }
-
-    public void parseNode(Node node) {
-        NodeList childNodes = node.getChildNodes();
-        int childCount = childNodes.getLength();
-
+    @Override
+    public boolean parseNode(Node node, NodeList children, int childCount, Void trail) {
         String currentNodeName = node.getNodeName();
         if (RESOURCE_PUBLIC.equals(currentNodeName)) {
             String name;
             Resource.Type type;
-            if ((name = getNodeNameAttribute(node)) != null &&
+            if ((name = XmlUtils.getAttributeValue(node, ATTRIBUTE_NAME)) != null &&
                     (type = getNodeTypeAttribute(node)) != null) {
                 Resource resource = mResourcesPool.getOrCreateResource(name, type);
                 resource.setIsPublic(true);
             }
         }
-
-        // Parse the remaining nodes.
-        for (int i = 0; i < childCount; i++) {
-            Node childNode = childNodes.item(i);
-            if (childNode.getNodeType() == Node.ELEMENT_NODE) {
-                parseNode(childNode);
-            }
-        }
+        return false;
     }
 
-    private static String getNodeNameAttribute(Node node) {
-        return getNodeAttribute(node, ATTRIBUTE_NAME);
+    @Override
+    public Void createTrail(Node node, Void trail) {
+        return null;
     }
 
     private static Resource.Type getNodeTypeAttribute(Node node) {
-        String typeName = getNodeAttribute(node, ATTRIBUTE_TYPE);
+        String typeName = XmlUtils.getAttributeValue(node, ATTRIBUTE_TYPE);
         if (typeName != null) {
             switch (typeName) {
                 case TYPE_DRAWABLE:
@@ -84,14 +59,6 @@ public class PublicResourcesParser {
                 case TYPE_ATTR:
                     return Resource.Type.ATTR;
             }
-        }
-        return null;
-    }
-
-    private static String getNodeAttribute(Node node, String attribute) {
-        Node nameAttr = node.getAttributes().getNamedItem(attribute);
-        if (nameAttr != null) {
-            return nameAttr.getNodeValue();
         }
         return null;
     }
