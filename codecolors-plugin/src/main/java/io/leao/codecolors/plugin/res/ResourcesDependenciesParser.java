@@ -209,7 +209,7 @@ public class ResourcesDependenciesParser
         return dependencyRegex;
     }
 
-    public static class XmlCrawlerTrail {
+    protected static class XmlCrawlerTrail {
         public CcConfiguration configuration;
         public Resource resource;
 
