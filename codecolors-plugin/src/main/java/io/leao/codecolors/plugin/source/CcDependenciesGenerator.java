@@ -123,7 +123,7 @@ public class CcDependenciesGenerator {
          * Setup configurations.
          */
 
-        FieldSpec configurationsField = GeneratorUtils.getConfigurationsField(configurations);
+        FieldSpec configurationsField = GeneratorUtils.generateConfigurationsField(configurations);
 
         /*
          * Configurations with resource and dependencies.

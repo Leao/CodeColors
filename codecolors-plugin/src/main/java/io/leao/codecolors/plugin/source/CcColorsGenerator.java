@@ -37,7 +37,7 @@ public class CcColorsGenerator {
         }
 
         Map<CcConfiguration, Integer> allConfigurationsIndexes = new HashMap<>();
-        FieldSpec allConfigurationsField = GeneratorUtils.getConfigurationsField(
+        FieldSpec allConfigurationsField = GeneratorUtils.generateConfigurationsField(
                 allConfigurations,
                 new GeneratorUtils.Callback<CcConfiguration>() {
                     @Override
@@ -58,22 +58,21 @@ public class CcColorsGenerator {
         CodeBlock.Builder putColorValueBuilder = CodeBlock.builder().indent();
 
         for (String color : colorConfigurations.keySet()) {
-            CodeBlock.Builder addConfigurationsBuilder = CodeBlock.builder();
-            Set<CcConfiguration> configurations = colorConfigurations.get(color);
-            for (CcConfiguration configuration : configurations) {
-                addConfigurationsBuilder.add(
-                        "add($L[$L]);\n",
-                        GeneratorUtils.CONFIGURATIONS_FIELD_NAME,
-                        allConfigurationsIndexes.get(configuration));
-            }
-
+            // Add configurations to TreeSet.
             putColorConfigurationsBuilder
                     .add("put(\n")
                     .indent()
                     .add("$T$L,\n", rClassName, String.format(COLOR_ID_BASE, color))
-                    .add("new $T<$T>() {{\n", TreeSet.class, CcConfiguration.class)
-                    .indent()
-                    .add(addConfigurationsBuilder.build())
+                    .add("new $T() {{\n", ParameterizedTypeName.get(TreeSet.class, CcConfiguration.class))
+                    .indent();
+            Set<CcConfiguration> configurations = colorConfigurations.get(color);
+            for (CcConfiguration configuration : configurations) {
+                putColorConfigurationsBuilder.add(
+                        "add($L[$L]);\n",
+                        GeneratorUtils.CONFIGURATIONS_FIELD_NAME,
+                        allConfigurationsIndexes.get(configuration));
+            }
+            putColorConfigurationsBuilder
                     .unindent()
                     .add("}});\n")
                     .unindent();

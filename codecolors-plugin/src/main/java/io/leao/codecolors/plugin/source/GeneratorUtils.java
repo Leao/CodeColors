@@ -13,17 +13,17 @@ import io.leao.codecolors.plugin.res.CcConfiguration;
 public class GeneratorUtils {
     public static final String CONFIGURATIONS_FIELD_NAME = "sConfigurations";
 
-    public static FieldSpec getConfigurationsField(Iterable<CcConfiguration> configurations) {
-        return getConfigurationsField(configurations, null);
+    public static FieldSpec generateConfigurationsField(Iterable<CcConfiguration> configurations) {
+        return generateConfigurationsField(configurations, null);
     }
 
-    public static FieldSpec getConfigurationsField(Iterable<CcConfiguration> configurations,
-                                                   Callback<CcConfiguration> callback) {
-        return getConfigurationsField(configurations, callback, CONFIGURATIONS_FIELD_NAME);
+    public static FieldSpec generateConfigurationsField(Iterable<CcConfiguration> configurations,
+                                                        Callback<CcConfiguration> callback) {
+        return generateConfigurationsField(configurations, callback, CONFIGURATIONS_FIELD_NAME);
     }
 
-    public static FieldSpec getConfigurationsField(Iterable<CcConfiguration> configurations,
-                                                   Callback<CcConfiguration> callback, String fieldName) {
+    public static FieldSpec generateConfigurationsField(Iterable<CcConfiguration> configurations,
+                                                        Callback<CcConfiguration> callback, String fieldName) {
         CodeBlock.Builder configurationsInitializer = CodeBlock.builder()
                 .add("new $T[]{\n", CcConfiguration.class)
                 .indent();
