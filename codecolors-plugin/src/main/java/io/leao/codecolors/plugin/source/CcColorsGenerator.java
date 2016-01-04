@@ -9,7 +9,9 @@ import com.squareup.javapoet.TypeSpec;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -58,25 +60,39 @@ public class CcColorsGenerator {
         CodeBlock.Builder putColorValueBuilder = CodeBlock.builder().indent();
 
         for (String color : colorConfigurations.keySet()) {
-            // Add configurations to TreeSet.
+            // Color configurations.
             putColorConfigurationsBuilder
                     .add("put(\n")
                     .indent()
                     .add("$T$L,\n", rClassName, String.format(COLOR_ID_BASE, color))
-                    .add("new $T() {{\n", ParameterizedTypeName.get(TreeSet.class, CcConfiguration.class))
+                    .add("new $T($T.asList(new $T[]{\n",
+                            ParameterizedTypeName.get(TreeSet.class, CcConfiguration.class),
+                            Arrays.class,
+                            CcConfiguration.class)
                     .indent();
+
             Set<CcConfiguration> configurations = colorConfigurations.get(color);
-            for (CcConfiguration configuration : configurations) {
-                putColorConfigurationsBuilder.add(
-                        "add($L[$L]);\n",
-                        GeneratorUtils.CONFIGURATIONS_FIELD_NAME,
-                        allConfigurationsIndexes.get(configuration));
+            Iterator<CcConfiguration> configurationsIterator = configurations.iterator();
+            while (configurationsIterator.hasNext()) {
+                CcConfiguration configuration = configurationsIterator.next();
+                putColorConfigurationsBuilder
+                        .add("$L[$L]",
+                                GeneratorUtils.CONFIGURATIONS_FIELD_NAME,
+                                allConfigurationsIndexes.get(configuration));
+                if (configurationsIterator.hasNext()) {
+                    putColorConfigurationsBuilder.add(",\n");
+                } else {
+                    putColorConfigurationsBuilder.add("\n");
+                    break;
+                }
             }
+
             putColorConfigurationsBuilder
                     .unindent()
-                    .add("}});\n")
+                    .add("})));\n")
                     .unindent();
 
+            // Color value.
             putColorValueBuilder
                     .add("put($T$L, $T$L);\n",
                             rClassName,
