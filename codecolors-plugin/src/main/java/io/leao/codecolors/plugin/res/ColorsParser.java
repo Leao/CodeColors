@@ -25,12 +25,13 @@ import io.leao.codecolors.plugin.xml.XmlUtils;
 /**
  * Parses project colors.
  * <p/>
- * Returns the list of colors by folder name, and exports the list of colors by {@link CcConfiguration}.
+ * Returns the list of colors by folder name, and exports the list of {@link CcConfiguration}s by color.
  */
 public class ColorsParser
         extends FileCrawlerResFileCallback<String>
         implements XmlCrawler.Callback<ColorsParser.XmlCrawlerTrail> {
-    private static final String OUTPUT_FILE_BASE = "%s\\intermediates\\codecolors\\CcColors.ser";
+    private static final String OUTPUT_DIR_BASE = "%s\\intermediates\\codecolors\\";
+    private static final String COLOR_CONFIGURATIONS_FILE_NAME = "ColorConfigurations.ser";
 
     private static final String RESOURCE_COLOR = "color";
     private static final String ATTRIBUTE_NAME = "name";
@@ -47,28 +48,27 @@ public class ColorsParser
     }
 
     public Map<String, Set<String>> parseColors() {
-        // Fill mFolderColors and mColorConfigurations.
+        // Fill mFolderColors, and mColorConfigurations.
         for (SourceProvider sourceProvider : mVariant.getSourceSets()) {
             for (File file : sourceProvider.getResDirectories()) {
                 FileCrawler.crawl(file, file.getName(), this);
             }
         }
 
+        File outputDir = createOutputDirFile(mProject);
+        if (!outputDir.exists()) {
+            outputDir.mkdirs();
+        }
+
+        // Write color configurations.
         try {
-            // Store output to reuse when generating CcColors class.
-            File outputFile = createConfigurationColorsOutputFile(mProject);
-            File outputDir = outputFile.getParentFile();
-            if (!outputDir.exists()) {
-                outputDir.mkdirs();
+            File colorConfigurationsFile = createColorConfigurationsOutputFile(outputDir);
+            if (!colorConfigurationsFile.exists()) {
+                colorConfigurationsFile.createNewFile();
             }
-
-            if (!outputFile.exists()) {
-                outputFile.createNewFile();
-            }
-
-            FileUtils.writeTo(mColorConfigurations, outputFile);
+            FileUtils.writeTo(mColorConfigurations, colorConfigurationsFile);
         } catch (IOException e) {
-            System.out.println("Failed to create CcColors file: " + e.toString());
+            System.out.println("Failed to create color configurations file: " + e.toString());
         }
 
         return mFolderColors;
@@ -121,13 +121,18 @@ public class ColorsParser
         colors.add(color);
     }
 
-    @SuppressWarnings("unchecked")
-    public static Map<String, Set<CcConfiguration>> getConfigurationColors(Project project) {
-        return (Map<String, Set<CcConfiguration>>) FileUtils.readFrom(createConfigurationColorsOutputFile(project));
+    private static File createOutputDirFile(Project project) {
+        return project.file(String.format(OUTPUT_DIR_BASE, project.getBuildDir()));
     }
 
-    private static File createConfigurationColorsOutputFile(Project project) {
-        return project.file(String.format(OUTPUT_FILE_BASE, project.getBuildDir()));
+    private static File createColorConfigurationsOutputFile(File outputDir) {
+        return new File(outputDir, COLOR_CONFIGURATIONS_FILE_NAME);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Map<String, Set<CcConfiguration>> getColorConfigurations(Project project) {
+        return (Map<String, Set<CcConfiguration>>)
+                FileUtils.readFrom(createColorConfigurationsOutputFile(createOutputDirFile(project)));
     }
 
     protected static class XmlCrawlerTrail {

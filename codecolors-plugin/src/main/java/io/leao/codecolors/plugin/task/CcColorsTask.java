@@ -20,10 +20,10 @@ public class CcColorsTask extends JavaGeneratingTask {
 
     @Override
     public void generateJava() {
-        Map<String, Set<CcConfiguration>> configurationColors = ColorsParser.getConfigurationColors(getProject());
+        Map<String, Set<CcConfiguration>> colorConfigurations = ColorsParser.getColorConfigurations(getProject());
 
         CcColorsGenerator.generateColors(
-                configurationColors,
+                colorConfigurations,
                 getVariant().getGenerateBuildConfig().getBuildConfigPackageName(),
                 getVariant().getApplicationId(),
                 getOutputDir());
