@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -135,10 +136,12 @@ public class CcLayoutInflater extends LayoutInflater implements LayoutInflater.F
 
     private void addCodeColorCallbacks(int resourceId, Drawable drawable, CcColorStateList.AnchorCallback callback) {
         Set<Integer> dependencies = mDependenciesManager.resolveDependencies(resourceId);
-        for (Integer dependency : dependencies) {
-            CcColorStateList codeColor = mColorsManager.getColor(dependency);
-            if (codeColor != null) {
-                codeColor.addCallback(drawable, callback);
+        if (dependencies != null) {
+            for (Integer dependency : dependencies) {
+                CcColorStateList codeColor = mColorsManager.getColor(dependency);
+                if (codeColor != null) {
+                    codeColor.addCallback(drawable, callback);
+                }
             }
         }
     }

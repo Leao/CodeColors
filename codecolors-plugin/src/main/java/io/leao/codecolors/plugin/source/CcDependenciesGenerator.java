@@ -46,9 +46,21 @@ public class CcDependenciesGenerator {
 
         List<FieldSpec> resourceDependenciesFields = new ArrayList<>();
 
-        for (Resource resource : resources) {
+        Iterator<Resource> resourcesIterator = resources.iterator();
+        while (resourcesIterator.hasNext()) {
+            Resource resource = resourcesIterator.next();
+
+            // If the resource doesn't have code colors, remove it and continue.
+            if (!resource.hasCodeColors()) {
+                resourcesIterator.remove();
+                continue;
+            }
+
+            // Prune dependency resources that don't have code colors.
+            resource.pruneDependencies();
+
             // Initialize private resource ids.
-            if (!resource.isPublic() && resource.hasDependents()) {
+            if (!resource.isPublic()) {
                 privateResourcesFields.add(
                         FieldSpec.builder(
                                 String.class,
@@ -58,7 +70,7 @@ public class CcDependenciesGenerator {
                                 .build());
             }
 
-            // Skip everything else if resource doesn't have dependencies.
+            // If the resource doesn't have dependencies, continue.
             if (!resource.hasDependencies()) {
                 continue;
             }
@@ -151,6 +163,7 @@ public class CcDependenciesGenerator {
             CodeBlock.Builder putResourceDependenciesBuilder = CodeBlock.builder().indent();
 
             for (Resource resource : resources) {
+                // If the resource doesn't have dependencies, continue.
                 if (!resource.hasDependencies()) {
                     continue;
                 }

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -16,14 +17,18 @@ public class Resource implements Serializable {
     private String mName;
     private Type mType;
     private boolean mIsPublic;
+    // True if of attribute type, or if included in the code colors list.
+    private boolean mIsCodeColor;
 
+    private Map<CcConfiguration, Boolean> mConfigurationHasCodeColors;
     private Map<CcConfiguration, Set<Resource>> mConfigurationDependencies;
     private Map<CcConfiguration, Set<Resource>> mConfigurationDependents;
 
-    private Resource(String name, Type type, boolean isPublic) {
+    private Resource(String name, Type type, boolean isPublic, boolean isCodeColor) {
         mName = name;
         mType = type;
         mIsPublic = isPublic;
+        mIsCodeColor = isCodeColor;
     }
 
     public String getName() {
@@ -40,6 +45,27 @@ public class Resource implements Serializable {
 
     public boolean isPublic() {
         return mIsPublic;
+    }
+
+    public boolean hasCodeColors() {
+        if (mIsCodeColor) {
+            return true;
+        }
+
+        if (mConfigurationHasCodeColors != null) {
+            for (Boolean hasCodeColors : mConfigurationHasCodeColors.values()) {
+                if (hasCodeColors) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean hasCodeColors(CcConfiguration configuration) {
+        return mIsCodeColor ||
+                (mConfigurationHasCodeColors != null && mConfigurationHasCodeColors.getOrDefault(configuration, false));
+
     }
 
     public Map<CcConfiguration, Set<Resource>> getConfigurationDependencies() {
@@ -61,6 +87,12 @@ public class Resource implements Serializable {
         if (dependency.equals(this)) {
             return; // Circular dependency.
         }
+
+        // Add code color info.
+        if (mConfigurationHasCodeColors == null) {
+            mConfigurationHasCodeColors = new HashMap<>();
+        }
+        mConfigurationHasCodeColors.put(configuration, dependency.hasCodeColors(configuration));
 
         // Add dependency-dependent relation.
         if (mConfigurationDependencies == null) {
@@ -85,18 +117,39 @@ public class Resource implements Serializable {
         }
     }
 
-    public boolean hasDependents() {
-        if (mConfigurationDependents != null) {
-            for (Set<Resource> dependents : mConfigurationDependents.values()) {
-                if (dependents.size() > 0) {
-                    return true;
+    public void pruneDependencies() {
+        // Code color dependencies must be preserved.
+        if (mIsCodeColor) {
+            return;
+        }
+
+        if (mConfigurationHasCodeColors != null) {
+            for (CcConfiguration configuration : mConfigurationHasCodeColors.keySet()) {
+                boolean hasCodeColors = mConfigurationHasCodeColors.get(configuration);
+                // If a configuration has code colors, we remove only the dependencies that doesn't have code colors.
+                // If a configuration doesn't have code colors, we remove the configuration altogether for the list
+                // of dependencies.
+                // In both cases, we remove this resource as a dependent.
+                if (hasCodeColors) {
+                    Iterator<Resource> dependenciesIterator = mConfigurationDependencies.get(configuration).iterator();
+                    while (dependenciesIterator.hasNext()) {
+                        Resource dependency = dependenciesIterator.next();
+                        if (!dependency.hasCodeColors(configuration)) {
+                            dependenciesIterator.remove();
+                            dependency.removeDependent(configuration, this);
+                        }
+                    }
+                } else {
+                    for (Resource dependency : mConfigurationDependencies.get(configuration)) {
+                        dependency.removeDependent(configuration, this);
+                    }
+                    mConfigurationDependencies.remove(configuration);
                 }
             }
         }
-        return false;
     }
 
-    private void addDependent(CcConfiguration configuration, Resource dependent) {
+    protected void addDependent(CcConfiguration configuration, Resource dependent) {
         if (mConfigurationDependents == null) {
             mConfigurationDependents = new TreeMap<>();
         }
@@ -106,6 +159,15 @@ public class Resource implements Serializable {
             mConfigurationDependents.put(configuration, dependents);
         }
         dependents.add(dependent);
+    }
+
+    protected void removeDependent(CcConfiguration configuration, Resource dependent) {
+        if (mConfigurationDependencies != null) {
+            Set<Resource> dependents = mConfigurationDependents.get(configuration);
+            if (dependents != null) {
+                dependents.remove(dependent);
+            }
+        }
     }
 
     @Override
@@ -165,7 +227,7 @@ public class Resource implements Serializable {
         }
 
         public Resource getOrCreateResource(String name, Resource.Type type) {
-            Resource key = new Resource(name, type, isPublic(name, type));
+            Resource key = new Resource(name, type, isPublic(name, type), isCodeColor(name, type));
             Resource value = mResources.get(key);
             if (value == null) {
                 value = key;
@@ -174,8 +236,12 @@ public class Resource implements Serializable {
             return value;
         }
 
-        public boolean isPublic(String name, Resource.Type type) {
+        protected boolean isPublic(String name, Resource.Type type) {
             return true;
+        }
+
+        protected boolean isCodeColor(String name, Resource.Type type) {
+            return type == Type.ATTR || type == Type.ANDROID_ATTR;
         }
 
         public void writeTo(File output) {

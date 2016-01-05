@@ -85,8 +85,18 @@ public class SdkDependenciesTask extends DefaultTask {
                     type = Resource.Type.ANDROID_ATTR;
                     break;
             }
-            // Name, type, not public.
-            return super.getOrCreateResource(name, type, false);
+            // Name, type.
+            return super.getOrCreateResource(name, type);
+        }
+
+        /**
+         * By default, we consider that SDK Resources are not public.
+         * <p>
+         * We will parse the public resources later and set the public ones.
+         */
+        @Override
+        protected boolean isPublic(String name, Resource.Type type) {
+            return false;
         }
     }
 }
