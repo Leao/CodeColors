@@ -22,22 +22,18 @@ import io.leao.codecolors.plugin.task.SdkDependenciesTask;
 public class CodeColorsPlugin implements Plugin<Project> {
 
     public void apply(final Project project) {
+        // Create plugin extension.
+        project.getExtensions().create(CcPluginExtension.NAME, CcPluginExtension.class);
+
+        // Hook tasks and actions to project's android extension.
         Object extension = project.getProperties().get("android");
         if (extension instanceof AppExtension) {
-            createExtension(project);
-
             AppExtension appExtension = (AppExtension) extension;
             appExtension.getApplicationVariants().all(createResourcesTaskCreator(project, appExtension));
         } else if (extension instanceof LibraryExtension) {
-            createExtension(project);
-
             LibraryExtension libraryExtension = (LibraryExtension) extension;
             libraryExtension.getLibraryVariants().all(createResourcesTaskCreator(project, libraryExtension));
         }
-    }
-
-    private void createExtension(Project project) {
-        project.getExtensions().create(CcPluginExtension.NAME, CcPluginExtension.class);
     }
 
     private static Action<BaseVariant> createResourcesTaskCreator(final Project project,
