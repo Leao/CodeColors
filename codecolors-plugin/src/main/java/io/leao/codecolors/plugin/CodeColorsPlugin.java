@@ -26,14 +26,20 @@ public class CodeColorsPlugin implements Plugin<Project> {
         project.getExtensions().create(CcPluginExtension.NAME, CcPluginExtension.class);
 
         // Hook tasks and actions to project's android extension.
-        Object extension = project.getProperties().get("android");
-        if (extension instanceof AppExtension) {
-            AppExtension appExtension = (AppExtension) extension;
-            appExtension.getApplicationVariants().all(createResourcesTaskCreator(project, appExtension));
-        } else if (extension instanceof LibraryExtension) {
-            LibraryExtension libraryExtension = (LibraryExtension) extension;
-            libraryExtension.getLibraryVariants().all(createResourcesTaskCreator(project, libraryExtension));
-        }
+        // Make sure android extension was already evaluated.
+        project.afterEvaluate(new Action<Project>() {
+            @Override
+            public void execute(Project project) {
+                Object extension = project.getProperties().get("android");
+                if (extension instanceof AppExtension) {
+                    AppExtension appExtension = (AppExtension) extension;
+                    appExtension.getApplicationVariants().all(createResourcesTaskCreator(project, appExtension));
+                } else if (extension instanceof LibraryExtension) {
+                    LibraryExtension libraryExtension = (LibraryExtension) extension;
+                    libraryExtension.getLibraryVariants().all(createResourcesTaskCreator(project, libraryExtension));
+                }
+            }
+        });
     }
 
     private static Action<BaseVariant> createResourcesTaskCreator(final Project project,
