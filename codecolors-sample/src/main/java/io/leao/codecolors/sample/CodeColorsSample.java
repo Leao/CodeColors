@@ -11,7 +11,15 @@ public class CodeColorsSample extends Application {
     public void onCreate() {
         super.onCreate();
 
+        long time = System.currentTimeMillis();
+
+        // Activate code colors.
         CodeColors.init(this);
-        Log.i(LOG_TAG, "CodeColors active: " + CodeColors.isActive());
+
+        if (CodeColors.isActive()) {
+            Log.i(LOG_TAG, "CodeColors active in " + (System.currentTimeMillis() - time) + "ms.");
+        } else {
+            Log.i(LOG_TAG, "CodeColors activation failed.");
+        }
     }
 }
