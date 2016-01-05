@@ -42,32 +42,27 @@ public class Resource implements Serializable {
         return mIsPublic;
     }
 
+    public Map<CcConfiguration, Set<Resource>> getConfigurationDependencies() {
+        return mConfigurationDependencies;
+    }
+
+    public boolean hasDependencies() {
+        if (mConfigurationDependencies != null) {
+            for (Set<Resource> dependencies : mConfigurationDependencies.values()) {
+                if (dependencies.size() > 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public void addDependency(CcConfiguration configuration, Resource dependency) {
         if (dependency.equals(this)) {
             return; // Circular dependency.
         }
 
-        // Establish dependency-dependent relation.
-        Set<Resource> dependencies = getDependencies(configuration);
-        dependencies.add(dependency);
-        dependency.addDependent(configuration, this);
-
-        // Propagate dependency.
-        Set<Resource> dependents = getDependents(configuration);
-        for (Resource dependent : dependents) {
-            dependent.addDependency(configuration, dependency);
-        }
-    }
-
-    public boolean hasDependencies() {
-        return mConfigurationDependencies != null;
-    }
-
-    public Map<CcConfiguration, Set<Resource>> getConfigurationDependencies() {
-        return mConfigurationDependencies;
-    }
-
-    private Set<Resource> getDependencies(CcConfiguration configuration) {
+        // Add dependency-dependent relation.
         if (mConfigurationDependencies == null) {
             mConfigurationDependencies = new TreeMap<>();
         }
@@ -76,19 +71,32 @@ public class Resource implements Serializable {
             dependencies = new HashSet<>();
             mConfigurationDependencies.put(configuration, dependencies);
         }
-        return dependencies;
+        dependencies.add(dependency);
+        dependency.addDependent(configuration, this);
+
+        // Propagate dependency.
+        if (mConfigurationDependents != null) {
+            Set<Resource> dependents = mConfigurationDependents.get(configuration);
+            if (dependents != null) {
+                for (Resource dependent : dependents) {
+                    dependent.addDependency(configuration, dependency);
+                }
+            }
+        }
     }
 
     public boolean hasDependents() {
-        return mConfigurationDependents != null;
+        if (mConfigurationDependents != null) {
+            for (Set<Resource> dependents : mConfigurationDependents.values()) {
+                if (dependents.size() > 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void addDependent(CcConfiguration configuration, Resource dependent) {
-        Set<Resource> dependents = getDependents(configuration);
-        dependents.add(dependent);
-    }
-
-    private Set<Resource> getDependents(CcConfiguration configuration) {
         if (mConfigurationDependents == null) {
             mConfigurationDependents = new TreeMap<>();
         }
@@ -97,7 +105,7 @@ public class Resource implements Serializable {
             dependents = new HashSet<>();
             mConfigurationDependents.put(configuration, dependents);
         }
-        return dependents;
+        dependents.add(dependent);
     }
 
     @Override
@@ -157,17 +165,17 @@ public class Resource implements Serializable {
         }
 
         public Resource getOrCreateResource(String name, Resource.Type type) {
-            return getOrCreateResource(name, type, true);
-        }
-
-        public Resource getOrCreateResource(String name, Resource.Type type, boolean isPublic) {
-            Resource key = new Resource(name, type, isPublic);
+            Resource key = new Resource(name, type, isPublic(name, type));
             Resource value = mResources.get(key);
             if (value == null) {
                 value = key;
                 mResources.put(key, value);
             }
             return value;
+        }
+
+        public boolean isPublic(String name, Resource.Type type) {
+            return true;
         }
 
         public void writeTo(File output) {
