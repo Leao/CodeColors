@@ -7,7 +7,7 @@ import org.gradle.api.Project;
 import java.io.File;
 
 import io.leao.codecolors.plugin.res.Resource;
-import io.leao.codecolors.plugin.res.ResourcesDependenciesParser;
+import io.leao.codecolors.plugin.res.DependenciesParser;
 import io.leao.codecolors.plugin.source.CcDependenciesGenerator;
 
 public class CcDependenciesTask extends JavaGeneratingTask {
@@ -29,7 +29,7 @@ public class CcDependenciesTask extends JavaGeneratingTask {
         Resource.Pool resourcesPool = new Resource.Pool(mSdkResourcesFile);
 
         // Parse and get configuration resource dependencies.
-        ResourcesDependenciesParser dependenciesParser = new ResourcesDependenciesParser(resourcesPool);
+        DependenciesParser dependenciesParser = new DependenciesParser(resourcesPool);
         dependenciesParser.parseDependencies(getMergeResourcesDir());
 
         CcDependenciesGenerator.generateDependencies(

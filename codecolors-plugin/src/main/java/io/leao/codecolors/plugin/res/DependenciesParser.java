@@ -16,9 +16,9 @@ import io.leao.codecolors.plugin.file.FileUtils;
 import io.leao.codecolors.plugin.xml.XmlUtils;
 import io.leao.codecolors.plugin.xml.XmlCrawler;
 
-public class ResourcesDependenciesParser
+public class DependenciesParser
         extends FileCrawlerXmlFileCallback<CcConfiguration>
-        implements XmlCrawler.Callback<ResourcesDependenciesParser.XmlCrawlerTrail> {
+        implements XmlCrawler.Callback<DependenciesParser.XmlCrawlerTrail> {
     private static final String NAMESPACE_ANDROID = "http://schemas.android.com/apk/res/android";
 
     private static final String RESOURCE_DRAWABLE = "drawable";
@@ -58,7 +58,7 @@ public class ResourcesDependenciesParser
 
     private final Resource.Pool mResourcesPool;
 
-    public ResourcesDependenciesParser(Resource.Pool resourcesPool) {
+    public DependenciesParser(Resource.Pool resourcesPool) {
         mResourcesPool = resourcesPool;
     }
 

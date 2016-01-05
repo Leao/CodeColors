@@ -14,7 +14,7 @@ import java.io.File;
 import io.leao.codecolors.plugin.aapt.AaptUtil;
 import io.leao.codecolors.plugin.res.PublicResourcesParser;
 import io.leao.codecolors.plugin.res.Resource;
-import io.leao.codecolors.plugin.res.ResourcesDependenciesParser;
+import io.leao.codecolors.plugin.res.DependenciesParser;
 
 public class SdkDependenciesTask extends DefaultTask {
     private static final String NAME_BASE = "generateSdkDependencies%s";
@@ -56,7 +56,7 @@ public class SdkDependenciesTask extends DefaultTask {
         SdkResourcesPool sdkResourcesPool = new SdkResourcesPool();
 
         // Parse and get configuration resource dependencies.
-        ResourcesDependenciesParser dependenciesParser = new ResourcesDependenciesParser(sdkResourcesPool);
+        DependenciesParser dependenciesParser = new DependenciesParser(sdkResourcesPool);
         dependenciesParser.parseDependencies(mInputDir);
 
         // Parse public.xml to convert resources to public.
