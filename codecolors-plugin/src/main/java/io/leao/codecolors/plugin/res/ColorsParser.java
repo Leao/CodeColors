@@ -3,6 +3,7 @@ package io.leao.codecolors.plugin.res;
 import com.android.build.gradle.api.BaseVariant;
 import com.android.builder.model.SourceProvider;
 
+import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -35,6 +36,8 @@ public class ColorsParser
 
     private static final String RESOURCE_COLOR = "color";
     private static final String ATTRIBUTE_NAME = "name";
+
+    private static final String COLOR_NAME_REGEX = "[a-z][a-z0-9_]+";
 
     private Project mProject;
     private BaseVariant mVariant;
@@ -106,6 +109,13 @@ public class ColorsParser
     }
 
     private void addColor(String folderName, String color, CcConfiguration configuration) {
+        if (!color.matches(COLOR_NAME_REGEX)) {
+            throw new GradleException(
+                    "'" + color + "' is not a valid file-based resource name. " +
+                    "Code colors need to be defined as file-based resources. " +
+                    "Names must contain only lowercase a-z, numbers or underscore, and they must start with a letter.");
+        }
+
         Set<CcConfiguration> configurations = mColorConfigurations.get(color);
         if (configurations == null) {
             configurations = new TreeSet<>();
