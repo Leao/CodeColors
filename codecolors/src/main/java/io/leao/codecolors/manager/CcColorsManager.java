@@ -1,8 +1,10 @@
 package io.leao.codecolors.manager;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.os.Build;
 import android.support.annotation.ColorRes;
 import android.util.SparseArray;
 
@@ -57,6 +59,7 @@ public class CcColorsManager {
         }
     }
 
+    @SuppressWarnings("deprecation")
     public void onNewContext(Context context) {
         Resources resources = context.getResources();
         Configuration configuration = resources.getConfiguration();
@@ -75,7 +78,13 @@ public class CcColorsManager {
                 // Reset default color if the configuration changed.
                 CcColorStateList cccsl = mColorCsssl.get(color);
                 if (!bestConfiguration.equals(cccsl.getConfiguration())) {
-                    cccsl.setDefaultColor(bestConfiguration, resources.getColorStateList(mColorValue.get(color)));
+                    ColorStateList csl;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        csl = resources.getColorStateList(mColorValue.get(color), context.getTheme());
+                    } else {
+                        csl = resources.getColorStateList(mColorValue.get(color));
+                    }
+                    cccsl.setDefaultColor(bestConfiguration, csl);
                 }
             }
         }
