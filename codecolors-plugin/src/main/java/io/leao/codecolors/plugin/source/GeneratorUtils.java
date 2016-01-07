@@ -1,5 +1,7 @@
 package io.leao.codecolors.plugin.source;
 
+import com.squareup.javapoet.AnnotationSpec;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeSpec;
@@ -85,6 +87,20 @@ public class GeneratorUtils {
 
         classBuilder.addJavadoc("Generated at $L:$L:$L.\n", String.format("%02d", hours),
                 String.format("%02d", minutes), String.format("%02d", seconds));
+    }
+
+    public static void addSuppressWarningsAnnotations(TypeSpec.Builder classBuilder) {
+        classBuilder.addAnnotation(
+                AnnotationSpec
+                        .builder(SuppressWarnings.class)
+                        .addMember("value", "$S", "unchecked")
+                        .build());
+
+        classBuilder.addAnnotation(
+                AnnotationSpec
+                        .builder(ClassName.get("android.annotation", "SuppressLint"))
+                        .addMember("value", "$S", "all")
+                        .build());
     }
 
     public interface Callback<T> {

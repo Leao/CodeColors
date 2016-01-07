@@ -98,8 +98,9 @@ public class CcDependenciesGenerator {
                 // Fill indexes of dependencies for a specific configuration.
                 configurationDependenciesIndexes.put(configuration, configurationDependenciesIndex++);
 
-                resourceDependenciesInitializer.add("new $T($T.asList(new $T[]{",
-                        ParameterizedTypeName.get(HashSet.class, Object.class),
+                resourceDependenciesInitializer.add(
+                        "new $T<>($T.asList(new $T[]{",
+                        HashSet.class,
                         Arrays.class,
                         Object.class);
 
@@ -124,7 +125,7 @@ public class CcDependenciesGenerator {
 
             resourceDependenciesFields.add(
                     FieldSpec.builder(
-                            ArrayTypeName.of(ParameterizedTypeName.get(HashSet.class, Object.class)),
+                            ArrayTypeName.of(HashSet.class),
                             createResourceVariableName(resource),
                             Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
                             .initializer(resourceDependenciesInitializer.unindent().add("}").build())
@@ -215,6 +216,8 @@ public class CcDependenciesGenerator {
                 .addField(configurationsField)
                 .addFields(resourceDependenciesFields)
                 .addField(dependenciesField);
+
+        GeneratorUtils.addSuppressWarningsAnnotations(codeColorResourcesClass);
 
         GeneratorUtils.addGeneratedTimeJavaDoc(codeColorResourcesClass);
 
