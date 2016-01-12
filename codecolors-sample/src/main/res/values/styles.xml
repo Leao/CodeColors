@@ -6,6 +6,8 @@
         <item name="colorPrimary">@color/cc__color_primary</item>
         <item name="colorPrimaryDark">@color/cc__color_primary_dark</item>
         <item name="colorAccent">@color/cc__color_accent</item>
+
+        <item name="colorButtonNormal">@color/cc__color_accent</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
