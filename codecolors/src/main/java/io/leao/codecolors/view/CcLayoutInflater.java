@@ -1,30 +1,22 @@
 package io.leao.codecolors.view;
 
 import android.content.Context;
-import android.content.res.TypedArray;
-import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.ImageView;
 
 import java.lang.reflect.Field;
-import java.util.Set;
 
-import io.leao.codecolors.R;
-import io.leao.codecolors.manager.CcColorsManager;
-import io.leao.codecolors.manager.CcDependenciesManager;
-import io.leao.codecolors.res.CcColorStateList;
+public class CcLayoutInflater extends LayoutInflater {
+    private static final String LOG_TAG = CcLayoutInflater.class.getSimpleName();
 
-public class CcLayoutInflater extends LayoutInflater implements LayoutInflater.Factory2 {
+    private static boolean sCheckedLayoutInflaterFactory2Field;
+    private static Field sLayoutInflaterFactory2Field;
 
     private static final String[] sClassPrefixes = {"android.widget.", "android.webkit."};
 
     protected Object[] mConstructorArgs;
-
-    protected CcColorsManager mColorsManager;
-    protected CcDependenciesManager mDependenciesManager;
 
     protected CcLayoutInflater(Context context) {
         super(context);
@@ -37,10 +29,7 @@ public class CcLayoutInflater extends LayoutInflater implements LayoutInflater.F
     }
 
     private void init(Context context) {
-        // Set factory if needed. If it's already set through cloning, do not reset it.
-        if (!(getFactory() instanceof CcLayoutInflater)) {
-            setFactory2(this);
-        }
+        forceSetFactory(new CcLayoutInflaterFactoryWrapper(this, internalGetFactory2()));
 
         // Get object args through reflection.
         try {
@@ -53,23 +42,53 @@ public class CcLayoutInflater extends LayoutInflater implements LayoutInflater.F
             mConstructorArgs = new Object[2];
         }
 
-        mColorsManager = CcColorsManager.obtain(context);
-        mColorsManager.onNewContext(context);
 
-        mDependenciesManager = CcDependenciesManager.obtain(context);
+    }
+
+    private void forceSetFactory(Factory2 factory) {
+        if (!sCheckedLayoutInflaterFactory2Field) {
+            try {
+                sLayoutInflaterFactory2Field = LayoutInflater.class.getDeclaredField("mFactory2");
+                sLayoutInflaterFactory2Field.setAccessible(true);
+            } catch (NoSuchFieldException e) {
+                Log.e(LOG_TAG, "Could not find field 'mFactory2' on class " + LayoutInflater.class.getName() +
+                        "; inflation may have unexpected results.", e);
+            }
+            sCheckedLayoutInflaterFactory2Field = true;
+        }
+        if (sLayoutInflaterFactory2Field != null) {
+            try {
+                sLayoutInflaterFactory2Field.set(this, factory);
+            } catch (IllegalAccessException e) {
+                Log.e(LOG_TAG, "Could not set the Factory2 on LayoutInflater " + this +
+                        "; inflation may have unexpected results.", e);
+            }
+        }
+    }
+
+    private Factory2 internalGetFactory2() {
+        Factory2 factory2 = getFactory2();
+        if (factory2 instanceof CcLayoutInflaterFactoryWrapper) {
+            return ((CcLayoutInflaterFactoryWrapper) factory2).getFactory();
+        } else {
+            return super.getFactory2();
+        }
     }
 
     @Override
-    public View onCreateView(View parent, String name, Context context, AttributeSet attrs) {
-        return onCreateView(name, context, attrs);
+    public void setFactory2(Factory2 factory) {
+        Factory2 factory2 = getFactory2();
+        if (factory2 instanceof CcLayoutInflaterFactoryWrapper) {
+            ((CcLayoutInflaterFactoryWrapper) factory2).setFactory(factory);
+        } else {
+            super.setFactory2(factory);
+        }
     }
 
-    @Override
-    public View onCreateView(String name, Context context, AttributeSet attrs) {
-        return createViewFromTag(context, name, attrs);
-    }
-
-    protected View createViewFromTag(Context context, String name, AttributeSet attrs) {
+    /**
+     * Called by {@link CcLayoutInflater}.
+     */
+    View createViewFromTag(Context context, String name, AttributeSet attrs) {
         final Context lastContext = (Context) mConstructorArgs[0];
         mConstructorArgs[0] = context;
         View view = null;
@@ -91,10 +110,6 @@ public class CcLayoutInflater extends LayoutInflater implements LayoutInflater.F
             } else {
                 view = createView(name, null, attrs);
             }
-
-            // Add callbacks to refresh drawable states.
-            addCodeColorCallbacks(context, attrs, view);
-
         } catch (ClassNotFoundException e) {
             // In this case we want to let the base class take a crack at it.
         } finally {
@@ -103,63 +118,6 @@ public class CcLayoutInflater extends LayoutInflater implements LayoutInflater.F
 
         return view;
     }
-
-    private void addCodeColorCallbacks(Context context, AttributeSet attrs, View view) {
-        if (attrs != null) {
-            TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.CodeColors);
-            try {
-                final int N = ta.getIndexCount();
-                for (int i = 0; i < N; i++) {
-                    int attr = ta.getIndex(i);
-                    if (attr == R.styleable.CodeColors_android_background ||
-                            attr == R.styleable.CodeColors_backgroundTint) {
-                        Drawable backgroundDrawable = view.getBackground();
-                        if (backgroundDrawable != null) {
-                            int resourceId = ta.getResourceId(attr, 0);
-                            addCodeColorCallbacks(resourceId, backgroundDrawable, mDrawableInvalidateCallback);
-                        }
-                    } else if (attr == R.styleable.CodeColors_android_src) {
-                        if (view instanceof ImageView) {
-                            Drawable srcDrawable = ((ImageView) view).getDrawable();
-                            if (srcDrawable != null) {
-                                int resourceId = ta.getResourceId(attr, 0);
-                                addCodeColorCallbacks(resourceId, srcDrawable, mDrawableInvalidateCallback);
-                            }
-                        }
-                    }
-                }
-            } finally {
-                ta.recycle();
-            }
-        }
-    }
-
-    private void addCodeColorCallbacks(int resourceId, Drawable drawable, CcColorStateList.AnchorCallback callback) {
-        Set<Integer> dependencies = mDependenciesManager.resolveDependencies(resourceId);
-        if (dependencies != null) {
-            for (Integer dependency : dependencies) {
-                CcColorStateList codeColor = mColorsManager.getColor(dependency);
-                if (codeColor != null) {
-                    codeColor.addCallback(drawable, callback);
-                }
-            }
-        }
-    }
-
-    private static final CcColorStateList.AnchorCallback<Drawable> mDrawableInvalidateCallback =
-            new CcColorStateList.AnchorCallback<Drawable>() {
-                @Override
-                public void invalidateColor(Drawable drawable, CcColorStateList color) {
-                    if (drawable != null) {
-                        final int[] state = drawable.getState();
-                        // Force a state change to update the color.
-                        drawable.setState(new int[]{0});
-                        drawable.setState(state);
-                        // Invalidate the drawable (invalidates the view).
-                        drawable.invalidateSelf();
-                    }
-                }
-            };
 
     @Override
     public LayoutInflater cloneInContext(Context newContext) {

@@ -3,8 +3,6 @@ package io.leao.codecolors.app;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v4.view.LayoutInflaterCompat;
-import android.support.v4.view.LayoutInflaterFactory;
 import android.support.v7.app.AppCompatActivity;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -17,15 +15,8 @@ public class CcAppCompatActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        installAppCompatViewFactory();
+        LayoutInflater.from(this); // Makes sure mLayoutInflater is initialized.
         super.onCreate(savedInstanceState);
-    }
-
-    protected void installAppCompatViewFactory() {
-        // Force app compat view factory installation.
-        // The AppCompat library will still log an error installing the factory, but it will work.
-        LayoutInflater layoutInflater = LayoutInflater.from(this);
-        LayoutInflaterCompat.setFactory(layoutInflater, (LayoutInflaterFactory) getDelegate());
     }
 
     @Override
