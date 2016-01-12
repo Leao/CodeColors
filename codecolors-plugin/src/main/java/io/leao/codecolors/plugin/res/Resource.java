@@ -22,7 +22,11 @@ public class Resource implements Serializable {
 
     private Map<CcConfiguration, Boolean> mConfigurationHasCodeColors;
     private Map<CcConfiguration, Set<Resource>> mConfigurationDependencies;
-    private Map<CcConfiguration, Set<Resource>> mConfigurationDependents;
+
+    // Dependents do not need to be persisted, since they are only important when creating the dependency graph, and,
+    // if persisted, they persist the circular dependency between resources, that creates a hashCode() issue on
+    // deserialization.
+    private transient Map<CcConfiguration, Set<Resource>> mConfigurationDependents;
 
     private Resource(String name, Type type, boolean isPublic, boolean isCodeColor) {
         mName = name;
@@ -88,13 +92,6 @@ public class Resource implements Serializable {
             return; // Circular dependency.
         }
 
-        // Add code color info.
-        if (mConfigurationHasCodeColors == null) {
-            mConfigurationHasCodeColors = new HashMap<>();
-        }
-        mConfigurationHasCodeColors.put(configuration, dependency.hasCodeColors(configuration));
-
-        // Add dependency-dependent relation.
         if (mConfigurationDependencies == null) {
             mConfigurationDependencies = new TreeMap<>();
         }
@@ -103,15 +100,40 @@ public class Resource implements Serializable {
             dependencies = new HashSet<>();
             mConfigurationDependencies.put(configuration, dependencies);
         }
-        dependencies.add(dependency);
-        dependency.addDependent(configuration, this);
 
-        // Propagate dependency.
-        if (mConfigurationDependents != null) {
-            Set<Resource> dependents = mConfigurationDependents.get(configuration);
-            if (dependents != null) {
-                for (Resource dependent : dependents) {
-                    dependent.addDependency(configuration, dependency);
+        if (!dependencies.contains(dependency)) {
+            // Add code color info.
+            if (mConfigurationHasCodeColors == null) {
+                mConfigurationHasCodeColors = new HashMap<>();
+            }
+            Boolean hasCodeColors = mConfigurationHasCodeColors.get(configuration);
+            // Only overwrite hasCodeColors value if it is not true.
+            if (hasCodeColors == null || !hasCodeColors) {
+                mConfigurationHasCodeColors.put(configuration, dependency.hasCodeColors());
+            }
+
+            // Add dependency-dependent relation.
+            dependencies.add(dependency);
+            dependency.addDependent(configuration, this);
+
+            // Also add all dependency's dependencies.
+            if (mConfigurationDependencies != null) {
+                Set<Resource> dependencyDependencies = mConfigurationDependencies.get(configuration);
+                if (dependencyDependencies != null) {
+                    for (Resource dependencyDependency : dependencyDependencies) {
+                        dependencies.add(dependencyDependency);
+                        dependencyDependency.addDependent(configuration, this);
+                    }
+                }
+            }
+
+            // Propagate dependency to dependents.
+            if (mConfigurationDependents != null) {
+                Set<Resource> dependents = mConfigurationDependents.get(configuration);
+                if (dependents != null) {
+                    for (Resource dependent : dependents) {
+                        dependent.addDependency(configuration, dependency);
+                    }
                 }
             }
         }
@@ -162,7 +184,7 @@ public class Resource implements Serializable {
     }
 
     protected void removeDependent(CcConfiguration configuration, Resource dependent) {
-        if (mConfigurationDependencies != null) {
+        if (mConfigurationDependents != null) {
             Set<Resource> dependents = mConfigurationDependents.get(configuration);
             if (dependents != null) {
                 dependents.remove(dependent);
@@ -177,14 +199,14 @@ public class Resource implements Serializable {
 
         Resource resource = (Resource) o;
 
-        if (mName != null ? !mName.equals(resource.mName) : resource.mName != null) return false;
+        if (!mName.equals(resource.mName)) return false;
         return mType == resource.mType;
     }
 
     @Override
     public int hashCode() {
-        int result = mName != null ? mName.hashCode() : 0;
-        result = 31 * result + (mType != null ? mType.hashCode() : 0);
+        int result = mName.hashCode();
+        result = 31 * result + mType.hashCode();
         return result;
     }
 
