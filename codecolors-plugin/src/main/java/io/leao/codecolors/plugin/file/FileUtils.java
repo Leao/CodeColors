@@ -16,7 +16,7 @@ public class FileUtils {
             inputStream.close();
             return object;
         } catch (Exception e) {
-            System.out.println("Failed to read object from " + input.getPath() + ": " + e.getMessage());
+            System.out.println("Failed to read object from " + input.getPath() + ": " + e.toString());
             return null;
         }
     }
@@ -27,7 +27,7 @@ public class FileUtils {
             outputStream.writeObject(object);
             outputStream.close();
         } catch (IOException e) {
-            System.out.println("Failed to write object to " + output.getPath() + ": " + e.getMessage());
+            System.out.println("Failed to write object to " + output.getPath() + ": " + e.toString());
         }
     }
 
