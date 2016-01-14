@@ -10,8 +10,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Parses list of CodeColors colors, stores it by {@link CcConfiguration}s, and replaces its entries defined in
- * {@code values.xml} files by separate ColorStateList files.
+ * Parses list of CodeColors colors, stores their {@link CcConfiguration}s, and replaces its names in
+ * {@code values.xml} file, and creates separate ColorStateList files with the original names.
  */
 public class ColorsParseMergeAction implements Action<Task> {
 
