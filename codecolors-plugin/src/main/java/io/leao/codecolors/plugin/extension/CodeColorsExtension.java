@@ -1,10 +1,12 @@
 package io.leao.codecolors.plugin.extension;
 
+import org.gradle.api.Project;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-public class CcPluginExtension {
+public class CodeColorsExtension {
     public static final String NAME = "codecolors";
     public static final String RES_FILE_NAME_DEFAULT = "codecolors.xml";
     private static final String RES_FILE_NAME_XML_BASE = "%s.xml";
@@ -28,5 +30,10 @@ public class CcPluginExtension {
 
     public String getResFileName() {
         return mResFileName;
+    }
+
+    public static String getResFileName(Project project) {
+        CodeColorsExtension extension = (CodeColorsExtension) project.getExtensions().getByName(CodeColorsExtension.NAME);
+        return extension != null ? extension.getResFileName() : null;
     }
 }

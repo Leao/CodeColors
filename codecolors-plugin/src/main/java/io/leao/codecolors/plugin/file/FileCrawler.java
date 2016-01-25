@@ -8,11 +8,11 @@ public class FileCrawler {
         if (files != null) {
             for (File file : files) {
                 if (file.isFile()) {
-                    if (callback.isFileValid(file)) {
+                    if (callback.isFileValid(file, trail)) {
                         callback.parseFile(file, trail);
                     }
                 } else {
-                    if (callback.isFolderValid(file)) {
+                    if (callback.isFolderValid(file, trail)) {
                         crawl(file, callback.createTrail(file, trail), callback);
                     }
                 }
@@ -25,8 +25,8 @@ public class FileCrawler {
 
         T createTrail(File folder, T trail);
 
-        boolean isFileValid(File file);
+        boolean isFileValid(File file, T trail);
 
-        boolean isFolderValid(File folder);
+        boolean isFolderValid(File folder, T trail);
     }
 }

@@ -26,7 +26,7 @@ import io.leao.codecolors.plugin.CcConst;
 import io.leao.codecolors.plugin.res.CcConfiguration;
 import io.leao.codecolors.plugin.res.Resource;
 
-public class CcDependenciesGenerator {
+public class DependenciesGenerator {
     private static final String RESOURCE_ID_BASE = ".%s.%s";
     private static final String ANDROID_RESOURCE_ID_PUBLIC_BASE = "android.R.%s.%s";
     private static final String ANDROID_RESOURCE_ID_PRIVATE_BASE = "android_R_%s_%s";

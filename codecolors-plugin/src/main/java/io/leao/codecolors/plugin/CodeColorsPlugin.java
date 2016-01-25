@@ -9,11 +9,13 @@ import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 
-import io.leao.codecolors.plugin.extension.CcPluginExtension;
-import io.leao.codecolors.plugin.res.ColorsParseMergeAction;
-import io.leao.codecolors.plugin.task.CcColorsTask;
-import io.leao.codecolors.plugin.task.CcDependenciesTask;
+import io.leao.codecolors.plugin.extension.CodeColorsExtension;
+import io.leao.codecolors.plugin.task.ColorsJavaGeneratingTask;
+import io.leao.codecolors.plugin.task.DependenciesJavaGeneratingTask;
+import io.leao.codecolors.plugin.task.MergeResourcesConfigurationTask;
 import io.leao.codecolors.plugin.task.JavaGeneratingTask;
+import io.leao.codecolors.plugin.task.ResGeneratingTask;
+import io.leao.codecolors.plugin.task.ResourcesResGeneratingTask;
 import io.leao.codecolors.plugin.task.SdkDependenciesTask;
 
 /**
@@ -23,7 +25,7 @@ public class CodeColorsPlugin implements Plugin<Project> {
 
     public void apply(final Project project) {
         // Create plugin extension.
-        project.getExtensions().create(CcPluginExtension.NAME, CcPluginExtension.class);
+        project.getExtensions().create(CodeColorsExtension.NAME, CodeColorsExtension.class);
 
         // Hook tasks and actions to project's android extension.
         // Make sure android extension was already evaluated.
@@ -47,15 +49,21 @@ public class CodeColorsPlugin implements Plugin<Project> {
         return new Action<BaseVariant>() {
             @Override
             public void execute(final BaseVariant variant) {
-                ColorsParseMergeAction.create(project, variant);
+                ResourcesResGeneratingTask resourcesResGeneratingTask =
+                        new ResourcesResGeneratingTask(project, variant);
+                ResGeneratingTask.register(resourcesResGeneratingTask);
+
+                MergeResourcesConfigurationTask.create(project, variant, resourcesResGeneratingTask);
 
                 SdkDependenciesTask sdkDependenciesTask = SdkDependenciesTask.create(project, extension, variant);
 
-                CcDependenciesTask ccDependenciesTask = new CcDependenciesTask(project, variant, sdkDependenciesTask);
-                JavaGeneratingTask.register(ccDependenciesTask);
+                DependenciesJavaGeneratingTask dependenciesJavaGeneratingTask =
+                        new DependenciesJavaGeneratingTask(project, variant, sdkDependenciesTask);
+                JavaGeneratingTask.register(dependenciesJavaGeneratingTask);
 
-                CcColorsTask ccColorsTask = new CcColorsTask(project, variant);
-                JavaGeneratingTask.register(ccColorsTask);
+                ColorsJavaGeneratingTask colorsJavaGeneratingTask =
+                        new ColorsJavaGeneratingTask(project, variant, resourcesResGeneratingTask);
+                JavaGeneratingTask.register(colorsJavaGeneratingTask);
             }
         };
     }

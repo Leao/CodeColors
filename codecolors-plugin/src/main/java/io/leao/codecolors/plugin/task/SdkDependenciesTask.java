@@ -12,6 +12,7 @@ import org.gradle.api.tasks.TaskAction;
 import java.io.File;
 
 import io.leao.codecolors.plugin.aapt.AaptUtil;
+import io.leao.codecolors.plugin.file.FileUtils;
 import io.leao.codecolors.plugin.res.PublicResourcesParser;
 import io.leao.codecolors.plugin.res.Resource;
 import io.leao.codecolors.plugin.res.DependenciesParser;
@@ -20,7 +21,7 @@ public class SdkDependenciesTask extends DefaultTask {
     private static final String NAME_BASE = "generateSdkDependencies%s";
     private static final String INPUT_DIR_BASE = "%s\\platforms\\%s\\data\\res";
     private static final String PUBLIC_FILE_BASE = "%s\\values\\public.xml";
-    private static final String OUTPUT_FILE_BASE = "%s\\intermediates\\codecolors\\SdkResources.ser";
+    private static final String SDK_RESOURCES_FILE_NAME = "SdkResources.ser";
 
     private File mInputDir;
     private File mOutputFile;
@@ -28,17 +29,17 @@ public class SdkDependenciesTask extends DefaultTask {
     public static SdkDependenciesTask create(Project project, BaseExtension extension, BaseVariant variant) {
         String name = String.format(NAME_BASE, AaptUtil.capitalize(variant.getName()));
         SdkDependenciesTask task = project.getTasks().create(name, SdkDependenciesTask.class);
-        task.initialize(project, extension);
+        task.initialize(project, extension, variant);
 
         return task;
     }
 
-    protected void initialize(Project project, BaseExtension extension) {
+    protected void initialize(Project project, BaseExtension extension, BaseVariant variant) {
         mInputDir = project.file(
                 String.format(INPUT_DIR_BASE, extension.getSdkDirectory(), extension.getCompileSdkVersion()));
 
         // Output directory.
-        mOutputFile = project.file(String.format(OUTPUT_FILE_BASE, project.getBuildDir()));
+        mOutputFile = new File(FileUtils.obtainIntermediatesDirFile(project, variant), SDK_RESOURCES_FILE_NAME);
     }
 
     @InputDirectory
@@ -91,7 +92,7 @@ public class SdkDependenciesTask extends DefaultTask {
 
         /**
          * By default, we consider that SDK Resources are not public.
-         * <p>
+         * <p/>
          * We will parse the public resources later and set the public ones.
          */
         @Override

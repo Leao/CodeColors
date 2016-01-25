@@ -7,7 +7,7 @@ import java.nio.file.Files;
 public abstract class FileCrawlerXmlFileCallback<T> implements FileCrawler.Callback<T> {
 
     @Override
-    public boolean isFileValid(File file) {
+    public boolean isFileValid(File file, T trail) {
         try {
             String type = Files.probeContentType(file.toPath());
             return "text/xml".equals(type);
@@ -17,7 +17,7 @@ public abstract class FileCrawlerXmlFileCallback<T> implements FileCrawler.Callb
     }
 
     @Override
-    public boolean isFolderValid(File folder) {
+    public boolean isFolderValid(File folder, T trail) {
         return true;
     }
 }

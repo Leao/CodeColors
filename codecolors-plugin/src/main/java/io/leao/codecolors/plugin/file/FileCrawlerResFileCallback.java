@@ -4,26 +4,27 @@ import org.gradle.api.Project;
 
 import java.io.File;
 
-import io.leao.codecolors.plugin.extension.CcPluginExtension;
-
 public abstract class FileCrawlerResFileCallback<T> implements FileCrawler.Callback<T> {
-    private static final String RESOURCE_VALUES = "values";
-
-    private final String mResFileName;
+    private ResFileIdentifier mResFileIdentifier;
+    private boolean mInResFolder;
 
     public FileCrawlerResFileCallback(Project project) {
-        CcPluginExtension extension = (CcPluginExtension) project.getExtensions().getByName(CcPluginExtension.NAME);
-        mResFileName = extension.getResFileName();
+        this(project, true);
+    }
+
+    public FileCrawlerResFileCallback(Project project, boolean inResFolder) {
+        mResFileIdentifier = new ResFileIdentifier(project);
+        mInResFolder = inResFolder;
     }
 
     @Override
-    public boolean isFileValid(File file) {
-        return mResFileName.equals(file.getName());
+    public boolean isFileValid(File file, T trail) {
+        return mResFileIdentifier.isResFile(file, !mInResFolder);
     }
 
     @Override
-    public boolean isFolderValid(File folder) {
-        String folderName = folder.getName().toLowerCase();
-        return folderName.startsWith(RESOURCE_VALUES);
+    public boolean isFolderValid(File folder, T trail) {
+        // If the crawler does not start in res folder, we check the folder for every file.
+        return !mInResFolder || mResFileIdentifier.isValuesFolder(folder);
     }
 }

@@ -37,7 +37,7 @@ public class XmlCrawler {
             // Parse the remaining nodes if parseNode does not stop the crawler.
             for (int i = 0; i < childCount; i++) {
                 Node childNode = childNodes.item(i);
-                if (childNode.getNodeType() == Node.ELEMENT_NODE) {
+                if (childNode != null && childNode.getNodeType() == Node.ELEMENT_NODE) {
                     crawl(childNode, callback.createTrail(childNode, trail), callback);
                 }
             }

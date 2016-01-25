@@ -22,7 +22,7 @@ import io.leao.codecolors.plugin.CcConst;
 import io.leao.codecolors.plugin.res.CcConfiguration;
 import io.leao.codecolors.plugin.res.ColorUtils;
 
-public class CcColorsGenerator {
+public class ColorsGenerator {
     private static final String COLOR_ID_BASE = ".color.%s";
 
     public static void generateColors(Map<String, Set<CcConfiguration>> colorConfigurations, String packageName,
