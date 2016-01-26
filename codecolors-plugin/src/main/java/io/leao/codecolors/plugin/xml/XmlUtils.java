@@ -1,6 +1,7 @@
 package io.leao.codecolors.plugin.xml;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -24,18 +25,23 @@ public class XmlUtils {
     private static final String ATTRIBUTE_TYPE = "type";
 
     public static String getAttributeValue(Node node, String attribute) {
-        Node nameAttr = node.getAttributes().getNamedItem(attribute);
-        if (nameAttr != null) {
-            return nameAttr.getNodeValue();
-        } else {
-            return null;
+        NamedNodeMap attributes = node.getAttributes();
+        if (attributes != null) {
+            Node nameAttr = attributes.getNamedItem(attribute);
+            if (nameAttr != null) {
+                return nameAttr.getNodeValue();
+            }
         }
+        return null;
     }
 
     public static void setAttributeValue(Node node, String attribute, String value) {
-        Node nameAttr = node.getAttributes().getNamedItem(attribute);
-        if (nameAttr != null) {
-            nameAttr.setNodeValue(value);
+        NamedNodeMap attributes = node.getAttributes();
+        if (attributes != null) {
+            Node nameAttr = attributes.getNamedItem(attribute);
+            if (nameAttr != null) {
+                nameAttr.setNodeValue(value);
+            }
         }
     }
 
