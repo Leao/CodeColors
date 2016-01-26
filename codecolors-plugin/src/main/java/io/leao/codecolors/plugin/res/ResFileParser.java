@@ -73,6 +73,12 @@ public class ResFileParser implements XmlCrawler.Callback<ResFileParser.XmlCrawl
                 }
                 return true; // Stop node crawl.
             }
+        } else if (childCount == 0) {
+            String attr = XmlUtils.getResourceAttributeValue(node, RESOURCE_ATTR, ATTRIBUTE_NAME);
+            if (attr != null) {
+                trail.callback.parseAttr(trail.folderName, attr);
+            }
+            return true; // Stop node crawl.
         }
         return false; // Continue node crawl.
     }
@@ -96,5 +102,7 @@ public class ResFileParser implements XmlCrawler.Callback<ResFileParser.XmlCrawl
 
     public interface Callback {
         void parseColor(String folderName, String color, String value, CcConfiguration configuration);
+
+        void parseAttr(String folderName, String attr);
     }
 }

@@ -125,6 +125,12 @@ public class ResourcesResGeneratingTask extends ResGeneratingTask {
                     resourcesGenerator.addColor(folderName, color, value);
                     colorConfigurationGenerator.addColor(color, configuration);
                 }
+
+                @Override
+                public void parseAttr(String folderName, String attr) {
+                    // Populate generators with attrs.
+                    resourcesGenerator.addAttr(folderName, attr);
+                }
             });
         }
 
