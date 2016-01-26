@@ -2,6 +2,7 @@ package io.leao.codecolors.plugin.xml;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -13,6 +14,10 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 
 public class XmlUtils {
     private static final String RESOURCE_ITEM = "item";
@@ -72,13 +77,24 @@ public class XmlUtils {
             String xmlDeclaration = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
             outputstream.write(xmlDeclaration.getBytes());
 
+            // Remove whitespaces outside tags.
+            // Essential to make sure the nodes are properly indented.
+            XPath xPath = XPathFactory.newInstance().newXPath();
+            NodeList nodeList =
+                    (NodeList) xPath.evaluate("//text()[normalize-space()='']", document, XPathConstants.NODESET);
+            for (int i = 0; i < nodeList.getLength(); ++i) {
+                Node node = nodeList.item(i);
+                node.getParentNode().removeChild(node);
+            }
+
+            // Pretty-print options.
             transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
             transformer.transform(source, result);
 
             outputstream.close();
-        } catch (TransformerException | IOException e) {
+        } catch (TransformerException | IOException | XPathExpressionException e) {
             System.out.println("Failed to write document file" + output.getPath() + ": " + e.toString());
         }
     }
