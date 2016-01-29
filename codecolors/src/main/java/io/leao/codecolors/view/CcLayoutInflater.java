@@ -20,15 +20,15 @@ public class CcLayoutInflater extends LayoutInflater {
 
     protected CcLayoutInflater(Context context) {
         super(context);
-        init(context);
+        init();
     }
 
     protected CcLayoutInflater(LayoutInflater original, Context newContext) {
         super(original, newContext);
-        init(newContext);
+        init();
     }
 
-    private void init(Context context) {
+    private void init() {
         forceSetFactory(new CcLayoutInflaterFactoryWrapper(this, internalGetFactory2()));
 
         // Get object args through reflection.
@@ -41,8 +41,6 @@ public class CcLayoutInflater extends LayoutInflater {
             // Will cause layout issues (with Themes, etc.), but won't crash.
             mConstructorArgs = new Object[2];
         }
-
-
     }
 
     private void forceSetFactory(Factory2 factory) {
