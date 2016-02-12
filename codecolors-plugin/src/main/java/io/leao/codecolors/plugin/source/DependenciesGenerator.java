@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import javax.lang.model.element.Modifier;
@@ -142,15 +143,15 @@ public class DependenciesGenerator {
          * Configurations with resource and dependencies.
          */
 
-        // HashMap<Integer, Set<Integer>>.
+        // HashMap<Object, Set<Object>>.
         ParameterizedTypeName resourceDependenciesType = ParameterizedTypeName.get(
                 ClassName.get(HashMap.class),
                 ClassName.get(Object.class),
                 ParameterizedTypeName.get(Set.class, Object.class));
 
-        // HashMap<CcConfiguration, HashMap<Integer, Set<Integer>>>.
+        // TreeMap<CcConfiguration, HashMap<Object, Set<Object>>>.
         ParameterizedTypeName configurationResourceDependenciesType = ParameterizedTypeName.get(
-                ClassName.get(HashMap.class),
+                ClassName.get(TreeMap.class),
                 ClassName.get(CcConfiguration.class),
                 resourceDependenciesType);
 
