@@ -5,6 +5,9 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+
+import org.xmlpull.v1.XmlPullParser;
 
 import java.lang.reflect.Field;
 
@@ -29,8 +32,6 @@ public class CcLayoutInflater extends LayoutInflater {
     }
 
     private void init() {
-        forceSetFactory(new CcLayoutInflaterFactoryWrapper(this, internalGetFactory2()));
-
         // Get object args through reflection.
         try {
             Field mConstructorArgsField = LayoutInflater.class.getDeclaredField("mConstructorArgs");
@@ -43,7 +44,23 @@ public class CcLayoutInflater extends LayoutInflater {
         }
     }
 
-    private void forceSetFactory(Factory2 factory) {
+    @Override
+    public View inflate(XmlPullParser parser, ViewGroup root, boolean attachToRoot) {
+        ensureFactory2();
+        return super.inflate(parser, root, attachToRoot);
+    }
+
+    /**
+     * Ensures that the factory is an instance of CcLayoutInflaterFactoryWrapper.
+     */
+    private void ensureFactory2() {
+        Factory2 factory2 = getFactory2();
+        if (!(factory2 instanceof CcLayoutInflaterFactoryWrapper)) {
+            forceSetFactory2(new CcLayoutInflaterFactoryWrapper(this, factory2));
+        }
+    }
+
+    private void forceSetFactory2(Factory2 factory) {
         if (!sCheckedLayoutInflaterFactory2Field) {
             try {
                 sLayoutInflaterFactory2Field = LayoutInflater.class.getDeclaredField("mFactory2");
@@ -61,25 +78,6 @@ public class CcLayoutInflater extends LayoutInflater {
                 Log.e(LOG_TAG, "Could not set the Factory2 on LayoutInflater " + this +
                         "; inflation may have unexpected results.", e);
             }
-        }
-    }
-
-    private Factory2 internalGetFactory2() {
-        Factory2 factory2 = getFactory2();
-        if (factory2 instanceof CcLayoutInflaterFactoryWrapper) {
-            return ((CcLayoutInflaterFactoryWrapper) factory2).getFactory();
-        } else {
-            return super.getFactory2();
-        }
-    }
-
-    @Override
-    public void setFactory2(Factory2 factory) {
-        Factory2 factory2 = getFactory2();
-        if (factory2 instanceof CcLayoutInflaterFactoryWrapper) {
-            ((CcLayoutInflaterFactoryWrapper) factory2).setFactory(factory);
-        } else {
-            super.setFactory2(factory);
         }
     }
 
