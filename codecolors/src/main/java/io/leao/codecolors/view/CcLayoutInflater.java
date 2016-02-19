@@ -1,6 +1,7 @@
 package io.leao.codecolors.view;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,6 +12,8 @@ import org.xmlpull.v1.XmlPullParser;
 
 import java.lang.reflect.Field;
 
+import io.leao.codecolors.manager.CcConfigurationManager;
+
 public class CcLayoutInflater extends LayoutInflater {
     private static final String LOG_TAG = CcLayoutInflater.class.getSimpleName();
 
@@ -19,19 +22,19 @@ public class CcLayoutInflater extends LayoutInflater {
 
     private static final String[] sClassPrefixes = {"android.widget.", "android.webkit."};
 
-    protected Object[] mConstructorArgs;
+    private Object[] mConstructorArgs;
 
     protected CcLayoutInflater(Context context) {
         super(context);
-        init();
+        init(context);
     }
 
     protected CcLayoutInflater(LayoutInflater original, Context newContext) {
         super(original, newContext);
-        init();
+        init(newContext);
     }
 
-    private void init() {
+    private void init(Context context) {
         // Get object args through reflection.
         try {
             Field mConstructorArgsField = LayoutInflater.class.getDeclaredField("mConstructorArgs");
@@ -42,6 +45,8 @@ public class CcLayoutInflater extends LayoutInflater {
             // Will cause layout issues (with Themes, etc.), but won't crash.
             mConstructorArgs = new Object[2];
         }
+
+        CcConfigurationManager.getInstance().onConfigurationChanged(context.getResources());
     }
 
     @Override
@@ -116,7 +121,7 @@ public class CcLayoutInflater extends LayoutInflater {
     }
 
     @Override
-    public LayoutInflater cloneInContext(Context newContext) {
+    public CcLayoutInflater cloneInContext(Context newContext) {
         return new CcLayoutInflater(this, newContext);
     }
 

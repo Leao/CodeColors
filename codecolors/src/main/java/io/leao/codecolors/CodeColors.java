@@ -12,9 +12,17 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
+import io.leao.codecolors.adapter.CcAttrCallbackAdapter;
+import io.leao.codecolors.adapter.CcBackgroundAttrCallbackAdapter;
+import io.leao.codecolors.adapter.CcSrcAttrCallbackAdapter;
+import io.leao.codecolors.adapter.CcTintableBackgroundViewCallbackAdapter;
+import io.leao.codecolors.adapter.CcViewCallbackAdapter;
+import io.leao.codecolors.drawable.CcColorDrawable;
+import io.leao.codecolors.drawable.CcDrawableCache;
+import io.leao.codecolors.manager.CcCallbackManager;
 import io.leao.codecolors.manager.CcColorsManager;
+import io.leao.codecolors.manager.CcConfigurationManager;
 import io.leao.codecolors.manager.CcDependenciesManager;
-import io.leao.codecolors.res.CcColorDrawable;
 import io.leao.codecolors.res.CcColorStateList;
 import io.leao.codecolors.res.CcResources;
 
@@ -23,13 +31,21 @@ public abstract class CodeColors {
 
     private static boolean sIsActive = false;
 
-    @SuppressWarnings("unchecked")
     public static void init(Context context) {
+        init(context, true);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void init(Context context, boolean useDefaultCallbackAdapters) {
         try {
-            // Initialize colors and dependencies.
             String packageName = context.getPackageName();
-            CcColorsManager.addPackageColors(packageName);
-            CcDependenciesManager.addPackageDependencies(packageName);
+            // Initialize colors.
+            CcColorsManager colorsManager = CcColorsManager.getInstance();
+            colorsManager.init(packageName);
+            // Initialize dependencies.
+            CcDependenciesManager.getInstance().init(packageName);
+            // Configure colors and dependencies for current configuration.
+            CcConfigurationManager.getInstance().onConfigurationChanged(context.getResources());
 
             Resources resources = context.getResources();
             // The SparseArray that holds the entries of preloaded colors.
@@ -41,15 +57,22 @@ public abstract class CodeColors {
             // getColorsConstantStateGetter throws an exception.
             Method colorsConstantStateGetter = getColorsConstantStateGetter(sPreloadedColorStateListsField);
 
-            // The SparseArray that holds the entries of preloaded drawables.
+            // The SparseArray (or array) that holds the entries of preloaded drawables.
             Field sPreloadedDrawablesField = Resources.class.getDeclaredField("sPreloadedDrawables");
             sPreloadedDrawablesField.setAccessible(true);
             Object sPreloadedDrawables = sPreloadedDrawablesField.get(null);
             // Whether to layout orientation to cache drawables.
             // If sPreloadedDrawables type is not supported, useLayoutDirectionDrawableCache throws an exception.
             boolean useLayoutDirectionDrawableCache = useLayoutDirectionDrawableCache(sPreloadedDrawables);
-
-            CcColorsManager colorsManager = CcColorsManager.obtain(context);
+            if (useLayoutDirectionDrawableCache) {
+                sPreloadedDrawables = new CcDrawableCache[]{
+                        new CcDrawableCache(context, ((LongSparseArray[]) sPreloadedDrawables)[0]),
+                        new CcDrawableCache(context, ((LongSparseArray[]) sPreloadedDrawables)[1])};
+            } else {
+                sPreloadedDrawables = new CcDrawableCache(context, (LongSparseArray) sPreloadedDrawables);
+            }
+            // Override preloaded drawables value.
+            sPreloadedDrawablesField.set(null, sPreloadedDrawables);
 
             for (Integer colorResId : colorsManager.getColors()) {
                 CcColorStateList color = colorsManager.getColor(colorResId);
@@ -80,6 +103,14 @@ public abstract class CodeColors {
 
         // Code colors successfully injected.
         sIsActive = true;
+
+        // Setup default callback adapters, if desired.
+        if (useDefaultCallbackAdapters) {
+            CcCallbackManager callbackManager = CcCallbackManager.getInstance();
+            callbackManager.addAttrCallbackAdapter(new CcSrcAttrCallbackAdapter());
+            callbackManager.addAttrCallbackAdapter(new CcBackgroundAttrCallbackAdapter());
+            callbackManager.addViewCallbackAdapter(new CcTintableBackgroundViewCallbackAdapter());
+        }
     }
 
     protected static Method getColorsConstantStateGetter(Field preloadedColorStateListsField)
@@ -128,11 +159,26 @@ public abstract class CodeColors {
         return sIsActive;
     }
 
-    public static CcColorStateList getColor(Context context, int resId) {
-        return CcColorsManager.obtain(context).getColor(resId);
+    public static CcColorStateList getColor(int resId) {
+        return CcColorsManager.getInstance().getColor(resId);
     }
 
-    public static void setColor(Context context, int resId, int color) {
-        CcColorsManager.obtain(context).setColor(resId, color);
+    public static void setColor(int resId, int color) {
+        CcColorsManager.getInstance().setColor(resId, color);
+    }
+
+    public static void addAttrCallbackAdapter(CcAttrCallbackAdapter adapter) {
+        CcCallbackManager.getInstance().addAttrCallbackAdapter(adapter);
+    }
+
+    public static void addViewCallbackAdapter(CcViewCallbackAdapter adapter) {
+        CcCallbackManager.getInstance().addViewCallbackAdapter(adapter);
+    }
+
+    public static void addColorCallback(int resId, Object anchor, CcColorStateList.AnchorCallback callback) {
+        CcColorStateList color = getColor(resId);
+        if (color != null) {
+            color.addCallback(anchor, callback);
+        }
     }
 }

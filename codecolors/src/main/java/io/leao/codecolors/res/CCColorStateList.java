@@ -16,7 +16,7 @@ public class CcColorStateList extends ColorStateList {
 
     private int mId = CcResources.NO_ID;
 
-    private ColorStateList mDefaultColor;
+    private ColorStateList mDefaultColor = ColorStateList.valueOf(DEFAULT_COLOR);
     private CcConfigurationParcelable mConfiguration;
 
     private ColorStateList mColor;
@@ -45,13 +45,13 @@ public class CcColorStateList extends ColorStateList {
         return mConfiguration;
     }
 
-    public void setDefaultColor(@NonNull CcConfiguration configuration, @NonNull ColorStateList defaultColor) {
+    public void setDefaultColor(@NonNull CcConfiguration configuration, ColorStateList defaultColor) {
         if (mConfiguration == null) {
             mConfiguration = new CcConfigurationParcelable(configuration);
         } else {
             mConfiguration.setTo(configuration);
         }
-        mDefaultColor = defaultColor;
+        mDefaultColor = defaultColor != null ? defaultColor : mDefaultColor;
     }
 
     public Integer getColor() {
@@ -87,6 +87,10 @@ public class CcColorStateList extends ColorStateList {
         mCallbacks.put(callback, null);
     }
 
+    public void removeCallback(Callback callback) {
+        mCallbacks.remove(callback);
+    }
+
     /**
      * @param anchor   the anchor object to which the callback is dependent.
      * @param callback the callback.
@@ -95,8 +99,8 @@ public class CcColorStateList extends ColorStateList {
         mAnchorCallbacks.put(anchor, callback);
     }
 
-    public void removeCallback(Callback callback) {
-        mCallbacks.remove(callback);
+    public void removeCallback(AnchorCallback callback) {
+        mAnchorCallbacks.remove(callback);
     }
 
     @SuppressWarnings("unchecked")

@@ -4,9 +4,13 @@ import android.annotation.SuppressLint;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.util.TypedValue;
+
+import java.io.InputStream;
 
 /**
  * Util class to retrieve drawables without tampering with {@link Resources} caches.
@@ -79,5 +83,44 @@ public class CcResources {
         }
 
         return csl;
+    }
+
+    /**
+     * Loads a drawable from XML or resources stream.
+     */
+    @SuppressWarnings("deprecation")
+    @SuppressLint("NewApi")
+    public static Drawable loadDrawableForCookie(Resources resources, TypedValue value, int id, Resources.Theme theme) {
+        if (value.string == null) {
+            throw new Resources.NotFoundException("Resource \"" + resources.getResourceName(id) + "\" ("
+                    + Integer.toHexString(id) + ") is not a Drawable (color or path): " + value);
+        }
+
+        final String file = value.string.toString();
+
+        final Drawable dr;
+
+        try {
+            if (file.endsWith(".xml")) {
+                final XmlResourceParser rp = resources.getXml(id);
+                dr = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ?
+                        Drawable.createFromXml(resources, rp, theme) :
+                        Drawable.createFromXml(resources, rp);
+                rp.close();
+            } else {
+                final InputStream is = resources.getAssets().openNonAssetFd(
+                        value.assetCookie, file).createInputStream();
+                dr = Drawable.createFromResourceStream(resources, value, is, file, null);
+                is.close();
+            }
+        } catch (Exception e) {
+            final Resources.NotFoundException rnf = new Resources.NotFoundException(
+                    "File " + file + " from drawable resource ID #0x" + Integer.toHexString(id));
+            rnf.initCause(e);
+            Log.i("wut", "fail", e);
+            throw rnf;
+        }
+
+        return dr;
     }
 }

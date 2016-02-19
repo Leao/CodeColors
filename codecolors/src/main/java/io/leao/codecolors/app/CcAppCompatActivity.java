@@ -1,22 +1,29 @@
 package io.leao.codecolors.app;
 
-import android.content.Context;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.View;
 
+import io.leao.codecolors.manager.CcConfigurationManager;
 import io.leao.codecolors.view.CcLayoutInflater;
 
 public class CcAppCompatActivity extends AppCompatActivity {
-    private LayoutInflater mLayoutInflater;
+    private CcLayoutInflater mLayoutInflater;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         LayoutInflater.from(this); // Makes sure mLayoutInflater is initialized.
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        CcConfigurationManager.getInstance().onConfigurationChanged(getResources());
     }
 
     @Override
@@ -34,10 +41,5 @@ public class CcAppCompatActivity extends AppCompatActivity {
         } else {
             return systemService;
         }
-    }
-
-    @Override
-    public View onCreateView(String name, Context context, AttributeSet attrs) {
-        return super.onCreateView(name, context, attrs);
     }
 }

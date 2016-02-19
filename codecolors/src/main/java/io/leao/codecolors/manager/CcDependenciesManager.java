@@ -1,15 +1,13 @@
 package io.leao.codecolors.manager;
 
-import android.content.Context;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.WeakHashMap;
 
 import io.leao.codecolors.plugin.CcConst;
 import io.leao.codecolors.plugin.res.CcConfiguration;
@@ -17,137 +15,172 @@ import io.leao.codecolors.res.CcConfigurationUtils;
 
 public class CcDependenciesManager {
     private static final String CLASS_NAME_BASE = "%s.%s";
-
     private static final String TYPE_ATTR = "attr";
 
-    private static final Map<String, Map<CcConfiguration, Map<Object, Set<Object>>>> sPackageConfigurationDependencies =
-            new HashMap<>();
+    private static CcDependenciesManager sInstance;
 
-    private static final Map<Context, CcDependenciesManager> sManagers = new WeakHashMap<>();
+    private Map<CcConfiguration, Map<Object, Set<Object>>> mConfigurationDependencies;
 
-    // Keys are either the id or the name of the resource.
-    private static final Map<Integer, Object> sKeys = new HashMap<>();
-    private static final Map<Object, Integer> sResolvedKeys = new HashMap<>();
-
-    private Context mContext;
-    private Resources mResources;
+    private CcConfiguration mCcConfiguration;
     private Map<Object, Set<Object>> mDependencies;
 
-    private Map<Object, Integer> mResolvedAttrs = new HashMap<>();
-    private Map<Integer, Set<Integer>> mResolvedDependencies = new HashMap<>();
+    // Keys are either the id or the name of the resource.
+    private Map<Integer, Object> mIdKey = new HashMap<>();
+    private Map<Object, Integer> mKeyId = new HashMap<>();
 
-    private int[] mTempArray = new int[1];
+    private Map<Resources.Theme, Map<Integer, Integer>> mThemeResolvedAttrs = new HashMap<>();
 
-    public static CcDependenciesManager obtain(Context context) {
-        CcDependenciesManager manager = sManagers.get(context);
-        if (manager == null) {
-            manager = new CcDependenciesManager(context);
-            sManagers.put(context, manager);
+    public static CcDependenciesManager getInstance() {
+        if (sInstance == null) {
+            sInstance = new CcDependenciesManager();
         }
-        return manager;
+        return sInstance;
     }
 
-    protected CcDependenciesManager(Context context) {
-        mContext = context;
-        mResources = context.getResources();
-        mDependencies = getDependencies(context);
+    @SuppressWarnings("unchecked")
+    public synchronized void init(String packageName)
+            throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+        // Init dependencies from generated classes by the CodeColors plugin.
+        Class<?> dependenciesClass =
+                Class.forName(String.format(CLASS_NAME_BASE, packageName, CcConst.DEPENDENCIES_CLASS_NAME));
+        Field dependenciesField = dependenciesClass.getDeclaredField(CcConst.DEPENDENCIES_FIELD_NAME);
+        dependenciesField.setAccessible(true);
+        mConfigurationDependencies = (Map<CcConfiguration, Map<Object, Set<Object>>>) dependenciesField.get(null);
     }
 
-    public Set<Integer> resolveDependencies(int resourceId) {
-        if (mResolvedDependencies.containsKey(resourceId)) {
-            return mResolvedDependencies.get(resourceId);
-        }
+    public synchronized void onConfigurationChanged(Configuration configuration) {
+        CcConfiguration ccConfiguration =
+                CcConfigurationUtils.getBestConfiguration(configuration, mConfigurationDependencies.keySet());
+        if (!ccConfiguration.equals(mCcConfiguration)) {
+            if (mCcConfiguration == null) {
+                mCcConfiguration = new CcConfiguration(ccConfiguration);
+            } else {
+                mCcConfiguration.setTo(ccConfiguration);
+            }
 
-        Set<Integer> resolvedDependencies;
-        Object key = getKey(resourceId);
+            mCcConfiguration = ccConfiguration;
+            mDependencies = mConfigurationDependencies.get(ccConfiguration);
+        }
+    }
+
+    public synchronized boolean hasDependencies(Resources resources, int resourceId) {
+        return getKey(resources, resourceId) != null;
+    }
+
+    public synchronized void getDependencies(Resources resources, int id, Set<Integer> outResolvedIds,
+                                             Set<Integer> outUnresolvedAttrs) {
+        Object key = getKey(resources, id);
         if (key != null) {
-            resolvedDependencies = new HashSet<>();
-            resolvedDependencies.add(resourceId);
             Set<Object> dependencies = mDependencies.get(key);
             for (Object dependency : dependencies) {
-                resolvedDependencies.add(resolveAttr(resolveKey(dependency)));
+                int dependencyId = getId(resources, dependency);
+                if (TYPE_ATTR.equals(resources.getResourceTypeName(dependencyId))) {
+                    outUnresolvedAttrs.add(dependencyId);
+                } else {
+                    outResolvedIds.add(dependencyId);
+                }
             }
-        } else {
-            resolvedDependencies = null;
         }
-
-        mResolvedDependencies.put(resourceId, resolvedDependencies);
-        return resolvedDependencies;
     }
 
-    private Object getKey(int resourceId) {
-        if (sKeys.containsKey(resourceId)) {
-            return sKeys.get(resourceId);
+    public synchronized void resolveDependencies(Resources.Theme theme, Resources resources, int id,
+                                                 Set<Integer> outResolvedIds) {
+        Set<Integer> unresolvedAttrs = TempUtils.getIntegerSet();
+        getDependencies(resources, id, outResolvedIds, unresolvedAttrs);
+
+        resolveDependencies(theme, resources, unresolvedAttrs, outResolvedIds);
+
+        // Recycle set for reuse.
+        TempUtils.recycleIntegerSet(unresolvedAttrs);
+    }
+
+    public synchronized void resolveDependencies(Resources.Theme theme, Resources resources, Set<Integer> attrs,
+                                                 Set<Integer> outResolvedAttrs) {
+        if (attrs.size() == 0) {
+            // Skip if there are not attributes to process.
+            return;
+        }
+
+        Map<Integer, Integer> resolvedAttrs = mThemeResolvedAttrs.get(theme);
+        if (resolvedAttrs == null) {
+            resolvedAttrs = new HashMap<>();
+            mThemeResolvedAttrs.put(theme, resolvedAttrs);
+        }
+
+        Set<Integer> unresolvedAttrs = TempUtils.getIntegerSet();
+        for (int attr : attrs) {
+            Integer id = resolvedAttrs.get(attr);
+            if (id == null) {
+                unresolvedAttrs.add(attr);
+            } else {
+                // Add resolved id.
+                outResolvedAttrs.add(id);
+                // Also resolve its dependencies.
+                resolveDependencies(theme, resources, id, outResolvedAttrs);
+            }
+        }
+
+        int[] unresolvedAttrsArray = TempUtils.toIntArray(unresolvedAttrs);
+        TypedArray ta = theme.obtainStyledAttributes(unresolvedAttrsArray);
+        try {
+            int N = ta.length();
+            for (int i = 0; i < N; i++) {
+                int index = ta.getIndex(i);
+                int id = ta.getResourceId(index, 0);
+                if (id != 0) {
+                    // Cache resolved id.
+                    resolvedAttrs.put(unresolvedAttrsArray[index], id);
+                    // Add resolved id.
+                    outResolvedAttrs.add(id);
+                    // Also resolve its dependencies.
+                    resolveDependencies(theme, resources, id, outResolvedAttrs);
+                }
+            }
+        } finally {
+            ta.recycle();
+        }
+
+        // Recycle set and array for reuse.
+        TempUtils.recycleIntArray(unresolvedAttrsArray);
+        TempUtils.recycleIntegerSet(unresolvedAttrs);
+    }
+
+    private synchronized Object getKey(Resources resources, int id) {
+        if (mIdKey.containsKey(id)) {
+            return mIdKey.get(id);
         }
 
         Object key;
-        if (mDependencies.containsKey(resourceId)) {
-            key = resourceId;
+        if (mDependencies.containsKey(id)) {
+            key = id;
         } else {
-            String resourceName = mResources.getResourceName(resourceId);
-            if (mDependencies.containsKey(resourceName)) {
-                key = resourceName;
+            String name = resources.getResourceName(id);
+            if (mDependencies.containsKey(name)) {
+                key = name;
             } else {
                 key = null;
             }
         }
 
-        sKeys.put(resourceId, key);
+        // Cache id-key pair.
+        mIdKey.put(id, key);
         return key;
     }
 
-    private Integer resolveKey(Object resourceKey) {
-        if (resourceKey instanceof Integer) {
-            return (Integer) resourceKey;
+    private synchronized Integer getId(Resources resources, Object key) {
+        if (key instanceof Integer) {
+            return (Integer) key;
         } else {
-            if (sResolvedKeys.containsKey(resourceKey)) {
-                return sResolvedKeys.get(resourceKey);
+            if (mKeyId.containsKey(key)) {
+                return mKeyId.get(key);
             }
 
-            String resourceName = (String) resourceKey;
-            int resourceId = mResources.getIdentifier(resourceName, "string", null);
+            String name = (String) key;
+            int id = resources.getIdentifier(name, "string", null);
 
-            sResolvedKeys.put(resourceKey, resourceId);
-            return resourceId;
+            // Cache key-id pair.
+            mKeyId.put(key, id);
+            return id;
         }
-    }
-
-    private Integer resolveAttr(Integer resourceId) {
-        if (mResolvedAttrs.containsKey(resourceId)) {
-            return mResolvedAttrs.get(resourceId);
-        }
-
-        int resolvedId = 0;
-        if (TYPE_ATTR.equals(mResources.getResourceTypeName(resourceId))) {
-            mTempArray[0] = resourceId;
-            TypedArray ta = mContext.obtainStyledAttributes(mTempArray);
-            try {
-                resolvedId = ta.getResourceId(0, resolvedId);
-            } finally {
-                ta.recycle();
-            }
-        }
-
-        mResolvedAttrs.put(resourceId, resolvedId);
-        return resolvedId;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static void addPackageDependencies(String packageName)
-            throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
-        Class<?> dependenciesClass =
-                Class.forName(String.format(CLASS_NAME_BASE, packageName, CcConst.DEPENDENCIES_CLASS_NAME));
-        Field dependenciesField = dependenciesClass.getDeclaredField(CcConst.DEPENDENCIES_FIELD_NAME);
-        dependenciesField.setAccessible(true);
-        sPackageConfigurationDependencies.put(
-                packageName,
-                (Map<CcConfiguration, Map<Object, Set<Object>>>) dependenciesField.get(null));
-    }
-
-    public static Map<Object, Set<Object>> getDependencies(Context context) {
-        Map<CcConfiguration, Map<Object, Set<Object>>> configurationDependencies =
-                sPackageConfigurationDependencies.get(context.getPackageName());
-        return configurationDependencies.get(
-                CcConfigurationUtils.getBestConfiguration(context, configurationDependencies.keySet()));
     }
 }

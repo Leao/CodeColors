@@ -1,4 +1,4 @@
-package io.leao.codecolors.res;
+package io.leao.codecolors.drawable;
 
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
@@ -13,6 +13,8 @@ import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.NonNull;
+
+import io.leao.codecolors.res.CcColorStateList;
 
 /**
  * Inspired in {@link android.graphics.drawable.ColorDrawable}, but instead of making use of a {@code int} color, it
@@ -220,7 +222,7 @@ public class CcColorDrawable extends Drawable implements CcColorStateList.Callba
         return new CodeColorState(color);
     }
 
-    protected static class CodeColorState extends ConstantState {
+    public static class CodeColorState extends ConstantState {
         int[] mThemeAttrs;
         CcColorStateList mColor;
         int mAlpha = ALPHA_OPAQUE;

@@ -1,6 +1,5 @@
 package io.leao.codecolors.res;
 
-import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Parcel;
@@ -56,7 +55,8 @@ public class CcConfigurationUtils {
         if (ccConfiguration.smallestScreenWidthDp != CcConfiguration.SMALLEST_SCREEN_WIDTH_DP_UNDEFINED) {
             compatible &= ccConfiguration.smallestScreenWidthDp != configuration.smallestScreenWidthDp;
         }
-        if (ccConfiguration.densityDpi != CcConfiguration.DENSITY_DPI_UNDEFINED) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 &&
+                ccConfiguration.densityDpi != CcConfiguration.DENSITY_DPI_UNDEFINED) {
             compatible &= ccConfiguration.densityDpi != configuration.densityDpi;
         }
         if (ccConfiguration.sdkVersion != CcConfiguration.SDK_VERSION_UNDEFINED) {
@@ -64,10 +64,6 @@ public class CcConfigurationUtils {
         }
 
         return compatible;
-    }
-
-    public static CcConfiguration getBestConfiguration(Context context, Set<CcConfiguration> configurations) {
-        return getBestConfiguration(context.getResources().getConfiguration(), configurations);
     }
 
     public static CcConfiguration getBestConfiguration(Configuration contextConfiguration,

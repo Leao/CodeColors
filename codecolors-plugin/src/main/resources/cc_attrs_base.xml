@@ -2,8 +2,6 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
 
     <declare-styleable name="CodeColors">
-        <attr name="android:background"/>
-        <attr name="android:src"/>
         <attr name="backgroundTint"/>
     </declare-styleable>
 
