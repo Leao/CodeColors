@@ -30,6 +30,7 @@ import io.leao.codecolors.R;
 import io.leao.codecolors.adapter.CcAttrCallbackAdapter;
 import io.leao.codecolors.adapter.CcCallbackAdapter;
 import io.leao.codecolors.adapter.CcViewCallbackAdapter;
+import io.leao.codecolors.adapter.CcViewDefStyleAdapter;
 import io.leao.codecolors.res.CcColorStateList;
 
 public class CcCallbackManager {
@@ -37,9 +38,12 @@ public class CcCallbackManager {
 
     private Map<Integer, List<CcAttrCallbackAdapter>> mAttrCallbackAdapters = new HashMap<>();
     private List<CcViewCallbackAdapter> mViewCallbackAdapters = new ArrayList<>();
+    private List<CcViewDefStyleAdapter> mViewDefStyleAdapters = new ArrayList<>();
 
     private Map<Class<?>, CcColorStateList.AnchorCallback> mAdapterClassAnchorCallback = new HashMap<>();
 
+    // Used to retrieve defStyle, when processing view callback adapters.
+    private CcViewDefStyleAdapter.DefStyle mTempDefStyle = new CcViewDefStyleAdapter.DefStyle();
     // Used to retrieve code colors when processing view callback adapters.
     private Set<CcColorStateList> mTempColors = new HashSet<>();
 
@@ -69,6 +73,10 @@ public class CcCallbackManager {
         mAdapterClassAnchorCallback.put(adapter.getClass(), adapter.getAnchorCallback());
     }
 
+    public synchronized void addViewDefStyleAdapter(CcViewDefStyleAdapter adapter) {
+        mViewDefStyleAdapters.add(adapter);
+    }
+
     public synchronized void addColorCallbacks(Context context, AttributeSet attrs, View view) {
         processViewCallbackAdapters(attrs, view);
         processAttrCallbackAdapters(context, attrs, view);
@@ -88,7 +96,8 @@ public class CcCallbackManager {
     }
 
     private synchronized void processAttrCallbackAdapters(Context context, AttributeSet attrs, View view) {
-        TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.CodeColors, getViewDefStyleAttr(view), 0);
+        CcViewDefStyleAdapter.DefStyle defStyle = getViewDefStyle(attrs, view);
+        TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.CodeColors, defStyle.attr, defStyle.res);
         try {
             final int N = ta.getIndexCount();
             for (int i = 0; i < N; i++) {
@@ -136,13 +145,19 @@ public class CcCallbackManager {
         }
     }
 
-    private synchronized CcColorStateList.AnchorCallback getAnchorCallback(CcCallbackAdapter adapter) {
-        CcColorStateList.AnchorCallback callback = mAdapterClassAnchorCallback.get(adapter.getClass());
-        if (callback == null) {
-            callback = adapter.getAnchorCallback();
-            mAdapterClassAnchorCallback.put(adapter.getClass(), callback);
+    private synchronized CcViewDefStyleAdapter.DefStyle getViewDefStyle(AttributeSet attrs, View view) {
+        // Try to get attr and res from adapters.
+        for (CcViewDefStyleAdapter adapter : mViewDefStyleAdapters) {
+            if (adapter.getDefStyle(attrs, view, mTempDefStyle)) {
+                return mTempDefStyle;
+            }
         }
-        return callback;
+
+        // Get the default attr and res values.
+        mTempDefStyle.attr = getViewDefStyleAttr(view);
+        mTempDefStyle.res = 0;
+
+        return mTempDefStyle;
     }
 
     /**
@@ -181,5 +196,14 @@ public class CcCallbackManager {
         } else {
             return 0;
         }
+    }
+
+    private synchronized CcColorStateList.AnchorCallback getAnchorCallback(CcCallbackAdapter adapter) {
+        CcColorStateList.AnchorCallback callback = mAdapterClassAnchorCallback.get(adapter.getClass());
+        if (callback == null) {
+            callback = adapter.getAnchorCallback();
+            mAdapterClassAnchorCallback.put(adapter.getClass(), callback);
+        }
+        return callback;
     }
 }

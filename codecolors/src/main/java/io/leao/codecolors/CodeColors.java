@@ -18,6 +18,7 @@ import io.leao.codecolors.adapter.CcSrcAttrCallbackAdapter;
 import io.leao.codecolors.adapter.CcTextColorAnchorCallbackAdapter;
 import io.leao.codecolors.adapter.CcTintableBackgroundViewCallbackAdapter;
 import io.leao.codecolors.adapter.CcViewCallbackAdapter;
+import io.leao.codecolors.adapter.CcViewDefStyleAdapter;
 import io.leao.codecolors.drawable.CcColorDrawable;
 import io.leao.codecolors.drawable.CcDrawableCache;
 import io.leao.codecolors.manager.CcCallbackManager;
@@ -33,11 +34,15 @@ public abstract class CodeColors {
     private static boolean sIsActive = false;
 
     public static void init(Context context) {
-        init(context, true);
+        init(context, null);
+    }
+
+    public static void init(Context context, Callback callback) {
+        init(context, true, callback);
     }
 
     @SuppressWarnings("unchecked")
-    public static void init(Context context, boolean useDefaultCallbackAdapters) {
+    public static void init(Context context, boolean useDefaultCallbackAdapters, Callback callback) {
         try {
             String packageName = context.getPackageName();
             // Initialize colors.
@@ -98,13 +103,18 @@ public abstract class CodeColors {
                 }
             }
         } catch (Exception e) {
-            Log.w(LOG_TAG, "ColorStateList preload failed. Dynamic colors will not work.", e);
+            onCodeColorsInitFailure(e, callback);
+
             return; // Finish without setting code colors active.
         }
 
         // Code colors successfully injected.
         sIsActive = true;
 
+        onCodeColorsInitSuccess(useDefaultCallbackAdapters, callback);
+    }
+
+    protected static void onCodeColorsInitSuccess(boolean useDefaultCallbackAdapters, Callback callback) {
         // Setup default callback adapters, if desired.
         if (useDefaultCallbackAdapters) {
             CcCallbackManager callbackManager = CcCallbackManager.getInstance();
@@ -112,6 +122,18 @@ public abstract class CodeColors {
             callbackManager.addAttrCallbackAdapter(new CcBackgroundAttrCallbackAdapter());
             callbackManager.addAttrCallbackAdapter(new CcTextColorAnchorCallbackAdapter());
             callbackManager.addViewCallbackAdapter(new CcTintableBackgroundViewCallbackAdapter());
+        }
+
+        if (callback != null) {
+            callback.onCodeColorsInitSuccess();
+        }
+    }
+
+    protected static void onCodeColorsInitFailure(Exception e, Callback callback) {
+        Log.w(LOG_TAG, "ColorStateList preload failed. Dynamic colors will not work.", e);
+
+        if (callback != null) {
+            callback.onCodeColorsInitFailure();
         }
     }
 
@@ -177,10 +199,19 @@ public abstract class CodeColors {
         CcCallbackManager.getInstance().addViewCallbackAdapter(adapter);
     }
 
+    public static void addViewDefStyleAdapter(CcViewDefStyleAdapter adapter) {
+        CcCallbackManager.getInstance().addViewDefStyleAdapter(adapter);
+    }
+
     public static void addColorCallback(int resId, Object anchor, CcColorStateList.AnchorCallback callback) {
         CcColorStateList color = getColor(resId);
         if (color != null) {
             color.addCallback(anchor, callback);
         }
+    }
+
+    public interface Callback {
+        void onCodeColorsInitSuccess();
+        void onCodeColorsInitFailure();
     }
 }
