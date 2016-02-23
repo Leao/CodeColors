@@ -13,8 +13,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 import io.leao.codecolors.adapter.CcAttrCallbackAdapter;
-import io.leao.codecolors.adapter.CcBackgroundAttrCallbackAdapter;
-import io.leao.codecolors.adapter.CcSrcAttrCallbackAdapter;
+import io.leao.codecolors.adapter.CcBackgroundTintAttrCallbackAdapter;
 import io.leao.codecolors.adapter.CcTextColorAnchorCallbackAdapter;
 import io.leao.codecolors.adapter.CcTintableBackgroundViewCallbackAdapter;
 import io.leao.codecolors.adapter.CcViewCallbackAdapter;
@@ -118,9 +117,8 @@ public abstract class CodeColors {
         // Setup default callback adapters, if desired.
         if (useDefaultCallbackAdapters) {
             CcCallbackManager callbackManager = CcCallbackManager.getInstance();
-            callbackManager.addAttrCallbackAdapter(new CcSrcAttrCallbackAdapter());
-            callbackManager.addAttrCallbackAdapter(new CcBackgroundAttrCallbackAdapter());
             callbackManager.addAttrCallbackAdapter(new CcTextColorAnchorCallbackAdapter());
+            callbackManager.addAttrCallbackAdapter(new CcBackgroundTintAttrCallbackAdapter());
             callbackManager.addViewCallbackAdapter(new CcTintableBackgroundViewCallbackAdapter());
         }
 
