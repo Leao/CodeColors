@@ -189,6 +189,10 @@ public abstract class CodeColors {
         CcColorsManager.getInstance().setColor(resId, color);
     }
 
+    public static void setColor(int resId, ColorStateList color) {
+        CcColorsManager.getInstance().setColor(resId, color);
+    }
+
     public static void addAttrCallbackAdapter(CcAttrCallbackAdapter adapter) {
         CcCallbackManager.getInstance().addAttrCallbackAdapter(adapter);
     }

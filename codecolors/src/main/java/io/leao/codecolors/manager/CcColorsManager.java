@@ -91,4 +91,11 @@ public class CcColorsManager {
             cccsl.setColor(color);
         }
     }
+
+    public synchronized void setColor(int resId, ColorStateList color) {
+        CcColorStateList cccsl = getColor(resId);
+        if (cccsl != null) {
+            cccsl.setColor(color);
+        }
+    }
 }
