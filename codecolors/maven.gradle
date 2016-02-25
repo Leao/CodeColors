@@ -23,23 +23,41 @@ publishing {
             artifact("$buildDir/outputs/aar/codecolors-release.aar")
 
             pom.withXml {
-                asNode().appendNode('organization')
-                            .appendNode('name', POM_ORGANIZATION_NAME).parent()
-                            .appendNode('url', POM_ORGANIZATION_URL)
+                def projectNode = asNode();
 
-                asNode().appendNode('scm')
-                            .appendNode('url', POM_SCM_URL).parent()
-                            .appendNode('connection', POM_SCM_CONNECTION).parent()
-                            .appendNode('developerConnection', POM_SCM_DEV_CONNECTION)
+                // Iterate over the compile dependencies to add a node for every valid one.
+                def dependenciesNode
+                configurations.compile.allDependencies.each {
+                    if (it.group != null && it.name != null && it.version != null) {
+                        if (dependenciesNode == null) {
+                            // Only create dependencies node if there are valid dependencies.
+                            dependenciesNode = projectNode.appendNode('dependencies')
+                        }
 
-                asNode().appendNode('issueManagement')
-                            .appendNode('system', POM_ISSUEMGMT_SYSTEM).parent()
-                            .appendNode('url', POM_ISSUEMGMT_URL)
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', it.group)
+                        dependencyNode.appendNode('artifactId', it.name)
+                        dependencyNode.appendNode('version', it.version)
+                    }
+                }
 
-                asNode().appendNode('licenses')
-                            .appendNode('license')
-                                .appendNode('name', POM_LICENSE_NAME).parent()
-                                .appendNode('url', POM_LICENSE_URL).parent()
+                projectNode.appendNode('organization')
+                                .appendNode('name', POM_ORGANIZATION_NAME).parent()
+                                .appendNode('url', POM_ORGANIZATION_URL)
+
+                projectNode.appendNode('scm')
+                                .appendNode('url', POM_SCM_URL).parent()
+                                .appendNode('connection', POM_SCM_CONNECTION).parent()
+                                .appendNode('developerConnection', POM_SCM_DEV_CONNECTION)
+
+                projectNode.appendNode('issueManagement')
+                                .appendNode('system', POM_ISSUEMGMT_SYSTEM).parent()
+                                .appendNode('url', POM_ISSUEMGMT_URL)
+
+                projectNode.appendNode('licenses')
+                                .appendNode('license')
+                                    .appendNode('name', POM_LICENSE_NAME).parent()
+                                    .appendNode('url', POM_LICENSE_URL).parent()
             }
         }
     }
