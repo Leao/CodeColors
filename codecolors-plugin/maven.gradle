@@ -58,6 +58,7 @@ bintray {
             name = VERSION_NAME
             desc = BINTRAY_PLUGIN_DESC
             vcsTag = VERSION
+            attributes = ['android-library': GROUP_ID + ':' + ARTIFACT_LIBRARY + ":" + VERSION]
         }
     }
 }
