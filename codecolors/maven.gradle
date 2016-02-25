@@ -75,12 +75,12 @@ bintray {
         licenses = [BINTRAY_LICENSE]
         vcsUrl = BINTRAY_VCS_URL
         labels = ['android', 'library']
-        attributes = ['gradle-plugin': GROUP_ID + ':' + ARTIFACT_PLUGIN + ":" + VERSION]
         publicDownloadNumbers = false
         version {
             name = VERSION_NAME
             desc = BINTRAY_LIBRARY_DESC
             vcsTag = VERSION
+            attributes = ['gradle-plugin': GROUP_ID + ':' + ARTIFACT_PLUGIN + ":" + VERSION]
         }
     }
 }
