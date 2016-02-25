@@ -4,13 +4,16 @@ buildscript {
     repositories {
         jcenter()
         maven {
-            url uri("codecolors-plugin-maven")
+            url 'https://dl.bintray.com/leao/maven/'
+            // For development purposes.
+            // url uri('codecolors-maven/plugin')
         }
     }
 
     dependencies {
         classpath 'com.android.tools.build:gradle:1.5.0'
-        classpath 'io.leao:codecolors-plugin:0.1'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
+        classpath 'io.leao:codecolors-plugin:0.1.0'
     }
 }
 

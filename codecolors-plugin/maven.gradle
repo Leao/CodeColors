@@ -1,0 +1,61 @@
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
+
+publishing {
+    repositories {
+        maven {
+            url "$rootDir/" + RESPOSITORY_LOCAL_PLUGIN
+        }
+    }
+
+    publications {
+        CodeColorsPlugin(MavenPublication) {
+            groupId GROUP_ID
+            artifactId ARTIFACT_PLUGIN
+            version VERSION
+
+            from components.java
+
+            pom.withXml {
+                asNode().appendNode('organization')
+                            .appendNode('name', POM_ORGANIZATION_NAME).parent()
+                            .appendNode('url', POM_ORGANIZATION_URL)
+
+                asNode().appendNode('scm')
+                            .appendNode('url', POM_SCM_URL).parent()
+                            .appendNode('connection', POM_SCM_CONNECTION).parent()
+                            .appendNode('developerConnection', POM_SCM_DEV_CONNECTION)
+
+                asNode().appendNode('issueManagement')
+                            .appendNode('system', POM_ISSUEMGMT_SYSTEM).parent()
+                            .appendNode('url', POM_ISSUEMGMT_URL)
+
+                asNode().appendNode('licenses')
+                            .appendNode('license')
+                                .appendNode('name', POM_LICENSE_NAME).parent()
+                                .appendNode('url', POM_LICENSE_URL).parent()
+            }
+        }
+    }
+}
+
+bintray {
+    user = project.hasProperty('bintrayUser') ? project.bintrayUser : System.getenv('BINTRAY_USER')
+    key = project.hasProperty('bintrayKey') ? project.bintrayKey : System.getenv('BINTRAY_KEY')
+    publications = ['CodeColorsPlugin']
+    publish = true
+    pkg {
+        repo = 'maven'
+        name = ARTIFACT_PLUGIN
+        userOrg = BINTRAY_USER_ORG
+        licenses = [BINTRAY_LICENSE]
+        vcsUrl = BINTRAY_VCS_URL
+        labels = ['gradle', 'plugin']
+        publicDownloadNumbers = false
+        version {
+            name = VERSION_NAME
+            desc = BINTRAY_PLUGIN_DESC
+            vcsTag = VERSION
+        }
+    }
+}

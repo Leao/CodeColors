@@ -1,0 +1,68 @@
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
+
+task sourceJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier "sources"
+}
+
+publishing {
+    repositories {
+        maven {
+            url "$rootDir/" + RESPOSITORY_LOCAL_LIBRARY
+        }
+    }
+
+    publications {
+        CodeColors(MavenPublication) {
+            groupId GROUP_ID
+            artifactId ARTIFACT_LIBRARY
+            version VERSION
+
+            artifact(sourceJar)
+            artifact("$buildDir/outputs/aar/codecolors-release.aar")
+
+            pom.withXml {
+                asNode().appendNode('organization')
+                            .appendNode('name', POM_ORGANIZATION_NAME).parent()
+                            .appendNode('url', POM_ORGANIZATION_URL)
+
+                asNode().appendNode('scm')
+                            .appendNode('url', POM_SCM_URL).parent()
+                            .appendNode('connection', POM_SCM_CONNECTION).parent()
+                            .appendNode('developerConnection', POM_SCM_DEV_CONNECTION)
+
+                asNode().appendNode('issueManagement')
+                            .appendNode('system', POM_ISSUEMGMT_SYSTEM).parent()
+                            .appendNode('url', POM_ISSUEMGMT_URL)
+
+                asNode().appendNode('licenses')
+                            .appendNode('license')
+                                .appendNode('name', POM_LICENSE_NAME).parent()
+                                .appendNode('url', POM_LICENSE_URL).parent()
+            }
+        }
+    }
+}
+
+bintray {
+    user = project.hasProperty('bintrayUser') ? project.bintrayUser : System.getenv('BINTRAY_USER')
+    key = project.hasProperty('bintrayKey') ? project.bintrayKey : System.getenv('BINTRAY_KEY')
+    publications = ['CodeColors']
+    publish = true
+    pkg {
+        repo = 'maven'
+        name = ARTIFACT_LIBRARY
+        userOrg = BINTRAY_USER_ORG
+        licenses = [BINTRAY_LICENSE]
+        vcsUrl = BINTRAY_VCS_URL
+        labels = ['android', 'library']
+        attributes = ['gradle-plugin': GROUP_ID + ':' + ARTIFACT_PLUGIN + ":" + VERSION]
+        publicDownloadNumbers = false
+        version {
+            name = VERSION_NAME
+            desc = BINTRAY_LIBRARY_DESC
+            vcsTag = VERSION
+        }
+    }
+}
