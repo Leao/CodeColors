@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'io.leao.codecolors.plugin'
 
 codecolors {
-    resFileName "codecolors_colors" // The default name is 'codecolors'.
+    resFileName "codecolors_res" // The default name is 'codecolors'.
 }
 
 android {
