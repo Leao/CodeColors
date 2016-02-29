@@ -45,6 +45,11 @@ public class CcColorStateList extends ColorStateList {
         return mConfiguration;
     }
 
+    @Override
+    public int getDefaultColor() {
+        return getColorInternal().getDefaultColor();
+    }
+
     public void setDefaultColor(@NonNull CcConfiguration configuration, ColorStateList defaultColor) {
         if (mConfiguration == null) {
             mConfiguration = new CcConfigurationParcelable(configuration);
@@ -72,11 +77,6 @@ public class CcColorStateList extends ColorStateList {
             mColor = color;
             invalidateSelf();
         }
-    }
-
-    @Override
-    public int getDefaultColor() {
-        return getColorInternal().getDefaultColor();
     }
 
     private ColorStateList getColorInternal() {
