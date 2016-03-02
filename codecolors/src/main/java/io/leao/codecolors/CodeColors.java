@@ -193,6 +193,14 @@ public abstract class CodeColors {
         CcColorsManager.getInstance().setColor(resId, color);
     }
 
+    public static void animateTo(int resId, int color) {
+        CcColorsManager.getInstance().animateTo(resId, color);
+    }
+
+    public static void animateTo(int resId, ColorStateList color) {
+        CcColorsManager.getInstance().animateTo(resId, color);
+    }
+
     public static void addAttrCallbackAdapter(CcAttrCallbackAdapter adapter) {
         CcCallbackManager.getInstance().addAttrCallbackAdapter(adapter);
     }

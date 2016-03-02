@@ -42,9 +42,9 @@ public class MainActivity extends CcAppCompatActivity {
                 if (mCurrentColor >= mColors.length) {
                     mCurrentColor = 0;
                 }
-                CodeColors.setColor(R.color.cc__color_primary_dark, color);
-                CodeColors.setColor(R.color.cc__color_primary, color);
-                CodeColors.setColor(R.color.cc__color_accent, color);
+                CodeColors.animateTo(R.color.cc__color_primary_dark, color);
+                CodeColors.animateTo(R.color.cc__color_primary, color);
+                CodeColors.animateTo(R.color.cc__color_accent, color);
             }
         });
     }

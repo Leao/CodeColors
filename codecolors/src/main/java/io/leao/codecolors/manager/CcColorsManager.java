@@ -98,4 +98,18 @@ public class CcColorsManager {
             cccsl.setColor(color);
         }
     }
+
+    public synchronized void animateTo(int resId, int color) {
+        CcColorStateList cccsl = getColor(resId);
+        if (cccsl != null) {
+            cccsl.animateTo(color);
+        }
+    }
+
+    public synchronized void animateTo(int resId, ColorStateList color) {
+        CcColorStateList cccsl = getColor(resId);
+        if (cccsl != null) {
+            cccsl.animateTo(color);
+        }
+    }
 }

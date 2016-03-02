@@ -1,16 +1,21 @@
 package io.leao.codecolors.res;
 
+import android.animation.Animator;
+import android.animation.ValueAnimator;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
+import android.view.animation.DecelerateInterpolator;
 
 import java.util.WeakHashMap;
 
 import io.leao.codecolors.plugin.res.CcConfiguration;
 
-public class CcColorStateList extends ColorStateList {
+public class CcColorStateList extends ColorStateList
+        implements ValueAnimator.AnimatorListener, ValueAnimator.AnimatorUpdateListener {
+
     private static final int DEFAULT_COLOR = Color.RED;
     private static final int[][] EMPTY = new int[][]{new int[0]};
 
@@ -20,6 +25,9 @@ public class CcColorStateList extends ColorStateList {
     private CcConfigurationParcelable mConfiguration;
 
     private ColorStateList mColor;
+
+    private ValueAnimator mAnimator;
+    private ColorStateList mAnimationColor;
 
     protected WeakHashMap<Callback, Object> mCallbacks = new WeakHashMap<>();
     protected WeakHashMap<Object, AnchorCallback> mAnchorCallbacks = new WeakHashMap<>();
@@ -47,7 +55,12 @@ public class CcColorStateList extends ColorStateList {
 
     @Override
     public int getDefaultColor() {
-        return getColorInternal().getDefaultColor();
+        int color = getColorInternal().getDefaultColor();
+        if (mAnimationColor == null) {
+            return color;
+        } else {
+            return interpolate(color, mAnimationColor.getDefaultColor(), (float) mAnimator.getAnimatedValue());
+        }
     }
 
     public void setDefaultColor(@NonNull CcConfiguration configuration, ColorStateList defaultColor) {
@@ -59,28 +72,108 @@ public class CcColorStateList extends ColorStateList {
         mDefaultColor = defaultColor != null ? defaultColor : mDefaultColor;
     }
 
-    public Integer getColor() {
-        return getColorInternal().getDefaultColor();
-    }
-
     @Override
     public int getColorForState(int[] stateSet, int defaultColor) {
-        return getColorInternal().getColorForState(stateSet, defaultColor);
+        int color = getColorInternal().getColorForState(stateSet, defaultColor);
+        if (mAnimationColor == null) {
+            return color;
+        } else {
+            return interpolate(
+                    color,
+                    mAnimationColor.getColorForState(stateSet, defaultColor),
+                    (float) mAnimator.getAnimatedValue());
+        }
     }
 
-    public void setColor(Integer color) {
+    public void setColor(int color) {
         setColor(ColorStateList.valueOf(color));
     }
 
     public void setColor(ColorStateList color) {
+        endAnimation();
+        setColorInternal(color);
+    }
+
+    private void setColorInternal(ColorStateList color) {
         if (mColor == null || !mColor.equals(color)) {
             mColor = color;
             invalidateSelf();
         }
+        // Clear animation color.
+        mAnimationColor = null;
     }
 
     private ColorStateList getColorInternal() {
         return mColor != null ? mColor : mDefaultColor;
+    }
+
+    public void animateTo(int color) {
+        animateTo(ColorStateList.valueOf(color));
+    }
+
+    public void animateTo(ColorStateList color) {
+        if (mAnimator == null) {
+            mAnimator = ValueAnimator.ofFloat(0, 1);
+            mAnimator.setDuration(400);
+            mAnimator.setInterpolator(new DecelerateInterpolator());
+            mAnimator.addUpdateListener(this);
+            mAnimator.addListener(this);
+        } else {
+            endAnimation();
+        }
+
+        mAnimationColor = color;
+        mAnimator.start();
+    }
+
+    private void endAnimation() {
+        if (mAnimator != null && mAnimator.isStarted()) {
+            mAnimator.end();
+        }
+    }
+
+    private int interpolate(int startColor, int endColor, float fraction) {
+        if (startColor != endColor) {
+            int startA = (startColor >> 24) & 0xff;
+            int startR = (startColor >> 16) & 0xff;
+            int startG = (startColor >> 8) & 0xff;
+            int startB = startColor & 0xff;
+            int endA = (endColor >> 24) & 0xff;
+            int endR = (endColor >> 16) & 0xff;
+            int endG = (endColor >> 8) & 0xff;
+            int endB = endColor & 0xff;
+            return ((startA + (int) (fraction * (endA - startA))) << 24) |
+                    ((startR + (int) (fraction * (endR - startR))) << 16) |
+                    ((startG + (int) (fraction * (endG - startG))) << 8) |
+                    ((startB + (int) (fraction * (endB - startB))));
+        } else {
+            return startColor;
+        }
+    }
+
+    @Override
+    public void onAnimationStart(Animator animation) {
+        // Do nothing.
+    }
+
+    @Override
+    public void onAnimationEnd(Animator animation) {
+        setColorInternal(mAnimationColor);
+    }
+
+    @Override
+    public void onAnimationCancel(Animator animation) {
+        setColorInternal(mAnimationColor);
+    }
+
+    @Override
+    public void onAnimationRepeat(Animator animation) {
+        // Do nothing.
+    }
+
+    @Override
+    public void onAnimationUpdate(ValueAnimator animation) {
+        invalidateSelf();
     }
 
     public void addCallback(Callback callback) {
