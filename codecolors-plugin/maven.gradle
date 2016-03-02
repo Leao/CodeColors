@@ -1,6 +1,11 @@
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
 
+task sourceJar(type: Jar) {
+    from sourceSets.main.allJava
+    classifier "sources"
+}
+
 publishing {
     repositories {
         maven {
@@ -15,6 +20,8 @@ publishing {
             version VERSION
 
             from components.java
+
+            artifact(sourceJar)
 
             pom.withXml {
                 def projectNode = asNode();
