@@ -38,13 +38,18 @@ public class MainActivity extends CcAppCompatActivity {
             private int mCurrentColor = 0;
 
             public void onClick(View v) {
-                int color = mColors[mCurrentColor++];
-                if (mCurrentColor >= mColors.length) {
+                if (mCurrentColor < mColors.length) {
+                    int color = mColors[mCurrentColor++];
+                    CodeColors.animateTo(R.color.cc__color_primary_dark, color);
+                    CodeColors.animateTo(R.color.cc__color_primary, color);
+                    CodeColors.animateTo(R.color.cc__color_accent, color);
+                } else {
+                    // Animate to default colors.
+                    CodeColors.animateTo(R.color.cc__color_primary_dark, null);
+                    CodeColors.animateTo(R.color.cc__color_primary, null);
+                    CodeColors.animateTo(R.color.cc__color_accent, null);
                     mCurrentColor = 0;
                 }
-                CodeColors.animateTo(R.color.cc__color_primary_dark, color);
-                CodeColors.animateTo(R.color.cc__color_primary, color);
-                CodeColors.animateTo(R.color.cc__color_accent, color);
             }
         });
     }
