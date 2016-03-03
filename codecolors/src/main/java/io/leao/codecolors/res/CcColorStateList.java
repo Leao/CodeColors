@@ -2,19 +2,24 @@ package io.leao.codecolors.res;
 
 import android.animation.Animator;
 import android.animation.ValueAnimator;
+import android.annotation.TargetApi;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.view.animation.DecelerateInterpolator;
+import android.view.animation.Interpolator;
 
 import java.util.WeakHashMap;
 
 import io.leao.codecolors.plugin.res.CcConfiguration;
 
-public class CcColorStateList extends ColorStateList
-        implements ValueAnimator.AnimatorListener, ValueAnimator.AnimatorUpdateListener {
+public class CcColorStateList extends ColorStateList {
+    public static final int DEFAULT_ANIMATION_DURATION_MS = 400;
+    public static final Interpolator DEFAULT_ANIMATION_INTERPOLATOR = new DecelerateInterpolator();
 
     private static final int DEFAULT_COLOR = Color.RED;
     private static final int[][] EMPTY = new int[][]{new int[0]};
@@ -26,7 +31,8 @@ public class CcColorStateList extends ColorStateList
 
     private ColorStateList mColor;
 
-    private ValueAnimator mAnimator;
+    private ValueAnimator mAnimation;
+    private AnimationCallbackInternal mAnimationCallback;
     private ColorStateList mAnimationColor;
 
     protected WeakHashMap<Callback, Object> mCallbacks = new WeakHashMap<>();
@@ -55,11 +61,15 @@ public class CcColorStateList extends ColorStateList
 
     @Override
     public int getDefaultColor() {
-        int color = getColorInternal().getDefaultColor();
-        if (mAnimationColor == null) {
-            return color;
+        if (mAnimation == null || !mAnimation.isStarted() || mAnimation.getAnimatedFraction() == 0) {
+            return getColorInternal().getDefaultColor();
+        } else if (mAnimation.getAnimatedFraction() == 1) {
+            return getAnimationColorInternal().getDefaultColor();
         } else {
-            return interpolate(color, mAnimationColor.getDefaultColor(), (float) mAnimator.getAnimatedValue());
+            return interpolate(
+                    getColorInternal().getDefaultColor(),
+                    getAnimationColorInternal().getDefaultColor(),
+                    (float) mAnimation.getAnimatedValue());
         }
     }
 
@@ -74,14 +84,15 @@ public class CcColorStateList extends ColorStateList
 
     @Override
     public int getColorForState(int[] stateSet, int defaultColor) {
-        int color = getColorInternal().getColorForState(stateSet, defaultColor);
-        if (mAnimationColor == null) {
-            return color;
+        if (mAnimation == null || !mAnimation.isStarted() || mAnimation.getAnimatedFraction() == 0) {
+            return getColorInternal().getColorForState(stateSet, defaultColor);
+        } else if (mAnimation.getAnimatedFraction() == 1) {
+            return getAnimationColorInternal().getColorForState(stateSet, defaultColor);
         } else {
             return interpolate(
-                    color,
-                    mAnimationColor.getColorForState(stateSet, defaultColor),
-                    (float) mAnimator.getAnimatedValue());
+                    getColorInternal().getColorForState(stateSet, defaultColor),
+                    getAnimationColorInternal().getColorForState(stateSet, defaultColor),
+                    (float) mAnimation.getAnimatedValue());
         }
     }
 
@@ -90,45 +101,81 @@ public class CcColorStateList extends ColorStateList
     }
 
     public void setColor(ColorStateList color) {
-        endAnimation();
-        setColorInternal(color);
-    }
-
-    private void setColorInternal(ColorStateList color) {
-        if (mColor == null || !mColor.equals(color)) {
+        endAnimation(true);
+        if (isColorChanging(color)) {
             mColor = color;
             invalidateSelf();
+        } else {
+            mColor = color;
         }
-        // Clear animation color.
-        mAnimationColor = null;
+    }
+
+    private boolean isColorChanging(ColorStateList color) {
+        return mColor == null || !mColor.equals(color);
     }
 
     private ColorStateList getColorInternal() {
         return mColor != null ? mColor : mDefaultColor;
     }
 
-    public void animateTo(int color) {
-        animateTo(ColorStateList.valueOf(color));
+    private ColorStateList getAnimationColorInternal() {
+        return mAnimationColor != null ? mAnimationColor : mDefaultColor;
     }
 
-    public void animateTo(ColorStateList color) {
-        if (mAnimator == null) {
-            mAnimator = ValueAnimator.ofFloat(0, 1);
-            mAnimator.setDuration(400);
-            mAnimator.setInterpolator(new DecelerateInterpolator());
-            mAnimator.addUpdateListener(this);
-            mAnimator.addListener(this);
+    public ValueAnimator animateTo(int color) {
+        return animateTo(ColorStateList.valueOf(color));
+    }
+
+    public ValueAnimator animateTo(ColorStateList color) {
+        return animateTo(color, DEFAULT_ANIMATION_DURATION_MS, null, null);
+    }
+
+    public ValueAnimator animateTo(int color, int duration, @Nullable Interpolator interpolator,
+                                   @Nullable AnimationCallback callback) {
+        return animateTo(ColorStateList.valueOf(color), duration, interpolator, callback);
+    }
+
+    /**
+     * @return the animation animator, if the color is going to change; null, otherwise.
+     */
+    public ValueAnimator animateTo(ColorStateList color, int duration, @Nullable Interpolator interpolator,
+                                   @Nullable AnimationCallback callback) {
+        endAnimation(false);
+
+        if (isColorChanging(color)) {
+            if (mAnimation == null) {
+                mAnimation = ValueAnimator.ofFloat(0, 1);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    mAnimationCallback = new AnimationKitKatCallbackInternal();
+                } else {
+                    mAnimationCallback = new AnimationCallbackInternal();
+                }
+                mAnimation.addListener(mAnimationCallback);
+                mAnimation.addUpdateListener(mAnimationCallback);
+            }
+
+            mAnimationColor = color;
+
+            mAnimation.setDuration(duration);
+            mAnimation.setInterpolator(interpolator != null ? interpolator : DEFAULT_ANIMATION_INTERPOLATOR);
+
+            mAnimationCallback.setCallback(callback);
+
+            // Start animation!
+            mAnimation.start();
+            return mAnimation;
         } else {
-            endAnimation();
+            mColor = color;
+            return null;
         }
-
-        mAnimationColor = color;
-        mAnimator.start();
     }
 
-    private void endAnimation() {
-        if (mAnimator != null && mAnimator.isStarted()) {
-            mAnimator.end();
+    private void endAnimation(boolean blockEndInvalidate) {
+        if (mAnimation != null && mAnimation.isStarted()) {
+            if (blockEndInvalidate) {
+                mAnimationCallback.blockEndInvalidate();
+            }
+            mAnimation.end();
         }
     }
 
@@ -149,31 +196,6 @@ public class CcColorStateList extends ColorStateList
         } else {
             return startColor;
         }
-    }
-
-    @Override
-    public void onAnimationStart(Animator animation) {
-        // Do nothing.
-    }
-
-    @Override
-    public void onAnimationEnd(Animator animation) {
-        setColorInternal(mAnimationColor);
-    }
-
-    @Override
-    public void onAnimationCancel(Animator animation) {
-        // Do nothing.
-    }
-
-    @Override
-    public void onAnimationRepeat(Animator animation) {
-        // Do nothing.
-    }
-
-    @Override
-    public void onAnimationUpdate(ValueAnimator animation) {
-        invalidateSelf();
     }
 
     public void addCallback(Callback callback) {
@@ -222,9 +244,10 @@ public class CcColorStateList extends ColorStateList
             dest.writeByte((byte) 0);
         }
 
-        if (mColor != null) {
+        ColorStateList color = mAnimation == null || !mAnimation.isStarted() ? mColor : mAnimationColor;
+        if (color != null) {
             dest.writeByte((byte) 1);
-            mColor.writeToParcel(dest, 0);
+            color.writeToParcel(dest, 0);
         } else {
             dest.writeByte((byte) 0);
         }
@@ -259,7 +282,127 @@ public class CcColorStateList extends ColorStateList
         void invalidateColor(T anchor, CcColorStateList color);
     }
 
-    @Override
+    private class AnimationCallbackInternal extends AnimationCallback {
+        protected AnimationCallback mCallback;
+
+        private float mUpdateFraction;
+        private boolean mBlockEndInvalidate; // Invalidate on end by default.
+
+        public void setCallback(AnimationCallback callback) {
+            mCallback = callback;
+        }
+
+        public void blockEndInvalidate() {
+            mBlockEndInvalidate = true;
+        }
+
+        @Override
+        public void onAnimationStart(Animator animation) {
+            if (mCallback != null) {
+                mCallback.onAnimationStart(animation);
+            }
+        }
+
+        @Override
+        public void onAnimationEnd(Animator animation) {
+            if (mCallback != null) {
+                mCallback.onAnimationEnd(animation);
+            }
+
+            mColor = mAnimationColor;
+            mAnimationColor = null;
+            mCallback = null;
+            mUpdateFraction = 0;
+            mBlockEndInvalidate = false;
+        }
+
+        @Override
+        public void onAnimationCancel(Animator animation) {
+            if (mCallback != null) {
+                mCallback.onAnimationCancel(animation);
+            }
+        }
+
+        @Override
+        public void onAnimationRepeat(Animator animation) {
+            if (mCallback != null) {
+                mCallback.onAnimationRepeat(animation);
+            }
+        }
+
+        @Override
+        public void onAnimationUpdate(ValueAnimator animation) {
+            float updateFraction = animation.getAnimatedFraction();
+            if (updateFraction != mUpdateFraction) {
+                mUpdateFraction = updateFraction;
+
+                if (mCallback != null) {
+                    mCallback.onAnimationUpdate(animation);
+                }
+
+                if (mUpdateFraction != 1 || !mBlockEndInvalidate) {
+                    invalidateSelf();
+                }
+            }
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.KITKAT)
+    public class AnimationKitKatCallbackInternal extends AnimationCallbackInternal
+            implements ValueAnimator.AnimatorPauseListener {
+
+        @Override
+        public void onAnimationPause(Animator animation) {
+            if (mCallback instanceof AnimationKitKatCallback) {
+                ((AnimationKitKatCallback) mCallback).onAnimationPause(animation);
+            }
+        }
+
+        @Override
+        public void onAnimationResume(Animator animation) {
+            if (mCallback instanceof AnimationKitKatCallback) {
+                ((AnimationKitKatCallback) mCallback).onAnimationResume(animation);
+            }
+        }
+    }
+
+    public abstract class AnimationCallback
+            implements ValueAnimator.AnimatorListener, ValueAnimator.AnimatorUpdateListener {
+
+        @Override
+        public void onAnimationStart(Animator animation) {
+        }
+
+        @Override
+        public void onAnimationEnd(Animator animation) {
+        }
+
+        @Override
+        public void onAnimationCancel(Animator animation) {
+        }
+
+        @Override
+        public void onAnimationRepeat(Animator animation) {
+        }
+
+        @Override
+        public void onAnimationUpdate(ValueAnimator animation) {
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.KITKAT)
+    public abstract class AnimationKitKatCallback extends AnimationCallback
+            implements ValueAnimator.AnimatorPauseListener {
+
+        @Override
+        public void onAnimationPause(Animator animation) {
+        }
+
+        @Override
+        public void onAnimationResume(Animator animation) {
+        }
+    }
+
     public String toString() {
         return getClass().getName() + "@" + Integer.toHexString(hashCode());
     }
