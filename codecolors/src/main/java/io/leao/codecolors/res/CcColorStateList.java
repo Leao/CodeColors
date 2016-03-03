@@ -163,7 +163,7 @@ public class CcColorStateList extends ColorStateList
 
     @Override
     public void onAnimationCancel(Animator animation) {
-        setColorInternal(mAnimationColor);
+        // Do nothing.
     }
 
     @Override
