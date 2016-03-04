@@ -58,8 +58,10 @@ public class CcColorsManager {
                     CcConfigurationUtils.getBestConfiguration(
                             resources.getConfiguration(), mColorConfigurations.get(color));
 
-            // Reset default color if the configuration changed.
             CcColorStateList cccsl = getColor(color);
+            // End animation, if isStarted.
+            cccsl.endAnimation();
+            // Reset default color if the configuration changed.
             if (!bestConfiguration.equals(cccsl.getConfiguration())) {
                 ColorStateList csl;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

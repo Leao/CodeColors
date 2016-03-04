@@ -101,6 +101,7 @@ public class CcColorStateList extends ColorStateList {
     }
 
     public void setColor(ColorStateList color) {
+        // End animation, and block the end invalidate.
         endAnimation(true);
         if (isColorChanging(color)) {
             mColor = color;
@@ -140,6 +141,7 @@ public class CcColorStateList extends ColorStateList {
      */
     public ValueAnimator animateTo(ColorStateList color, int duration, @Nullable Interpolator interpolator,
                                    @Nullable AnimationCallback callback) {
+        // End animation, without blocking the end invalidate.
         endAnimation(false);
 
         if (isColorChanging(color)) {
@@ -168,6 +170,11 @@ public class CcColorStateList extends ColorStateList {
             mColor = color;
             return null;
         }
+    }
+
+    public void endAnimation() {
+        // End animation, without blocking the end invalidate.
+        endAnimation(false);
     }
 
     private void endAnimation(boolean blockEndInvalidate) {
