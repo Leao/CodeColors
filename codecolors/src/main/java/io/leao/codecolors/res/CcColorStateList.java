@@ -13,6 +13,8 @@ import android.support.annotation.Nullable;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.WeakHashMap;
 
 import io.leao.codecolors.plugin.res.CcConfiguration;
@@ -35,8 +37,10 @@ public class CcColorStateList extends ColorStateList {
     private AnimationCallbackInternal mAnimationCallback;
     private ColorStateList mAnimationColor;
 
-    protected WeakHashMap<Callback, Object> mCallbacks = new WeakHashMap<>();
-    protected WeakHashMap<Object, AnchorCallback> mAnchorCallbacks = new WeakHashMap<>();
+    protected Map<Callback, Object> mCallbacks =
+            Collections.synchronizedMap(new WeakHashMap<Callback, Object>());
+    protected Map<Object, AnchorCallback> mAnchorCallbacks =
+            Collections.synchronizedMap(new WeakHashMap<Object, AnchorCallback>());
 
     public CcColorStateList() {
         super(EMPTY, new int[]{DEFAULT_COLOR});
