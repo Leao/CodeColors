@@ -69,7 +69,7 @@ public class CcColorsManager {
                 } else {
                     csl = resources.getColorStateList(mColorValue.get(color));
                 }
-                cccsl.setDefaultColor(bestConfiguration, csl);
+                cccsl.onConfigurationChanged(bestConfiguration, csl);
             }
         }
     }

@@ -77,7 +77,7 @@ public class CcColorStateList extends ColorStateList {
         }
     }
 
-    public void setDefaultColor(@NonNull CcConfiguration configuration, ColorStateList defaultColor) {
+    public void onConfigurationChanged(@NonNull CcConfiguration configuration, ColorStateList defaultColor) {
         if (mConfiguration == null) {
             mConfiguration = new CcConfigurationParcelable(configuration);
         } else {
@@ -274,7 +274,7 @@ public class CcColorStateList extends ColorStateList {
         public CcColorStateList createFromParcel(Parcel source) {
             CcColorStateList cccsl = new CcColorStateList();
             if (source.readByte() == 1) {
-                cccsl.setDefaultColor(
+                cccsl.onConfigurationChanged(
                         CcConfigurationParcelable.CREATOR.createFromParcel(source),
                         ColorStateList.CREATOR.createFromParcel(source));
             }
