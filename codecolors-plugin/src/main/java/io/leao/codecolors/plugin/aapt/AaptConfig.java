@@ -1,6 +1,5 @@
 package io.leao.codecolors.plugin.aapt;
 
-
 import io.leao.codecolors.plugin.res.CcConfiguration;
 
 /**
