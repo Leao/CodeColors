@@ -26,8 +26,6 @@ public class CcColorStateList extends ColorStateList {
     private static final int DEFAULT_COLOR = Color.RED;
     private static final int[][] EMPTY = new int[][]{new int[0]};
 
-    private int mId = CcResources.NO_ID;
-
     private ColorStateList mDefaultColor = ColorStateList.valueOf(DEFAULT_COLOR);
     private CcConfigurationParcelable mConfiguration;
 
@@ -49,14 +47,6 @@ public class CcColorStateList extends ColorStateList {
     @Override
     public boolean isStateful() {
         return true;
-    }
-
-    public void setId(int id) {
-        mId = id;
-    }
-
-    public int getId() {
-        return mId;
     }
 
     public CcConfiguration getConfiguration() {
