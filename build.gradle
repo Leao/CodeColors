@@ -3,11 +3,16 @@
 buildscript {
     repositories {
         jcenter()
-        maven {
+
+        // For development purposes (remote).
+        /*maven {
             url 'https://dl.bintray.com/leao/maven/'
-            // For development purposes.
-            // url uri('codecolors-maven/plugin')
-        }
+        }*/
+
+        // For development purposes (local).
+        /*maven {
+            url uri('codecolors-maven/plugin')
+        }*/
     }
 
     dependencies {
