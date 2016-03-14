@@ -10,7 +10,6 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 
 import java.util.Collections;
@@ -20,20 +19,11 @@ import java.util.WeakHashMap;
 import io.leao.codecolors.plugin.res.CcConfiguration;
 
 public class CcColorStateList extends ColorStateList {
-    public static final int DEFAULT_ANIMATION_DURATION_MS = 400;
-    public static final Interpolator DEFAULT_ANIMATION_INTERPOLATOR = new DecelerateInterpolator();
-
-    private static final int DEFAULT_COLOR = Color.RED;
+    private static final int DEFAULT_COLOR = Color.BLUE;
     private static final int[][] EMPTY = new int[][]{new int[0]};
 
-    private ColorStateList mDefaultColor = ColorStateList.valueOf(DEFAULT_COLOR);
+    private AnimatedDefaultColorHandler mColorHandler;
     private CcConfigurationParcelable mConfiguration;
-
-    private ColorStateList mColor;
-
-    private ValueAnimator mAnimation;
-    private AnimationCallbackInternal mAnimationCallback;
-    private ColorStateList mAnimationColor;
 
     protected Map<Callback, Object> mCallbacks =
             Collections.synchronizedMap(new WeakHashMap<Callback, Object>());
@@ -41,30 +31,29 @@ public class CcColorStateList extends ColorStateList {
             Collections.synchronizedMap(new WeakHashMap<Object, AnchorCallback>());
 
     public CcColorStateList() {
-        super(EMPTY, new int[]{DEFAULT_COLOR});
+        this(new AnimatedDefaultColorHandler());
     }
 
-    @Override
-    public boolean isStateful() {
-        return true;
+    private CcColorStateList(AnimatedDefaultColorHandler colorHandler) {
+        super(EMPTY, new int[]{DEFAULT_COLOR});
+        mColorHandler = colorHandler;
+        mColorHandler.setOnColorChangedListener(new DefaultColorHandler.OnColorChangedListener() {
+            @Override
+            public void onColorChanged() {
+                invalidateSelf();
+            }
+        });
+    }
+
+    private CcColorStateList(Parcel source) {
+        this(AnimatedDefaultColorHandler.CREATOR.createFromParcel(source));
+        if (source.readByte() == 1) {
+            mConfiguration = CcConfigurationParcelable.CREATOR.createFromParcel(source);
+        }
     }
 
     public CcConfiguration getConfiguration() {
         return mConfiguration;
-    }
-
-    @Override
-    public int getDefaultColor() {
-        if (mAnimation == null || !mAnimation.isStarted() || mAnimation.getAnimatedFraction() == 0) {
-            return getColorInternal().getDefaultColor();
-        } else if (mAnimation.getAnimatedFraction() == 1) {
-            return getAnimationColorInternal().getDefaultColor();
-        } else {
-            return interpolate(
-                    getColorInternal().getDefaultColor(),
-                    getAnimationColorInternal().getDefaultColor(),
-                    (float) mAnimation.getAnimatedValue());
-        }
     }
 
     public void onConfigurationChanged(@NonNull CcConfiguration configuration, ColorStateList defaultColor) {
@@ -73,21 +62,33 @@ public class CcColorStateList extends ColorStateList {
         } else {
             mConfiguration.setTo(configuration);
         }
-        mDefaultColor = defaultColor != null ? defaultColor : mDefaultColor;
+        mColorHandler.setDefaultColor(defaultColor);
+    }
+
+    @NonNull
+    @Override
+    public CcColorStateList withAlpha(int alpha) {
+        return new CcColorStateList(mColorHandler.withAlpha(alpha));
+    }
+
+    @Override
+    public boolean isStateful() {
+        return true;
+    }
+
+    @Override
+    public boolean isOpaque() {
+        return mColorHandler.isOpaque();
+    }
+
+    @Override
+    public int getDefaultColor() {
+        return mColorHandler.getDefaultColor();
     }
 
     @Override
     public int getColorForState(int[] stateSet, int defaultColor) {
-        if (mAnimation == null || !mAnimation.isStarted() || mAnimation.getAnimatedFraction() == 0) {
-            return getColorInternal().getColorForState(stateSet, defaultColor);
-        } else if (mAnimation.getAnimatedFraction() == 1) {
-            return getAnimationColorInternal().getColorForState(stateSet, defaultColor);
-        } else {
-            return interpolate(
-                    getColorInternal().getColorForState(stateSet, defaultColor),
-                    getAnimationColorInternal().getColorForState(stateSet, defaultColor),
-                    (float) mAnimation.getAnimatedValue());
-        }
+        return mColorHandler.getColorForState(stateSet, defaultColor);
     }
 
     public void setColor(int color) {
@@ -95,26 +96,7 @@ public class CcColorStateList extends ColorStateList {
     }
 
     public void setColor(ColorStateList color) {
-        // End animation, and block the end invalidate.
-        endAnimation(true);
-        if (isColorChanging(color)) {
-            mColor = color;
-            invalidateSelf();
-        } else {
-            mColor = color;
-        }
-    }
-
-    private boolean isColorChanging(ColorStateList color) {
-        return mColor == null || !mColor.equals(color);
-    }
-
-    private ColorStateList getColorInternal() {
-        return mColor != null ? mColor : mDefaultColor;
-    }
-
-    private ColorStateList getAnimationColorInternal() {
-        return mAnimationColor != null ? mAnimationColor : mDefaultColor;
+        mColorHandler.setColor(color);
     }
 
     public ValueAnimator animateTo(int color) {
@@ -122,10 +104,12 @@ public class CcColorStateList extends ColorStateList {
     }
 
     public ValueAnimator animateTo(ColorStateList color) {
-        return animateTo(color, DEFAULT_ANIMATION_DURATION_MS, null, null);
+        return animateTo(color, null, null, null);
     }
 
-    public ValueAnimator animateTo(int color, int duration, @Nullable Interpolator interpolator,
+    public ValueAnimator animateTo(int color,
+                                   @Nullable Integer duration,
+                                   @Nullable Interpolator interpolator,
                                    @Nullable AnimationCallback callback) {
         return animateTo(ColorStateList.valueOf(color), duration, interpolator, callback);
     }
@@ -133,70 +117,16 @@ public class CcColorStateList extends ColorStateList {
     /**
      * @return the animation animator, if the color is going to change; null, otherwise.
      */
-    public ValueAnimator animateTo(ColorStateList color, int duration, @Nullable Interpolator interpolator,
+    public ValueAnimator animateTo(ColorStateList color,
+                                   @Nullable Integer duration,
+                                   @Nullable Interpolator interpolator,
                                    @Nullable AnimationCallback callback) {
-        // End animation, without blocking the end invalidate.
-        endAnimation(false);
-
-        if (isColorChanging(color)) {
-            if (mAnimation == null) {
-                mAnimation = ValueAnimator.ofFloat(0, 1);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                    mAnimationCallback = new AnimationKitKatCallbackInternal();
-                } else {
-                    mAnimationCallback = new AnimationCallbackInternal();
-                }
-                mAnimation.addListener(mAnimationCallback);
-                mAnimation.addUpdateListener(mAnimationCallback);
-            }
-
-            mAnimationColor = color;
-
-            mAnimation.setDuration(duration);
-            mAnimation.setInterpolator(interpolator != null ? interpolator : DEFAULT_ANIMATION_INTERPOLATOR);
-
-            mAnimationCallback.setCallback(callback);
-
-            // Start animation!
-            mAnimation.start();
-            return mAnimation;
-        } else {
-            mColor = color;
-            return null;
-        }
+        return mColorHandler.animateTo(color, duration, interpolator, callback);
     }
 
     public void endAnimation() {
-        // End animation, without blocking the end invalidate.
-        endAnimation(false);
-    }
-
-    private void endAnimation(boolean blockEndInvalidate) {
-        if (mAnimation != null && mAnimation.isStarted()) {
-            if (blockEndInvalidate) {
-                mAnimationCallback.blockEndInvalidate();
-            }
-            mAnimation.end();
-        }
-    }
-
-    private int interpolate(int startColor, int endColor, float fraction) {
-        if (startColor != endColor) {
-            int startA = (startColor >> 24) & 0xff;
-            int startR = (startColor >> 16) & 0xff;
-            int startG = (startColor >> 8) & 0xff;
-            int startB = startColor & 0xff;
-            int endA = (endColor >> 24) & 0xff;
-            int endR = (endColor >> 16) & 0xff;
-            int endG = (endColor >> 8) & 0xff;
-            int endB = endColor & 0xff;
-            return ((startA + (int) (fraction * (endA - startA))) << 24) |
-                    ((startR + (int) (fraction * (endR - startR))) << 16) |
-                    ((startG + (int) (fraction * (endG - startG))) << 8) |
-                    ((startB + (int) (fraction * (endB - startB))));
-        } else {
-            return startColor;
-        }
+        // End animation, without blocking the color change call.
+        mColorHandler.endAnimation(false);
     }
 
     public void addCallback(Callback callback) {
@@ -237,18 +167,11 @@ public class CcColorStateList extends ColorStateList {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
+        mColorHandler.writeToParcel(dest, flags);
+
         if (mConfiguration != null) {
             dest.writeByte((byte) 1);
             mConfiguration.writeToParcel(dest, 0);
-            mDefaultColor.writeToParcel(dest, 0);
-        } else {
-            dest.writeByte((byte) 0);
-        }
-
-        ColorStateList color = mAnimation == null || !mAnimation.isStarted() ? mColor : mAnimationColor;
-        if (color != null) {
-            dest.writeByte((byte) 1);
-            color.writeToParcel(dest, 0);
         } else {
             dest.writeByte((byte) 0);
         }
@@ -262,16 +185,7 @@ public class CcColorStateList extends ColorStateList {
 
         @Override
         public CcColorStateList createFromParcel(Parcel source) {
-            CcColorStateList cccsl = new CcColorStateList();
-            if (source.readByte() == 1) {
-                cccsl.onConfigurationChanged(
-                        CcConfigurationParcelable.CREATOR.createFromParcel(source),
-                        ColorStateList.CREATOR.createFromParcel(source));
-            }
-            if (source.readByte() == 1) {
-                cccsl.setColor(ColorStateList.CREATOR.createFromParcel(source));
-            }
-            return cccsl;
+            return new CcColorStateList(source);
         }
     };
 
@@ -281,90 +195,6 @@ public class CcColorStateList extends ColorStateList {
 
     public interface AnchorCallback<T> {
         void invalidateColor(T anchor, CcColorStateList color);
-    }
-
-    private class AnimationCallbackInternal extends AnimationCallback {
-        protected AnimationCallback mCallback;
-
-        private float mUpdateFraction;
-        private boolean mBlockEndInvalidate; // Invalidate on end by default.
-
-        public void setCallback(AnimationCallback callback) {
-            mCallback = callback;
-        }
-
-        public void blockEndInvalidate() {
-            mBlockEndInvalidate = true;
-        }
-
-        @Override
-        public void onAnimationStart(Animator animation) {
-            if (mCallback != null) {
-                mCallback.onAnimationStart(animation);
-            }
-        }
-
-        @Override
-        public void onAnimationEnd(Animator animation) {
-            if (mCallback != null) {
-                mCallback.onAnimationEnd(animation);
-            }
-
-            mColor = mAnimationColor;
-            mAnimationColor = null;
-            mCallback = null;
-            mUpdateFraction = 0;
-            mBlockEndInvalidate = false;
-        }
-
-        @Override
-        public void onAnimationCancel(Animator animation) {
-            if (mCallback != null) {
-                mCallback.onAnimationCancel(animation);
-            }
-        }
-
-        @Override
-        public void onAnimationRepeat(Animator animation) {
-            if (mCallback != null) {
-                mCallback.onAnimationRepeat(animation);
-            }
-        }
-
-        @Override
-        public void onAnimationUpdate(ValueAnimator animation) {
-            float updateFraction = animation.getAnimatedFraction();
-            if (updateFraction != mUpdateFraction) {
-                mUpdateFraction = updateFraction;
-
-                if (mCallback != null) {
-                    mCallback.onAnimationUpdate(animation);
-                }
-
-                if (mUpdateFraction != 1 || !mBlockEndInvalidate) {
-                    invalidateSelf();
-                }
-            }
-        }
-    }
-
-    @TargetApi(Build.VERSION_CODES.KITKAT)
-    public class AnimationKitKatCallbackInternal extends AnimationCallbackInternal
-            implements ValueAnimator.AnimatorPauseListener {
-
-        @Override
-        public void onAnimationPause(Animator animation) {
-            if (mCallback instanceof AnimationKitKatCallback) {
-                ((AnimationKitKatCallback) mCallback).onAnimationPause(animation);
-            }
-        }
-
-        @Override
-        public void onAnimationResume(Animator animation) {
-            if (mCallback instanceof AnimationKitKatCallback) {
-                ((AnimationKitKatCallback) mCallback).onAnimationResume(animation);
-            }
-        }
     }
 
     public abstract class AnimationCallback
@@ -392,7 +222,7 @@ public class CcColorStateList extends ColorStateList {
     }
 
     @TargetApi(Build.VERSION_CODES.KITKAT)
-    public abstract class AnimationKitKatCallback extends AnimationCallback
+    public abstract class AnimationCallbackKitKat extends AnimationCallback
             implements ValueAnimator.AnimatorPauseListener {
 
         @Override
