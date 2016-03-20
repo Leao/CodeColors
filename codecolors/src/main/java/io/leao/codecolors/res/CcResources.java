@@ -7,7 +7,6 @@ import android.content.res.XmlResourceParser;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.util.TypedValue;
 
 import java.io.InputStream;
@@ -115,7 +114,6 @@ public class CcResources {
             final Resources.NotFoundException rnf = new Resources.NotFoundException(
                     "File " + file + " from drawable resource ID #0x" + Integer.toHexString(id));
             rnf.initCause(e);
-            Log.i("wut", "fail", e);
             throw rnf;
         }
 
