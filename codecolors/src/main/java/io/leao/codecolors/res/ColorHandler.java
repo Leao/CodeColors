@@ -7,7 +7,7 @@ interface ColorHandler<T extends ColorHandler> {
 
     boolean isOpaque();
 
-    int getDefaultColor();
+    Integer getDefaultColor();
 
     Integer getColorForState(@Nullable int[] stateSet, Integer defaultColor);
 }

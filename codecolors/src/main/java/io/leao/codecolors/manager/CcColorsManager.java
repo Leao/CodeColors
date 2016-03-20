@@ -101,17 +101,40 @@ public class CcColorsManager {
         }
     }
 
-    public synchronized void animateTo(int resId, int color) {
+    public synchronized void setStates(int resId, int[][] states, int[] colors) {
         CcColorStateList cccsl = getColor(resId);
         if (cccsl != null) {
-            cccsl.animateTo(color);
+            cccsl.setStates(states, colors);
         }
     }
 
-    public synchronized void animateTo(int resId, ColorStateList color) {
+    public synchronized void setState(int resId, int[] state, int color) {
         CcColorStateList cccsl = getColor(resId);
         if (cccsl != null) {
-            cccsl.animateTo(color);
+            cccsl.setState(state, color);
+        }
+    }
+
+    public synchronized void removeStates(int resId, int[][] states) {
+        CcColorStateList cccsl = getColor(resId);
+        if (cccsl != null) {
+            cccsl.removeStates(states);
+        }
+    }
+
+    public synchronized void removeState(int resId, int[] state) {
+        CcColorStateList cccsl = getColor(resId);
+        if (cccsl != null) {
+            cccsl.removeState(state);
+        }
+    }
+
+    public synchronized CcColorStateList.AnimationBuilder animate(int resId) {
+        CcColorStateList cccsl = getColor(resId);
+        if (cccsl != null) {
+            return cccsl.animate();
+        } else {
+            return null;
         }
     }
 }

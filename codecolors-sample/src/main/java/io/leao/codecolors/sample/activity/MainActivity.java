@@ -12,6 +12,7 @@ import android.widget.Button;
 
 import io.leao.codecolors.CodeColors;
 import io.leao.codecolors.app.CcAppCompatActivity;
+import io.leao.codecolors.res.CcColorStateList;
 import io.leao.codecolors.sample.R;
 
 public class MainActivity extends CcAppCompatActivity {
@@ -36,18 +37,27 @@ public class MainActivity extends CcAppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             private int[] mColors = new int[]{Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW};
             private int mCurrentColor = 0;
+            private boolean mSetState = true;
 
             public void onClick(View v) {
                 if (mCurrentColor < mColors.length) {
                     int color = mColors[mCurrentColor++];
-                    CodeColors.animateTo(R.color.cc__color_primary_dark, color);
-                    CodeColors.animateTo(R.color.cc__color_primary, color);
-                    CodeColors.animateTo(R.color.cc__color_accent, color);
+                    CodeColors.animate(R.color.cc__color_primary_dark).setColor(color).start();
+                    CodeColors.animate(R.color.cc__color_primary).setColor(color).start();
+                    CodeColors.animate(R.color.cc__color_accent).setColor(color).start();
                 } else {
                     // Animate to default colors.
-                    CodeColors.animateTo(R.color.cc__color_primary_dark, null);
-                    CodeColors.animateTo(R.color.cc__color_primary, null);
-                    CodeColors.animateTo(R.color.cc__color_accent, null);
+                    CodeColors.animate(R.color.cc__color_primary_dark).setColor(null).start();
+                    CodeColors.animate(R.color.cc__color_primary).setColor(null).start();
+                    CcColorStateList.AnimationBuilder builder = CodeColors.animate(R.color.cc__color_accent);
+                    builder.setColor(null);
+                    if (mSetState) {
+                        builder.setState(new int[]{android.R.attr.state_pressed}, Color.CYAN);
+                    } else {
+                        builder.removeState(new int[]{android.R.attr.state_pressed});
+                    }
+                    builder.start();
+                    mSetState = !mSetState;
                     mCurrentColor = 0;
                 }
             }

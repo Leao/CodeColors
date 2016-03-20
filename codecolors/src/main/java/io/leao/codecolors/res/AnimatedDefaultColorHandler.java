@@ -7,6 +7,7 @@ import android.content.res.ColorStateList;
 import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
@@ -22,37 +23,38 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
     protected AnimationUpdateListener mAnimationUpdateListener;
 
     public AnimatedDefaultColorHandler() {
-        this(null, null);
+        this(new BaseColorHandler(), new BaseColorHandler());
     }
 
-    protected AnimatedDefaultColorHandler(@Nullable BaseColorHandler defaultColorHandler,
-                                          @Nullable BaseColorHandler colorHandler) {
+    protected AnimatedDefaultColorHandler(@NonNull BaseColorHandler defaultColorHandler,
+                                          @NonNull BaseColorHandler colorHandler) {
         super(defaultColorHandler, colorHandler);
+        mAnimationColorHandler = new BaseColorHandler(mColorHandler);
     }
 
     protected AnimatedDefaultColorHandler(Parcel source) {
         super(source);
+        mAnimationColorHandler = new BaseColorHandler(mColorHandler);
     }
 
     @Override
     public AnimatedDefaultColorHandler withAlpha(int alpha) {
         endAnimation(false);
-        return new AnimatedDefaultColorHandler(
-                mDefaultColorHandler != null ? mDefaultColorHandler.withAlpha(alpha) : null,
-                mColorHandler != null ? mColorHandler.withAlpha(alpha) : null);
+        return new AnimatedDefaultColorHandler(mDefaultColorHandler.withAlpha(alpha), mColorHandler.withAlpha(alpha));
     }
 
     @Override
     public boolean isOpaque() {
         boolean isOpaque = super.isOpaque();
-        if (mAnimation != null && mAnimation.isStarted()) {
-            isOpaque &= mAnimationColorHandler == null || mAnimationColorHandler.isOpaque();
+        if (isOpaque && mAnimation != null && mAnimation.isStarted()) {
+            return mAnimationColorHandler.isOpaque();
+        } else {
+            return isOpaque;
         }
-        return isOpaque;
     }
 
     @Override
-    public int getDefaultColor() {
+    public Integer getDefaultColor() {
         if (mAnimation == null || !mAnimation.isStarted() || mAnimation.getAnimatedFraction() == 0) {
             return super.getDefaultColor();
         } else if (mAnimation.getAnimatedFraction() == 1) {
@@ -66,9 +68,14 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
     }
 
     @Override
-    public void setColor(ColorStateList color) {
-        endAnimation(true);
-        super.setColor(color);
+    public boolean setColor(ColorStateList color) {
+        boolean ended = endAnimation(true);
+        boolean changed = super.setColor(color);
+        mAnimationColorHandler.setColor(color);
+        if (ended && !changed) {
+            onColorChanged();
+        }
+        return changed;
     }
 
     @Override
@@ -85,28 +92,84 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
         }
     }
 
-    public ValueAnimator animateTo(ColorStateList color,
-                                   @Nullable Integer duration,
-                                   @Nullable Interpolator interpolator,
-                                   @Nullable CcColorStateList.AnimationCallback callback) {
-        endAnimation(false);
-
-        if (!isChangingColor(color)) {
-            return null;
+    @Override
+    public boolean setStates(int[][] states, int[] colors) {
+        boolean ended = endAnimation(true);
+        boolean changed = super.setStates(states, colors);
+        mAnimationColorHandler.setStates(states, colors);
+        if (ended && !changed) {
+            onColorChanged();
         }
-
-        mAnimationColorHandler = color != null ? new BaseColorHandler(color) : null;
-        mAnimationCallback = callback;
-
-        ensureAnimation();
-        mAnimation.setDuration(duration != null ? duration : DEFAULT_ANIMATION_DURATION_MS);
-        mAnimation.setInterpolator(interpolator != null ? interpolator : DEFAULT_ANIMATION_INTERPOLATOR);
-        mAnimation.start();
-
-        return mAnimation;
+        return changed;
     }
 
-    private void ensureAnimation() {
+    @Override
+    public boolean setState(int[] state, int color) {
+        boolean ended = endAnimation(true);
+        boolean changed = super.setState(state, color);
+        mAnimationColorHandler.setState(state, color);
+        if (ended && !changed) {
+            onColorChanged();
+        }
+        return changed;
+    }
+
+    @Override
+    public boolean removeStates(int[][] states) {
+        boolean ended = endAnimation(true);
+        boolean changed = super.removeStates(states);
+        mAnimationColorHandler.removeStates(states);
+        if (ended && !changed) {
+            onColorChanged();
+        }
+        return changed;
+    }
+
+    @Override
+    public boolean removeState(int[] state) {
+        boolean ended = endAnimation(true);
+        boolean changed = super.removeState(state);
+        mAnimationColorHandler.removeState(state);
+        if (ended && !changed) {
+            onColorChanged();
+        }
+        return changed;
+    }
+
+    public boolean setAnimationColor(int color) {
+        return setAnimationColor(ColorStateList.valueOf(color));
+    }
+
+    public boolean setAnimationColor(ColorStateList color) {
+        endAnimation(false);
+        return mAnimationColorHandler.setColor(color);
+    }
+
+    public boolean setAnimationStates(int[][] states, int[] colors) {
+        endAnimation(false);
+        return mAnimationColorHandler.setStates(states, colors);
+    }
+
+    public boolean setAnimationState(int[] state, int color) {
+        endAnimation(false);
+        return mAnimationColorHandler.setState(state, color);
+    }
+
+    public boolean removeAnimationStates(int[][] states) {
+        endAnimation(false);
+        return mAnimationColorHandler.removeStates(states);
+    }
+
+    public boolean removeAnimationState(int[] state) {
+        endAnimation(false);
+        return mAnimationColorHandler.removeState(state);
+    }
+
+    public ValueAnimator startAnimation(@Nullable Integer duration,
+                                        @Nullable Interpolator interpolator,
+                                        @Nullable CcColorStateList.AnimationCallback callback) {
+        mAnimationCallback = callback;
+
         if (mAnimation == null) {
             mAnimation = ValueAnimator.ofFloat(0, 1);
             // Listener.
@@ -119,14 +182,22 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
                 mAnimation.addPauseListener(new AnimationPauseListener());
             }
         }
+        mAnimation.setDuration(duration != null ? duration : DEFAULT_ANIMATION_DURATION_MS);
+        mAnimation.setInterpolator(interpolator != null ? interpolator : DEFAULT_ANIMATION_INTERPOLATOR);
+        mAnimation.start();
+
+        return mAnimation;
     }
 
-    public void endAnimation(boolean blockColorChange) {
+    public boolean endAnimation(boolean blockColorChange) {
         if (mAnimation != null && mAnimation.isStarted()) {
             if (blockColorChange && mAnimationUpdateListener != null) {
                 mAnimationUpdateListener.blockColorChange();
             }
             mAnimation.end();
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -186,8 +257,7 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
             }
 
             // Reset handler state.
-            mColorHandler = mAnimationColorHandler;
-            mAnimationColorHandler = null;
+            mColorHandler = new BaseColorHandler(mAnimationColorHandler);
             mAnimationCallback = null;
         }
 
@@ -229,7 +299,7 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
                 mUpdateFraction = updateFraction;
 
                 if (mUpdateFraction != 1 || !mBlockColorChange) {
-                    mOnColorChangedListener.onColorChanged();
+                    onColorChanged();
                 }
             }
 

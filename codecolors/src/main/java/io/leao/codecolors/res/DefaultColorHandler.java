@@ -3,6 +3,7 @@ package io.leao.codecolors.res;
 import android.content.res.ColorStateList;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 class DefaultColorHandler implements ColorHandler<DefaultColorHandler>, Parcelable {
@@ -11,55 +12,54 @@ class DefaultColorHandler implements ColorHandler<DefaultColorHandler>, Parcelab
 
     protected OnColorChangedListener mOnColorChangedListener;
 
-    protected DefaultColorHandler(@Nullable BaseColorHandler defaultColorHandler,
-                                  @Nullable BaseColorHandler colorHandler) {
+    public DefaultColorHandler(@NonNull BaseColorHandler defaultColorHandler,
+                               @NonNull BaseColorHandler colorHandler) {
         mDefaultColorHandler = defaultColorHandler;
         mColorHandler = colorHandler;
     }
 
     protected DefaultColorHandler(Parcel source) {
-        this(source.readByte() == 1 ? BaseColorHandler.CREATOR.createFromParcel(source) : null,
-                source.readByte() == 1 ? BaseColorHandler.CREATOR.createFromParcel(source) : null);
+        this((BaseColorHandler) source.readParcelable(DefaultColorHandler.class.getClassLoader()),
+                (BaseColorHandler) source.readParcelable(DefaultColorHandler.class.getClassLoader()));
     }
 
     @Override
     public DefaultColorHandler withAlpha(int alpha) {
-        return new DefaultColorHandler(
-                mDefaultColorHandler != null ? mDefaultColorHandler.withAlpha(alpha) : null,
-                mColorHandler != null ? mColorHandler.withAlpha(alpha) : null);
+        return new DefaultColorHandler(mDefaultColorHandler.withAlpha(alpha), mColorHandler.withAlpha(alpha));
     }
 
     @Override
     public boolean isOpaque() {
-        return (mDefaultColorHandler == null || mDefaultColorHandler.isOpaque()) &&
-                (mColorHandler == null || mColorHandler.isOpaque());
+        return mDefaultColorHandler.isOpaque() && mColorHandler.isOpaque();
     }
 
     public void setDefaultColor(ColorStateList color) {
-        mDefaultColorHandler = new BaseColorHandler(color);
+        mDefaultColorHandler.setColor(color);
     }
 
     @Override
-    public int getDefaultColor() {
+    public Integer getDefaultColor() {
         return getDefaultColorOrDefault(mColorHandler);
     }
 
-    protected int getDefaultColorOrDefault(BaseColorHandler colorHandler) {
-        return colorHandler != null ? colorHandler.getDefaultColor() : mDefaultColorHandler.getDefaultColor();
-    }
-
-    protected boolean isChangingColor(ColorStateList color) {
-        if (color == null) {
-            return mColorHandler != null;
-        } else {
-            return mColorHandler == null || mColorHandler.getColor() != color;
+    protected Integer getDefaultColorOrDefault(BaseColorHandler colorHandler) {
+        Integer defaultColor = colorHandler != null ? colorHandler.getDefaultColor() : null;
+        if (defaultColor == null) {
+            defaultColor = mDefaultColorHandler.getDefaultColor();
         }
+        return defaultColor;
     }
 
-    public void setColor(ColorStateList color) {
-        if (isChangingColor(color)) {
-            mColorHandler = color != null ? new BaseColorHandler(color) : null;
-            mOnColorChangedListener.onColorChanged();
+    public boolean setColor(int color) {
+        return setColor(ColorStateList.valueOf(color));
+    }
+
+    public boolean setColor(ColorStateList color) {
+        if (mColorHandler.setColor(color)) {
+            onColorChanged();
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -72,13 +72,59 @@ class DefaultColorHandler implements ColorHandler<DefaultColorHandler>, Parcelab
                                                 Integer defaultColor) {
         Integer color = colorHandler != null ? colorHandler.getColorForState(stateSet, null) : null;
         if (color == null) {
-            color = mDefaultColorHandler.getColorForState(stateSet, defaultColor);
+            color = mDefaultColorHandler.getColorForState(stateSet, null);
         }
-        return color;
+        return color != null ? color : defaultColor;
+    }
+
+    public boolean setStates(int[][] states, int[] colors) {
+        if (mColorHandler.setStates(states, colors)) {
+            onColorChanged();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean setState(int[] state, int color) {
+        if (mColorHandler.setState(state, color)) {
+            onColorChanged();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean removeStates(int[][] states) {
+        if (mColorHandler.removeStates(states)) {
+            onColorChanged();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean removeState(int[] state) {
+        if (mColorHandler.removeState(state)) {
+            onColorChanged();
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public void setOnColorChangedListener(OnColorChangedListener listener) {
         mOnColorChangedListener = listener;
+    }
+
+    protected void onColorChanged() {
+        if (mOnColorChangedListener != null) {
+            mOnColorChangedListener.onColorChanged();
+        }
+    }
+
+    public interface OnColorChangedListener {
+        void onColorChanged();
     }
 
     @Override
@@ -88,17 +134,8 @@ class DefaultColorHandler implements ColorHandler<DefaultColorHandler>, Parcelab
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        writeColorHandlerToParcel(mDefaultColorHandler, dest, flags);
-        writeColorHandlerToParcel(mColorHandler, dest, flags);
-    }
-
-    private void writeColorHandlerToParcel(BaseColorHandler handler, Parcel dest, int flags) {
-        if (handler != null) {
-            dest.writeByte((byte) 1);
-            handler.writeToParcel(dest, flags);
-        } else {
-            dest.writeByte((byte) 0);
-        }
+        dest.writeParcelable(mDefaultColorHandler, flags);
+        dest.writeParcelable(mColorHandler, flags);
     }
 
     public static final Parcelable.Creator<DefaultColorHandler> CREATOR =
@@ -113,8 +150,4 @@ class DefaultColorHandler implements ColorHandler<DefaultColorHandler>, Parcelab
                     return new DefaultColorHandler(source);
                 }
             };
-
-    public interface OnColorChangedListener {
-        void onColorChanged();
-    }
 }

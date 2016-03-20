@@ -9,7 +9,6 @@ import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.view.animation.Interpolator;
 
 import java.util.Collections;
@@ -24,6 +23,8 @@ public class CcColorStateList extends ColorStateList {
 
     private AnimatedDefaultColorHandler mColorHandler;
     private CcConfigurationParcelable mConfiguration;
+
+    private AnimationBuilder mAnimationBuilder;
 
     protected Map<Callback, Object> mCallbacks =
             Collections.synchronizedMap(new WeakHashMap<Callback, Object>());
@@ -83,7 +84,8 @@ public class CcColorStateList extends ColorStateList {
 
     @Override
     public int getDefaultColor() {
-        return mColorHandler.getDefaultColor();
+        Integer defaultColor = mColorHandler.getDefaultColor();
+        return defaultColor != null ? defaultColor : DEFAULT_COLOR;
     }
 
     @Override
@@ -92,36 +94,36 @@ public class CcColorStateList extends ColorStateList {
     }
 
     public void setColor(int color) {
-        setColor(ColorStateList.valueOf(color));
+        mColorHandler.setColor(color);
     }
 
     public void setColor(ColorStateList color) {
         mColorHandler.setColor(color);
     }
 
-    public ValueAnimator animateTo(int color) {
-        return animateTo(ColorStateList.valueOf(color));
+    public void setStates(int[][] states, int[] colors) {
+        mColorHandler.setStates(states, colors);
     }
 
-    public ValueAnimator animateTo(ColorStateList color) {
-        return animateTo(color, null, null, null);
+    public void setState(int[] state, int color) {
+        mColorHandler.setState(state, color);
     }
 
-    public ValueAnimator animateTo(int color,
-                                   @Nullable Integer duration,
-                                   @Nullable Interpolator interpolator,
-                                   @Nullable AnimationCallback callback) {
-        return animateTo(ColorStateList.valueOf(color), duration, interpolator, callback);
+    public void removeStates(int[][] states) {
+        mColorHandler.removeStates(states);
     }
 
-    /**
-     * @return the animation animator, if the color is going to change; null, otherwise.
-     */
-    public ValueAnimator animateTo(ColorStateList color,
-                                   @Nullable Integer duration,
-                                   @Nullable Interpolator interpolator,
-                                   @Nullable AnimationCallback callback) {
-        return mColorHandler.animateTo(color, duration, interpolator, callback);
+    public void removeState(int[] state) {
+        mColorHandler.removeState(state);
+    }
+
+    public AnimationBuilder animate() {
+        if (mAnimationBuilder == null) {
+            mAnimationBuilder = new AnimationBuilder();
+        } else {
+            mAnimationBuilder.reset();
+        }
+        return mAnimationBuilder;
     }
 
     public void endAnimation() {
@@ -165,29 +167,66 @@ public class CcColorStateList extends ColorStateList {
         }
     }
 
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        mColorHandler.writeToParcel(dest, flags);
+    public class AnimationBuilder {
+        private Integer mDuration;
+        private Interpolator mInterpolator;
+        private AnimationCallback mCallback;
 
-        if (mConfiguration != null) {
-            dest.writeByte((byte) 1);
-            mConfiguration.writeToParcel(dest, 0);
-        } else {
-            dest.writeByte((byte) 0);
+        protected void reset() {
+            mDuration = null;
+            mInterpolator = null;
+            mCallback = null;
+        }
+
+        public AnimationBuilder setColor(int color) {
+            mColorHandler.setAnimationColor(color);
+            return this;
+        }
+
+        public AnimationBuilder setColor(ColorStateList color) {
+            mColorHandler.setAnimationColor(color);
+            return this;
+        }
+
+        public AnimationBuilder setStates(int[][] states, int[] colors) {
+            mColorHandler.setAnimationStates(states, colors);
+            return this;
+        }
+
+        public AnimationBuilder setState(int[] state, int color) {
+            mColorHandler.setAnimationState(state, color);
+            return this;
+        }
+
+        public AnimationBuilder removeStates(int[][] states) {
+            mColorHandler.removeAnimationStates(states);
+            return this;
+        }
+
+        public AnimationBuilder removeState(int[] state) {
+            mColorHandler.removeAnimationState(state);
+            return this;
+        }
+
+        public AnimationBuilder setDuration(int duration) {
+            mDuration = duration;
+            return this;
+        }
+
+        public AnimationBuilder setInterpolator(Interpolator interpolator) {
+            mInterpolator = interpolator;
+            return this;
+        }
+
+        public AnimationBuilder setCallback(AnimationCallback callback) {
+            mCallback = callback;
+            return this;
+        }
+
+        public ValueAnimator start() {
+            return mColorHandler.startAnimation(mDuration, mInterpolator, mCallback);
         }
     }
-
-    public static final Parcelable.Creator<CcColorStateList> CREATOR = new Parcelable.Creator<CcColorStateList>() {
-        @Override
-        public CcColorStateList[] newArray(int size) {
-            return new CcColorStateList[size];
-        }
-
-        @Override
-        public CcColorStateList createFromParcel(Parcel source) {
-            return new CcColorStateList(source);
-        }
-    };
 
     public interface Callback {
         void invalidateColor(CcColorStateList color);
@@ -237,4 +276,33 @@ public class CcColorStateList extends ColorStateList {
     public String toString() {
         return getClass().getName() + "@" + Integer.toHexString(hashCode());
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        mColorHandler.writeToParcel(dest, flags);
+
+        if (mConfiguration != null) {
+            dest.writeByte((byte) 1);
+            mConfiguration.writeToParcel(dest, 0);
+        } else {
+            dest.writeByte((byte) 0);
+        }
+    }
+
+    public static final Parcelable.Creator<CcColorStateList> CREATOR = new Parcelable.Creator<CcColorStateList>() {
+        @Override
+        public CcColorStateList[] newArray(int size) {
+            return new CcColorStateList[size];
+        }
+
+        @Override
+        public CcColorStateList createFromParcel(Parcel source) {
+            return new CcColorStateList(source);
+        }
+    };
 }
