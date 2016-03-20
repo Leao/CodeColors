@@ -189,10 +189,10 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
         return mAnimation;
     }
 
-    public boolean endAnimation(boolean blockColorChange) {
+    public boolean endAnimation(boolean blockOnColorChangedCall) {
         if (mAnimation != null && mAnimation.isStarted()) {
-            if (blockColorChange && mAnimationUpdateListener != null) {
-                mAnimationUpdateListener.blockColorChange();
+            if (blockOnColorChangedCall && mAnimationUpdateListener != null) {
+                mAnimationUpdateListener.blockOnColorChangedCall();
             }
             mAnimation.end();
             return true;
@@ -281,10 +281,10 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
      */
     private class AnimationUpdateListener implements ValueAnimator.AnimatorUpdateListener {
         private float mUpdateFraction;
-        private boolean mBlockColorChange;
+        private boolean mBlockOnColorChangedCall;
 
-        public void blockColorChange() {
-            mBlockColorChange = true;
+        public void blockOnColorChangedCall() {
+            mBlockOnColorChangedCall = true;
         }
 
         @Override
@@ -298,7 +298,7 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
             if (updateFraction != mUpdateFraction) {
                 mUpdateFraction = updateFraction;
 
-                if (mUpdateFraction != 1 || !mBlockColorChange) {
+                if (mUpdateFraction != 1 || !mBlockOnColorChangedCall) {
                     onColorChanged();
                 }
             }
@@ -306,7 +306,7 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
             // Reset listener state.
             if (mUpdateFraction == 1) {
                 mUpdateFraction = 0;
-                mBlockColorChange = false;
+                mBlockOnColorChangedCall = false;
             }
         }
     }
