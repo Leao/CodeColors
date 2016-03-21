@@ -234,6 +234,7 @@ public abstract class CodeColors {
 
     public interface Callback {
         void onCodeColorsInitSuccess();
+
         void onCodeColorsInitFailure();
     }
 }
