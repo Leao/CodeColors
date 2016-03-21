@@ -1,7 +1,6 @@
 package io.leao.codecolors.app;
 
 import android.content.res.Configuration;
-import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
@@ -11,12 +10,6 @@ import io.leao.codecolors.view.CcLayoutInflater;
 
 public class CcAppCompatActivity extends AppCompatActivity {
     private CcLayoutInflater mLayoutInflater;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        LayoutInflater.from(this); // Makes sure mLayoutInflater is initialized.
-        super.onCreate(savedInstanceState);
-    }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
