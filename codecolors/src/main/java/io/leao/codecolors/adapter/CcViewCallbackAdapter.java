@@ -1,5 +1,6 @@
 package io.leao.codecolors.adapter;
 
+import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -11,7 +12,7 @@ public interface CcViewCallbackAdapter<T> extends CcCallbackAdapter<T> {
     /**
      * @param outColors the code colors from the given view that should receive the callback.
      */
-    void getCodeColors(AttributeSet attrs, View view, Set<CcColorStateList> outColors);
+    void getCodeColors(@Nullable AttributeSet attrs, View view, Set<CcColorStateList> outColors);
 
-    T getAnchor(AttributeSet attrs, View view);
+    T getAnchor(@Nullable AttributeSet attrs, View view);
 }

@@ -6,6 +6,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 
 import io.leao.codecolors.manager.CcCallbackManager;
+import io.leao.codecolors.widget.CcAppCompatToolbar;
+import io.leao.codecolors.widget.CcToolbar;
 
 public class CcLayoutInflaterFactoryWrapper implements LayoutInflater.Factory2 {
     private final CcLayoutInflater mInflater;
@@ -24,10 +26,22 @@ public class CcLayoutInflaterFactoryWrapper implements LayoutInflater.Factory2 {
     @Override
     public View onCreateView(String name, Context context, AttributeSet attrs) {
         View view;
-        if (mFactory != null) {
+        // We 'inject' our toolbar views, to make sure we add proper callbacks to its children (title, subtitle) views.
+        // This workflow also exists in AppCompat library.
+        switch (name) {
+            case "Toolbar":
+                view = new CcToolbar(context, attrs);
+                break;
+            case "android.support.v7.widget.Toolbar":
+                view = new CcAppCompatToolbar(context, attrs);
+                break;
+            default:
+                view = null;
+                break;
+        }
+
+        if (view == null && mFactory != null) {
             view = mFactory.onCreateView(name, context, attrs);
-        } else {
-            view = null;
         }
 
         if (view == null) {
