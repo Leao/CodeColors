@@ -4,7 +4,7 @@ import android.graphics.drawable.Drawable;
 
 import io.leao.codecolors.res.CcColorStateList;
 
-public class CcDrawableCallback implements CcColorStateList.AnchorCallback<Drawable> {
+public class CcInvalidateDrawableCallback implements CcColorStateList.AnchorCallback<Drawable> {
     @Override
     public void invalidateColor(Drawable drawable, CcColorStateList color) {
         invalidate(drawable);

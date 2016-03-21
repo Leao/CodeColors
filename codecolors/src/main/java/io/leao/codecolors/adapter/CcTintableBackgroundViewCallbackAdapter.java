@@ -8,18 +8,14 @@ import android.view.View;
 
 import java.util.Set;
 
+import io.leao.codecolors.callback.CcRefreshDrawableStateCallback;
 import io.leao.codecolors.res.CcColorStateList;
 
 public class CcTintableBackgroundViewCallbackAdapter implements CcViewCallbackAdapter<View> {
     @NonNull
     @Override
     public CcColorStateList.AnchorCallback<View> getAnchorCallback() {
-        return new CcColorStateList.AnchorCallback<View>() {
-            @Override
-            public void invalidateColor(View anchor, CcColorStateList color) {
-                anchor.refreshDrawableState();
-            }
-        };
+        return new CcRefreshDrawableStateCallback<>();
     }
 
     @Override

@@ -5,14 +5,14 @@ import android.support.annotation.NonNull;
 import android.view.View;
 
 import io.leao.codecolors.R;
-import io.leao.codecolors.callback.CcDrawableCallback;
+import io.leao.codecolors.callback.CcInvalidateDrawableCallback;
 import io.leao.codecolors.res.CcColorStateList;
 
 public class CcBackgroundTintAttrCallbackAdapter implements CcAttrCallbackAdapter<Drawable> {
     @NonNull
     @Override
     public CcColorStateList.AnchorCallback<Drawable> getAnchorCallback() {
-        return new CcDrawableCallback();
+        return new CcInvalidateDrawableCallback();
     }
 
     @NonNull

@@ -12,7 +12,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import io.leao.codecolors.CodeColors;
-import io.leao.codecolors.callback.CcDrawableCallback;
+import io.leao.codecolors.callback.CcInvalidateDrawableCallback;
 import io.leao.codecolors.manager.CcDependenciesManager;
 import io.leao.codecolors.res.CcColorStateList;
 import io.leao.codecolors.res.CcResources;
@@ -80,7 +80,7 @@ class CcDrawableWrapper extends InsetDrawable implements CcColorStateList.Callba
 
     @Override
     public void invalidateColor(CcColorStateList color) {
-        CcDrawableCallback.invalidate(this);
+        CcInvalidateDrawableCallback.invalidate(this);
     }
 
     static class CcConstantState extends ConstantState {
