@@ -43,11 +43,23 @@ class DefaultColorHandler implements ColorHandler<DefaultColorHandler>, Parcelab
     }
 
     protected Integer getDefaultColorFromHandlerOrDefaultHandler(BaseColorHandler colorHandler) {
-        Integer defaultColor = colorHandler != null ? colorHandler.getDefaultColor() : null;
-        if (defaultColor == null) {
-            defaultColor = mDefaultColorHandler.getDefaultColor();
+        // Return handler default color when:
+        // - its default color is not null
+        // - its default state's length is 0
+        // - its default state's length is not 0, but the default handler default state's length is also not 0.
+        Integer handlerDefaultColor = colorHandler != null ? colorHandler.getDefaultColor() : null;
+        if (handlerDefaultColor != null) {
+            int[] handlerDefaultState = colorHandler.getDefaultColorState();
+            if (handlerDefaultState == null || handlerDefaultState.length == 0) {
+                return handlerDefaultColor;
+            } else {
+                int[] defaultHandlerDefaultState = mDefaultColorHandler.getDefaultColorState();
+                if (defaultHandlerDefaultState == null || defaultHandlerDefaultState.length != 0) {
+                    return handlerDefaultColor;
+                }
+            }
         }
-        return defaultColor;
+        return mDefaultColorHandler.getDefaultColor();
     }
 
     public boolean setColor(int color) {

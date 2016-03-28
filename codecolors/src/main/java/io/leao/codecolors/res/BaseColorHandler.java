@@ -22,6 +22,8 @@ class BaseColorHandler implements ColorHandler<BaseColorHandler>, Parcelable {
 
     private boolean mInvalidateDefaultColor;
     private Integer mDefaultColor;
+    private int[] mDefaultColorState;
+
     private int mTransparentCount;
 
     public List<StateIndexValue> mStateIndexValueList;
@@ -36,6 +38,8 @@ class BaseColorHandler implements ColorHandler<BaseColorHandler>, Parcelable {
 
         mInvalidateDefaultColor = orig.mInvalidateDefaultColor;
         mDefaultColor = orig.mDefaultColor;
+        mDefaultColorState = orig.mDefaultColorState;
+
         mTransparentCount = orig.mTransparentCount;
 
         mStateIndexValueList = new ArrayList<>(orig.mStateIndexValueList.size());
@@ -258,23 +262,33 @@ class BaseColorHandler implements ColorHandler<BaseColorHandler>, Parcelable {
         return mDefaultColor;
     }
 
+    public int[] getDefaultColorState() {
+        ensureDefaultColor();
+        return mDefaultColorState;
+    }
+
     private void ensureDefaultColor() {
         if (mInvalidateDefaultColor) {
             mInvalidateDefaultColor = false;
 
             if (mStateIndexValueList.size() > 0) {
-                mDefaultColor = mStateIndexValueList.get(0).getColor();
+                StateIndexValue defaultStateIndexValue = mStateIndexValueList.get(0);
+                mDefaultColor = defaultStateIndexValue.getColor();
+                mDefaultColorState = defaultStateIndexValue.getState();
                 for (int i = mStateIndexValueList.size() - 1; i > 0; i--) {
                     StateIndexValue stateIndexValue = mStateIndexValueList.get(i);
                     if (stateIndexValue.getState().length == 0) {
                         mDefaultColor = stateIndexValue.getColor();
+                        mDefaultColorState = stateIndexValue.getState();
                         break;
                     }
                 }
             } else if (mColor != null) {
                 mDefaultColor = mColor.getDefaultColor();
+                mDefaultColorState = null;
             } else {
                 mDefaultColor = null;
+                mDefaultColorState = null;
             }
         }
     }
