@@ -58,11 +58,11 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
         if (mAnimation == null || !mAnimation.isStarted() || mAnimation.getAnimatedFraction() == 0) {
             return super.getDefaultColor();
         } else if (mAnimation.getAnimatedFraction() == 1) {
-            return getDefaultColorOrDefault(mAnimationColorHandler);
+            return getDefaultColorFromHandlerOrDefaultHandler(mAnimationColorHandler);
         } else {
             return interpolate(
                     super.getDefaultColor(),
-                    getDefaultColorOrDefault(mAnimationColorHandler),
+                    getDefaultColorFromHandlerOrDefaultHandler(mAnimationColorHandler),
                     (float) mAnimation.getAnimatedValue());
         }
     }
@@ -83,11 +83,11 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
         if (mAnimation == null || !mAnimation.isStarted() || mAnimation.getAnimatedFraction() == 0) {
             return super.getColorForState(stateSet, defaultColor);
         } else if (mAnimation.getAnimatedFraction() == 1) {
-            return getColorForStateOrDefault(mAnimationColorHandler, stateSet, defaultColor);
+            return getColorForStateFromHandlerOrDefaultHandler(mAnimationColorHandler, stateSet, defaultColor);
         } else {
             return interpolate(
                     super.getColorForState(stateSet, defaultColor),
-                    getColorForStateOrDefault(mAnimationColorHandler, stateSet, defaultColor),
+                    getColorForStateFromHandlerOrDefaultHandler(mAnimationColorHandler, stateSet, defaultColor),
                     (float) mAnimation.getAnimatedValue());
         }
     }

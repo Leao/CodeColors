@@ -39,10 +39,10 @@ class DefaultColorHandler implements ColorHandler<DefaultColorHandler>, Parcelab
 
     @Override
     public Integer getDefaultColor() {
-        return getDefaultColorOrDefault(mColorHandler);
+        return getDefaultColorFromHandlerOrDefaultHandler(mColorHandler);
     }
 
-    protected Integer getDefaultColorOrDefault(BaseColorHandler colorHandler) {
+    protected Integer getDefaultColorFromHandlerOrDefaultHandler(BaseColorHandler colorHandler) {
         Integer defaultColor = colorHandler != null ? colorHandler.getDefaultColor() : null;
         if (defaultColor == null) {
             defaultColor = mDefaultColorHandler.getDefaultColor();
@@ -65,11 +65,12 @@ class DefaultColorHandler implements ColorHandler<DefaultColorHandler>, Parcelab
 
     @Override
     public Integer getColorForState(@Nullable int[] stateSet, Integer defaultColor) {
-        return getColorForStateOrDefault(mColorHandler, stateSet, defaultColor);
+        return getColorForStateFromHandlerOrDefaultHandler(mColorHandler, stateSet, defaultColor);
     }
 
-    protected Integer getColorForStateOrDefault(BaseColorHandler colorHandler, @Nullable int[] stateSet,
-                                                Integer defaultColor) {
+    protected Integer getColorForStateFromHandlerOrDefaultHandler(BaseColorHandler colorHandler,
+                                                                  @Nullable int[] stateSet,
+                                                                  Integer defaultColor) {
         Integer color = colorHandler != null ? colorHandler.getColorForState(stateSet, null) : null;
         if (color == null) {
             color = mDefaultColorHandler.getColorForState(stateSet, null);
