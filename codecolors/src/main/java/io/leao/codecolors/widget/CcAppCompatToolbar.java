@@ -30,7 +30,7 @@ public class CcAppCompatToolbar extends Toolbar {
         if (child instanceof TextView) {
             ColorStateList textColors = ((TextView) child).getTextColors();
             if (textColors instanceof CcColorStateList) {
-                ((CcColorStateList) textColors).addCallback(child, new CcRefreshDrawableStateCallback());
+                ((CcColorStateList) textColors).addAnchorCallback(child, new CcRefreshDrawableStateCallback());
             }
         }
     }

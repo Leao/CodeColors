@@ -80,15 +80,13 @@ public class CcTintableBackgroundColorCallbackAdapter implements CcColorCallback
                 outResult.add(
                         (CcColorStateList) backgroundTintList,
                         new TintableBackgroundRefreshDrawableCallback(backgroundTintList));
-            } else {
+            } else if (backgroundTintList == null) {
                 TypedArray ta = view.getContext().obtainStyledAttributes(attrs, ATTRS_ARRAY, defStyleAttr, defStyleRes);
                 try {
                     final int backgroundResId = ta.getResourceId(0, -1);
                     if (backgroundResId != -1) {
                         CcColorStateList.AnchorCallback<View> callback =
-                                new TintableBackgroundUpdateTintListCallback(
-                                        backgroundResId,
-                                        ((TintableBackgroundView) view).getSupportBackgroundTintList());
+                                new TintableBackgroundUpdateTintListCallback(backgroundResId);
 
                         /*
                          * Checks if the attributes used by {@link TintManager#getTintList(int)} given the view's
@@ -182,9 +180,8 @@ public class CcTintableBackgroundColorCallbackAdapter implements CcColorCallback
         private int mBackgroundId;
         private ColorStateList mBackgroundTintList;
 
-        public TintableBackgroundUpdateTintListCallback(int backgroundId, ColorStateList backgroundTintList) {
+        public TintableBackgroundUpdateTintListCallback(int backgroundId) {
             mBackgroundId = backgroundId;
-            mBackgroundTintList = backgroundTintList;
         }
 
         @Override
@@ -193,8 +190,8 @@ public class CcTintableBackgroundColorCallbackAdapter implements CcColorCallback
                 TintManager manager = TintManager.get(new ContextWrapper(anchor.getContext()));
                 ColorStateList backgroundTintList = manager.getTintList(mBackgroundId);
                 if (backgroundTintList != null) {
-                    mBackgroundTintList = backgroundTintList;
                     ((TintableBackgroundView) anchor).setSupportBackgroundTintList(backgroundTintList);
+                    mBackgroundTintList = ((TintableBackgroundView) anchor).getSupportBackgroundTintList();
                     return; // Success!
                 }
             }

@@ -112,7 +112,7 @@ public class CcCallbackManager {
                         }
 
                         if (callback != null) {
-                            color.addCallback(inflateResult.anchor, callback);
+                            color.addAnchorCallback(inflateResult.anchor, callback);
                         }
                     }
                 }
@@ -180,7 +180,7 @@ public class CcCallbackManager {
                                     for (Integer dependency : dependencies) {
                                         CcColorStateList codeColor = CcColorsManager.getInstance().getColor(dependency);
                                         if (codeColor != null) {
-                                            codeColor.addCallback(inflateResult.anchor, cacheResult.callback);
+                                            codeColor.addAnchorCallback(inflateResult.anchor, cacheResult.callback);
                                         }
                                     }
                                 }

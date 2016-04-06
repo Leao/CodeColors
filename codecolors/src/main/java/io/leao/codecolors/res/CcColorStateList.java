@@ -11,8 +11,6 @@ import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.view.animation.Interpolator;
 
-import java.util.Collections;
-import java.util.Map;
 import java.util.WeakHashMap;
 
 import io.leao.codecolors.plugin.res.CcConfiguration;
@@ -24,12 +22,8 @@ public class CcColorStateList extends ColorStateList {
     private AnimatedDefaultColorHandler mColorHandler;
     private CcConfigurationParcelable mConfiguration;
 
+    private CallbackHandler mCallbackHandler = new CallbackHandler();
     private AnimationBuilder mAnimationBuilder;
-
-    protected Map<Callback, Object> mCallbacks =
-            Collections.synchronizedMap(new WeakHashMap<Callback, Object>());
-    protected Map<Object, AnchorCallback> mAnchorCallbacks =
-            Collections.synchronizedMap(new WeakHashMap<Object, AnchorCallback>());
 
     public CcColorStateList() {
         this(new AnimatedDefaultColorHandler());
@@ -131,40 +125,46 @@ public class CcColorStateList extends ColorStateList {
         mColorHandler.endAnimation(false);
     }
 
+    /**
+     * The added callback is kept in a {@code set} generated from a {@link WeakHashMap}.
+     * <p>
+     * That means the callback should be an object used by the application, like a
+     * {@link android.graphics.drawable.Drawable} or a {@link android.view.View}.
+     */
     public void addCallback(Callback callback) {
-        mCallbacks.put(callback, null);
+        mCallbackHandler.addCallback(callback);
     }
 
     public void removeCallback(Callback callback) {
-        mCallbacks.remove(callback);
+        mCallbackHandler.removeCallback(callback);
     }
 
     /**
+     * The added anchor is the key of a {@link WeakHashMap}.
+     * <p>
+     * That means the anchor should be an object used by the application, like a
+     * {@link android.graphics.drawable.Drawable} or a {@link android.view.View}.
+     * <p>
+     * Refrain from keeping a reference to the {@code anchor} in your {@code callback}. Otherwise, it might generate a
+     * memory leak.
+     *
      * @param anchor   the anchor object to which the callback is dependent.
      * @param callback the callback.
      */
-    public void addCallback(Object anchor, AnchorCallback callback) {
-        mAnchorCallbacks.put(anchor, callback);
+    public void addAnchorCallback(Object anchor, AnchorCallback callback) {
+        mCallbackHandler.addAnchorCallback(anchor, callback);
+    }
+
+    public void removeAnchor(AnchorCallback callback) {
+        mCallbackHandler.removeAnchor(callback);
     }
 
     public void removeCallback(AnchorCallback callback) {
-        mAnchorCallbacks.remove(callback);
+        mCallbackHandler.removeCallback(callback);
     }
 
-    @SuppressWarnings("unchecked")
     public void invalidateSelf() {
-        for (Callback callback : mCallbacks.keySet()) {
-            if (callback != null) {
-                callback.invalidateColor(this);
-            }
-        }
-
-        for (Object anchor : mAnchorCallbacks.keySet()) {
-            AnchorCallback callback = mAnchorCallbacks.get(anchor);
-            if (callback != null) {
-                callback.invalidateColor(anchor, this);
-            }
-        }
+        mCallbackHandler.invalidateColor(this);
     }
 
     public class AnimationBuilder {

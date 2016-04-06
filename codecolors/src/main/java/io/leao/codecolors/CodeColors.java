@@ -228,7 +228,7 @@ public abstract class CodeColors {
     public static void addColorCallback(int resId, Object anchor, CcColorStateList.AnchorCallback callback) {
         CcColorStateList color = getColor(resId);
         if (color != null) {
-            color.addCallback(anchor, callback);
+            color.addAnchorCallback(anchor, callback);
         }
     }
 
