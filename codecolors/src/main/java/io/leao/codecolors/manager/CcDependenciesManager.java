@@ -12,6 +12,7 @@ import java.util.Set;
 import io.leao.codecolors.plugin.CcConst;
 import io.leao.codecolors.plugin.res.CcConfiguration;
 import io.leao.codecolors.res.CcConfigurationUtils;
+import io.leao.codecolors.util.TempUtils;
 
 public class CcDependenciesManager {
     private static final String CLASS_NAME_BASE = "%s.%s";

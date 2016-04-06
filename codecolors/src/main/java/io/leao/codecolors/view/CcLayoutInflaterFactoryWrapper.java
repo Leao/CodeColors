@@ -5,7 +5,7 @@ import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 
-import io.leao.codecolors.manager.CcCallbackManager;
+import io.leao.codecolors.adapter.CcCallbackManager;
 import io.leao.codecolors.widget.CcAppCompatToolbar;
 import io.leao.codecolors.widget.CcToolbar;
 
@@ -50,7 +50,7 @@ public class CcLayoutInflaterFactoryWrapper implements LayoutInflater.Factory2 {
 
         if (view != null && attrs != null) {
             // Add callbacks to refresh drawable states.
-            CcCallbackManager.getInstance().addColorCallbacks(context, attrs, view);
+            CcCallbackManager.getInstance().onCreateView(context, attrs, view);
         }
 
         return view;

@@ -14,13 +14,13 @@ import java.lang.reflect.Type;
 
 import io.leao.codecolors.adapter.CcAttrCallbackAdapter;
 import io.leao.codecolors.adapter.CcBackgroundTintAttrCallbackAdapter;
-import io.leao.codecolors.adapter.CcTextColorsViewCallbackAdapter;
-import io.leao.codecolors.adapter.CcTintableBackgroundViewCallbackAdapter;
-import io.leao.codecolors.adapter.CcViewCallbackAdapter;
-import io.leao.codecolors.adapter.CcViewDefStyleAdapter;
+import io.leao.codecolors.adapter.CcTextColorsColorCallbackAdapter;
+import io.leao.codecolors.adapter.CcTintableBackgroundColorCallbackAdapter;
+import io.leao.codecolors.adapter.CcColorCallbackAdapter;
+import io.leao.codecolors.adapter.CcDefStyleAdapter;
 import io.leao.codecolors.drawable.CcColorDrawable;
 import io.leao.codecolors.drawable.CcDrawableCache;
-import io.leao.codecolors.manager.CcCallbackManager;
+import io.leao.codecolors.adapter.CcCallbackManager;
 import io.leao.codecolors.manager.CcColorsManager;
 import io.leao.codecolors.manager.CcConfigurationManager;
 import io.leao.codecolors.manager.CcDependenciesManager;
@@ -118,8 +118,8 @@ public abstract class CodeColors {
         if (useDefaultCallbackAdapters) {
             CcCallbackManager callbackManager = CcCallbackManager.getInstance();
             callbackManager.addAttrCallbackAdapter(new CcBackgroundTintAttrCallbackAdapter());
-            callbackManager.addViewCallbackAdapter(new CcTextColorsViewCallbackAdapter());
-            callbackManager.addViewCallbackAdapter(new CcTintableBackgroundViewCallbackAdapter());
+            callbackManager.addColorCallbackAdapter(new CcTextColorsColorCallbackAdapter());
+            callbackManager.addColorCallbackAdapter(new CcTintableBackgroundColorCallbackAdapter());
         }
 
         if (callback != null) {
@@ -217,12 +217,12 @@ public abstract class CodeColors {
         CcCallbackManager.getInstance().addAttrCallbackAdapter(adapter);
     }
 
-    public static void addViewCallbackAdapter(CcViewCallbackAdapter adapter) {
-        CcCallbackManager.getInstance().addViewCallbackAdapter(adapter);
+    public static void addViewCallbackAdapter(CcColorCallbackAdapter adapter) {
+        CcCallbackManager.getInstance().addColorCallbackAdapter(adapter);
     }
 
-    public static void addViewDefStyleAdapter(CcViewDefStyleAdapter adapter) {
-        CcCallbackManager.getInstance().addViewDefStyleAdapter(adapter);
+    public static void addViewDefStyleAdapter(CcDefStyleAdapter adapter) {
+        CcCallbackManager.getInstance().addDefStyleAdapter(adapter);
     }
 
     public static void addColorCallback(int resId, Object anchor, CcColorStateList.AnchorCallback callback) {

@@ -1,35 +1,31 @@
 package io.leao.codecolors.adapter;
 
 import android.content.res.ColorStateList;
-import android.support.annotation.NonNull;
 import android.support.v4.view.TintableBackgroundView;
 import android.util.AttributeSet;
 import android.view.View;
 
-import java.util.Set;
-
 import io.leao.codecolors.callback.CcRefreshDrawableStateCallback;
 import io.leao.codecolors.res.CcColorStateList;
 
-public class CcTintableBackgroundViewCallbackAdapter implements CcViewCallbackAdapter<View> {
-    @NonNull
+public class CcTintableBackgroundColorCallbackAdapter implements CcColorCallbackAdapter<View> {
     @Override
-    public CcColorStateList.AnchorCallback<View> getAnchorCallback() {
-        return new CcRefreshDrawableStateCallback<>();
+    public boolean onCache(CacheResult<View> outResult) {
+        outResult.set(new CcRefreshDrawableStateCallback<>());
+        return true;
     }
 
     @Override
-    public void getCodeColors(AttributeSet attrs, View view, Set<CcColorStateList> outColors) {
+    public boolean onInflate(AttributeSet attrs, View view, int defStyleAttr, int defStyleRes,
+                             InflateResult<View> outResult) {
         if (view instanceof TintableBackgroundView) {
             ColorStateList backgroundTint = ((TintableBackgroundView) view).getSupportBackgroundTintList();
             if (backgroundTint instanceof CcColorStateList) {
-                outColors.add((CcColorStateList) backgroundTint);
+                outResult.set(view);
+                outResult.add((CcColorStateList) backgroundTint);
+                return true;
             }
         }
-    }
-
-    @Override
-    public View getAnchor(AttributeSet attrs, View view) {
-        return view;
+        return false;
     }
 }

@@ -5,20 +5,17 @@ import android.support.design.widget.CoordinatorLayout;
 import android.util.AttributeSet;
 import android.view.View;
 
-import io.leao.codecolors.adapter.CcViewDefStyleAdapter;
+import io.leao.codecolors.adapter.CcDefStyleAdapter;
 import io.leao.codecolors.sample.R;
 
-public class CcCoordinatorLayoutDefStyleAdapter implements CcViewDefStyleAdapter {
-
+public class CcCoordinatorLayoutDefStyleAdapter implements CcDefStyleAdapter {
     @SuppressLint("PrivateResource")
     @Override
-    public boolean getDefStyle(AttributeSet attrs, View view, DefStyle outDefStyle) {
+    public boolean onInflate(AttributeSet attrs, View view, InflateResult outResult) {
         if (view instanceof CoordinatorLayout) {
-            outDefStyle.attr = 0;
-            outDefStyle.res = R.style.Widget_Design_CoordinatorLayout;
+            outResult.set(0, R.style.Widget_Design_CoordinatorLayout);
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 }

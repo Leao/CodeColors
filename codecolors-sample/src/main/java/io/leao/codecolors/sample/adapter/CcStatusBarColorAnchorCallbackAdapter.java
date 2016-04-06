@@ -1,6 +1,5 @@
 package io.leao.codecolors.sample.adapter;
 
-import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.view.View;
 
@@ -9,30 +8,25 @@ import io.leao.codecolors.res.CcColorStateList;
 import io.leao.codecolors.sample.R;
 
 public class CcStatusBarColorAnchorCallbackAdapter implements CcAttrCallbackAdapter<CoordinatorLayout> {
-    @NonNull
     @Override
-    public int[] getAttrs() {
-        return new int[]{R.attr.statusBarBackground};
+    public boolean onCache(CacheResult<CoordinatorLayout> outResult) {
+        outResult.set(
+                new int[]{R.attr.statusBarBackground},
+                new CcColorStateList.AnchorCallback<CoordinatorLayout>() {
+                    @Override
+                    public void invalidateColor(CoordinatorLayout anchor, CcColorStateList color) {
+                        anchor.invalidate();
+                    }
+                });
+        return true;
     }
 
     @Override
-    public CoordinatorLayout getAnchor(View view, int attr) {
+    public boolean onInflate(View view, int attr, InflateResult<CoordinatorLayout> outResult) {
         if (view instanceof CoordinatorLayout) {
-            return (CoordinatorLayout) view;
-        } else {
-            return null;
+            outResult.set((CoordinatorLayout) view);
+            return true;
         }
-    }
-
-
-    @NonNull
-    @Override
-    public CcColorStateList.AnchorCallback<CoordinatorLayout> getAnchorCallback() {
-        return new CcColorStateList.AnchorCallback<CoordinatorLayout>() {
-            @Override
-            public void invalidateColor(CoordinatorLayout anchor, CcColorStateList color) {
-                anchor.invalidate();
-            }
-        };
+        return false;
     }
 }

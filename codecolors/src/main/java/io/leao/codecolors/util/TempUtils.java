@@ -1,4 +1,4 @@
-package io.leao.codecolors.manager;
+package io.leao.codecolors.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-class TempUtils {
+public class TempUtils {
     private static Map<Integer, List<int[]>> sIntArrays = new HashMap<>();
 
     // Order bigger sets first. Supposedly, it helps in reducing the probability of the needed to allocate more memory.
