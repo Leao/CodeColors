@@ -58,10 +58,9 @@ public class CcCallbackManager {
     }
 
     public synchronized void onCreateView(Context context, AttributeSet attrs, View view) {
-        CcDefStyleAdapter.InflateResult defStyleInflateResult = mDefStyleAdaptersHandler.onCreateView(attrs, view);
-
-        mColorCallbackAdaptersHandler.onCreateView(attrs, view, defStyleInflateResult);
-        mAttrCallbackAdaptersHandler.onCreateView(context, attrs, view, defStyleInflateResult);
+        CcDefStyleAdapter.InflateResult defStyle = mDefStyleAdaptersHandler.onCreateView(attrs, view);
+        mColorCallbackAdaptersHandler.onCreateView(attrs, view, defStyle.attr, defStyle.res);
+        mAttrCallbackAdaptersHandler.onCreateView(context, attrs, view, defStyle.attr, defStyle.res);
     }
 
     private static class ColorCallbackAdaptersHandler {
@@ -84,13 +83,12 @@ public class CcCallbackManager {
         }
 
         @SuppressWarnings("unchecked")
-        public void onCreateView(AttributeSet attrs, View view, CcDefStyleAdapter.InflateResult defStyleInflateResult) {
+        public void onCreateView(AttributeSet attrs, View view, int defStyleAttr, int defStyleRes) {
             for (int i = 0; i < mAdapters.size(); i++) {
                 CcColorCallbackAdapter adapter = mAdapters.get(i);
                 CcColorCallbackAdapter.InflateResult inflateResult = mTempInflateResult.reuse();
 
-                if (adapter.onInflate(
-                        attrs, view, defStyleInflateResult.attr, defStyleInflateResult.res, inflateResult)) {
+                if (adapter.onInflate(attrs, view, defStyleAttr, defStyleRes, inflateResult)) {
                     CcColorCallbackAdapter.CacheResult cacheResult = mCacheResults.get(i);
                     for (int j = 0; j < inflateResult.colors.size(); j++) {
                         CcColorStateList color = (CcColorStateList) inflateResult.colors.get(j);
@@ -138,11 +136,8 @@ public class CcCallbackManager {
         }
 
         @SuppressWarnings("unchecked")
-        public void onCreateView(Context context, AttributeSet attrs, View view,
-                                 CcDefStyleAdapter.InflateResult defStyleInflateResult) {
-            TypedArray ta =
-                    context.obtainStyledAttributes(
-                            attrs, R.styleable.CodeColors, defStyleInflateResult.attr, defStyleInflateResult.res);
+        public void onCreateView(Context context, AttributeSet attrs, View view, int defStyleAttr, int defStyleRes) {
+            TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.CodeColors, defStyleAttr, defStyleRes);
             try {
                 final int N = ta.getIndexCount();
                 for (int i = 0; i < N; i++) {
