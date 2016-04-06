@@ -4,6 +4,18 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.os.Build;
+import android.support.v7.widget.AppCompatAutoCompleteTextView;
+import android.support.v7.widget.AppCompatButton;
+import android.support.v7.widget.AppCompatCheckBox;
+import android.support.v7.widget.AppCompatCheckedTextView;
+import android.support.v7.widget.AppCompatEditText;
+import android.support.v7.widget.AppCompatImageButton;
+import android.support.v7.widget.AppCompatMultiAutoCompleteTextView;
+import android.support.v7.widget.AppCompatRadioButton;
+import android.support.v7.widget.AppCompatRatingBar;
+import android.support.v7.widget.AppCompatSeekBar;
+import android.support.v7.widget.AppCompatSpinner;
+import android.support.v7.widget.AppCompatTextView;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.AutoCompleteTextView;
@@ -218,31 +230,51 @@ public class CcCallbackManager {
          * Order matters: a {@link CheckBox} is also {@link Button}, so we have to be careful when returning the default
          * style attribute.
          */
-        @SuppressLint("InlinedApi")
+        @SuppressLint({"InlinedApi", "PrivateResource"})
         private static int getViewDefStyleAttr(View view) {
-            if (view instanceof RadioButton) {
+            if (view instanceof AppCompatRadioButton) {
+                return R.attr.radioButtonStyle;
+            } else if (view instanceof RadioButton) {
                 return android.R.attr.radioButtonStyle;
+            } else if (view instanceof AppCompatCheckBox) {
+                return R.attr.checkboxStyle;
             } else if (view instanceof CheckBox) {
                 return android.R.attr.checkboxStyle;
+            } else if (view instanceof AppCompatButton) {
+                return R.attr.buttonStyle;
             } else if (view instanceof Button) {
                 return android.R.attr.buttonStyle;
+            } else if (view instanceof AppCompatMultiAutoCompleteTextView) {
+                return R.attr.autoCompleteTextViewStyle;
             } else if (view instanceof MultiAutoCompleteTextView) {
                 return android.R.attr.autoCompleteTextViewStyle;
+            } else if (view instanceof AppCompatAutoCompleteTextView) {
+                return R.attr.autoCompleteTextViewStyle;
             } else if (view instanceof AutoCompleteTextView) {
                 return android.R.attr.autoCompleteTextViewStyle;
+            } else if (view instanceof AppCompatEditText) {
+                return R.attr.editTextStyle;
             } else if (view instanceof EditText) {
                 return android.R.attr.editTextStyle;
-            } else if (view instanceof CheckedTextView) {
+            } else if (view instanceof AppCompatCheckedTextView || view instanceof CheckedTextView) {
                 return Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 ?
                         android.R.attr.checkedTextViewStyle : 0;
-            } else if (view instanceof TextView) {
+            } else if (view instanceof AppCompatTextView || view instanceof TextView) {
                 return android.R.attr.textViewStyle;
+            } else if (view instanceof AppCompatSpinner) {
+                return R.attr.spinnerStyle;
             } else if (view instanceof Spinner) {
                 return android.R.attr.spinnerStyle;
+            } else if (view instanceof AppCompatImageButton) {
+                return R.attr.imageButtonStyle;
             } else if (view instanceof ImageButton) {
                 return android.R.attr.imageButtonStyle;
+            } else if (view instanceof AppCompatRatingBar) {
+                return R.attr.ratingBarStyle;
             } else if (view instanceof RatingBar) {
                 return android.R.attr.ratingBarStyle;
+            } else if (view instanceof AppCompatSeekBar) {
+                return R.attr.seekBarStyle;
             } else if (view instanceof SeekBar) {
                 return android.R.attr.seekBarStyle;
             } else {
