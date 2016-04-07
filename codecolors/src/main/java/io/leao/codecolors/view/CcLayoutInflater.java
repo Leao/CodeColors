@@ -86,7 +86,7 @@ public class CcLayoutInflater extends LayoutInflater {
     }
 
     /**
-     * Called by {@link CcLayoutInflater}.
+     * Called by {@link CcLayoutInflaterFactoryWrapper}.
      */
     View createViewFromTag(Context context, String name, AttributeSet attrs) {
         final Context lastContext = (Context) mConstructorArgs[0];

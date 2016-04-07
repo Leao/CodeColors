@@ -6,8 +6,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 
 import io.leao.codecolors.adapter.CcCallbackManager;
-import io.leao.codecolors.widget.CcAppCompatToolbar;
-import io.leao.codecolors.widget.CcToolbar;
 
 public class CcLayoutInflaterFactoryWrapper implements LayoutInflater.Factory2 {
     private final CcLayoutInflater mInflater;
@@ -19,29 +17,36 @@ public class CcLayoutInflaterFactoryWrapper implements LayoutInflater.Factory2 {
     }
 
     @Override
-    public View onCreateView(View parent, String name, Context context, AttributeSet attrs) {
-        return onCreateView(name, context, attrs);
+    public View onCreateView(String name, Context context, AttributeSet attrs) {
+        return onCreateViewInternal(null, name, context, attrs, false);
     }
 
     @Override
-    public View onCreateView(String name, Context context, AttributeSet attrs) {
-        View view;
-        // We 'inject' our toolbar views, to make sure we add proper callbacks to its children (title, subtitle) views.
-        // This workflow also exists in AppCompat library.
+    public View onCreateView(View parent, String name, Context context, AttributeSet attrs) {
+        return onCreateViewInternal(parent, name, context, attrs, true);
+    }
+
+    private View onCreateViewInternal(View parent, String name, Context context, AttributeSet attrs, boolean isFactory2Call) {
+        // We 'inject' our toolbar views, to make sure we add proper callbacks to their children views.
+        // This workflow also exists in AppCompat library, but instead of creating the views ourselves, we simply change
+        // the name of the view to inflate, to make sure the context is still themified by the AppCompat library.
         switch (name) {
             case "Toolbar":
-                view = new CcToolbar(context, attrs);
+                name = "io.leao.codecolors.widget.CcToolbar";
                 break;
             case "android.support.v7.widget.Toolbar":
-                view = new CcAppCompatToolbar(context, attrs);
+                name = "io.leao.codecolors.widget.CcAppCompatToolbar";
                 break;
             default:
-                view = null;
                 break;
         }
 
-        if (view == null && mFactory != null) {
-            view = mFactory.onCreateView(name, context, attrs);
+        View view = null;
+
+        if (mFactory != null) {
+            view = isFactory2Call ?
+                    mFactory.onCreateView(parent, name, context, attrs) :
+                    mFactory.onCreateView(name, context, attrs);
         }
 
         if (view == null) {
