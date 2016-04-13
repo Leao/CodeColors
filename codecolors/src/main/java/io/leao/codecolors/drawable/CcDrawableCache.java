@@ -12,6 +12,7 @@ import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
 
+import io.leao.codecolors.tint.CcTintManager;
 import io.leao.codecolors.manager.CcDependenciesManager;
 
 public class CcDrawableCache extends LongSparseArray<Drawable.ConstantState> {
@@ -64,18 +65,25 @@ public class CcDrawableCache extends LongSparseArray<Drawable.ConstantState> {
             id = 0;
         }
 
-        if (id != 0 && CcDependenciesManager.getInstance().hasDependencies(mResources, id)) {
-            return new CcDrawableWrapper.CcConstantState(mResources, id);
-        } else {
-            return cs;
+        if (id != 0) {
+            if (CcDependenciesManager.getInstance().hasDependencies(mResources, id)) {
+                return new CcDrawableWrapper.CcConstantState(mResources, id);
+            } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                int[] attrs = CcTintManager.getAttrs(id);
+                if (attrs != null) {
+                    return new CcAppCompatDrawableWrapper.CcAppCompatConstantState(mResources, id, attrs);
+                }
+            }
         }
+
+        return cs;
     }
 
     public static int retrieveId(Resources resources, String appPackageName, int assetCookie, int data)
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         AssetManager assetManager = resources.getAssets();
         String getPooledStringMethodName =
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ? "getPooledStringForCookie" : "getPooledString";
+                Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ? "getPooledString" : "getPooledStringForCookie";
         Method getPooledStringMethod =
                 assetManager.getClass().getDeclaredMethod(getPooledStringMethodName, int.class, int.class);
         getPooledStringMethod.setAccessible(true);

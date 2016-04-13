@@ -42,7 +42,7 @@ class CcDrawableWrapper extends InsetDrawable implements CcColorStateList.Callba
         if (super.mutate() == this) {
             ConstantState mutatedState = mDrawable.getConstantState();
             if (mState.mDrawableState != mutatedState) {
-                mState = new CcConstantState(mState, mutatedState);
+                mState = mState.createState(mutatedState);
             }
         }
         return this;
@@ -111,14 +111,14 @@ class CcDrawableWrapper extends InsetDrawable implements CcColorStateList.Callba
             mDrawableState = CcResources.loadDrawableForCookie(res, value, mId, null).getConstantState();
         }
 
-        public CcConstantState(CcConstantState orig, ConstantState newDrawableState) {
+        public CcConstantState(CcConstantState orig, ConstantState drawableState) {
             mResources = orig.mResources;
             mId = orig.mId;
             mResolvedIds = orig.mResolvedIds;
             mUnresolvedAttrs = orig.mUnresolvedAttrs;
             mThemeIds = new HashSet<>(orig.mThemeIds);
             mChangingConfigurations = orig.mChangingConfigurations;
-            mDrawableState = newDrawableState;
+            mDrawableState = drawableState;
         }
 
         @Override
@@ -128,20 +128,20 @@ class CcDrawableWrapper extends InsetDrawable implements CcColorStateList.Callba
 
         @Override
         public Drawable newDrawable(Resources res) {
-            return internalNewDrawable(mDrawableState.newDrawable(res));
+            return newDrawableInternal(mDrawableState.newDrawable(res));
         }
 
         @TargetApi(Build.VERSION_CODES.LOLLIPOP)
         @Override
         public Drawable newDrawable(Resources res, Resources.Theme theme) {
-            Drawable drawable = internalNewDrawable(mDrawableState.newDrawable(res, theme));
+            Drawable drawable = newDrawableInternal(mDrawableState.newDrawable(res, theme));
             if (theme != null) {
                 drawable.applyTheme(theme);
             }
             return drawable;
         }
 
-        private Drawable internalNewDrawable(Drawable baseDrawable) {
+        protected Drawable newDrawableInternal(Drawable baseDrawable) {
             // Some drawables keep changing their "constant" state.
             // Make sure to also change our state when that happens.
             ConstantState baseDrawableState = baseDrawable.getConstantState();
@@ -149,10 +149,10 @@ class CcDrawableWrapper extends InsetDrawable implements CcColorStateList.Callba
             if (mDrawableState == baseDrawableState) {
                 state = this;
             } else {
-                state = new CcConstantState(this, baseDrawableState);
+                state = createState(baseDrawableState);
             }
 
-            CcDrawableWrapper drawable = new CcDrawableWrapper(state, baseDrawable);
+            CcDrawableWrapper drawable = state.createDrawable(baseDrawable);
 
             addCallbacks(mResolvedIds, drawable);
             addCallbacks(mThemeIds, drawable);
@@ -160,7 +160,15 @@ class CcDrawableWrapper extends InsetDrawable implements CcColorStateList.Callba
             return drawable;
         }
 
-        private void addCallbacks(Set<Integer> dependencies, CcDrawableWrapper drawable) {
+        protected CcConstantState createState(ConstantState drawableState) {
+            return new CcConstantState(this, drawableState);
+        }
+
+        protected CcDrawableWrapper createDrawable(Drawable drawable) {
+            return new CcDrawableWrapper(this, drawable);
+        }
+
+        protected void addCallbacks(Set<Integer> dependencies, CcDrawableWrapper drawable) {
             for (int dependencyId : dependencies) {
                 CcColorStateList color = CodeColors.getColor(dependencyId);
                 if (color != null) {
