@@ -22,13 +22,11 @@ import io.leao.codecolors.plugin.xml.XmlUtils;
 public class ResFileParser implements XmlCrawler.Callback<ResFileParser.XmlCrawlerTrail> {
     private static final String RESOURCES = "resources";
     private static final String RESOURCE_COLOR = "color";
-    private static final String RESOURCE_ATTR = "attr";
     private static final String RESOURCE_ITEM = "item";
 
     private static final Set<String> VALID_NODES = new HashSet<String>() {{
         add(RESOURCES);
         add(RESOURCE_COLOR);
-        add(RESOURCE_ATTR);
         add(RESOURCE_ITEM);
     }};
 
@@ -73,12 +71,6 @@ public class ResFileParser implements XmlCrawler.Callback<ResFileParser.XmlCrawl
                 }
                 return true; // Stop node crawl.
             }
-        } else if (childCount == 0) {
-            String attr = XmlUtils.getResourceAttributeValue(node, RESOURCE_ATTR, ATTRIBUTE_NAME);
-            if (attr != null) {
-                trail.callback.parseAttr(trail.folderName, attr);
-            }
-            return true; // Stop node crawl.
         }
         return false; // Continue node crawl.
     }
@@ -102,7 +94,5 @@ public class ResFileParser implements XmlCrawler.Callback<ResFileParser.XmlCrawl
 
     public interface Callback {
         void parseColor(String folderName, String color, String value, CcConfiguration configuration);
-
-        void parseAttr(String folderName, String attr);
     }
 }

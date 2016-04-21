@@ -10,9 +10,9 @@ buildscript {
         }*/
 
         // For development purposes (local).
-        /*maven {
+        maven {
             url uri('codecolors-maven/plugin')
-        }*/
+        }
     }
 
     dependencies {
