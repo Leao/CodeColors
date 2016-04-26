@@ -29,8 +29,8 @@ public class CodeColors {
             }
 
             @Override
-            public void onCodeColorsSetupFailure() {
-                callback.onCodeColorsSetupFailure();
+            public void onCodeColorsSetupFailure(Exception e) {
+                callback.onCodeColorsSetupFailure(e);
             }
         });
     }
@@ -106,6 +106,6 @@ public class CodeColors {
     public interface Callback {
         void onCodeColorsSetupSuccess();
 
-        void onCodeColorsSetupFailure();
+        void onCodeColorsSetupFailure(Exception e);
     }
 }

@@ -120,7 +120,7 @@ public class CcSetupManager {
         Log.w(LOG_TAG, "ColorStateList preload failed. Dynamic colors will not work.", e);
 
         if (callback != null) {
-            callback.onCodeColorsSetupFailure();
+            callback.onCodeColorsSetupFailure(e);
         }
     }
 
@@ -170,6 +170,6 @@ public class CcSetupManager {
     public interface Callback {
         void onCodeColorsSetupSuccess();
 
-        void onCodeColorsSetupFailure();
+        void onCodeColorsSetupFailure(Exception e);
     }
 }
