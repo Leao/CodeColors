@@ -20,7 +20,7 @@ publishing {
             version VERSION
 
             artifact(sourceJar)
-            artifact("$buildDir/outputs/aar/codecolors-release.aar")
+            artifact("$buildDir/outputs/aar/codecolors-appcompat-release.aar")
 
             pom.withXml {
                 def projectNode = asNode();
