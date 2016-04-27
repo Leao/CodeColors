@@ -16,15 +16,15 @@ public class CodeColorsSample extends Application {
         long time = System.currentTimeMillis();
 
         // Activate code colors.
-        CodeColors.init(this, new CodeColors.Callback() {
+        CodeColors.setup(this, new CodeColors.Callback() {
             @Override
-            public void onCodeColorsInitSuccess() {
+            public void onCodeColorsSetupSuccess() {
                 CodeColors.addAttrCallbackAdapter(new CcStatusBarColorAnchorCallbackAdapter());
                 CodeColors.addViewDefStyleAdapter(new CcCoordinatorLayoutDefStyleAdapter());
             }
 
             @Override
-            public void onCodeColorsInitFailure() {
+            public void onCodeColorsSetupFailure(Exception e) {
                 // Do nothing.
             }
         });

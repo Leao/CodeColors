@@ -1,4 +1,13 @@
 <resources>
     <string name="app_name">CodeColors</string>
     <string name="action_settings">Settings</string>
+
+    <string name="button_cycle_colors">Cycle colors</string>
+    <string name="button_pick_color">Pick color</string>
+    <string name="hint_pick_color">Color (e.g., #ff0000)</string>
+
+    <string name="color_not_valid">The picked color is invalid.</string>
+
+    <string name="snackbar_regular">Just your regular snackbar.</string>
+    <string name="snackbar_action_regular">Just your regular action… or is it?</string>
 </resources>

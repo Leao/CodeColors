@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="cc__color_primary">#1976D2</color>
+    <item name="cc__color_primary_dark" type="color">#1976D2</item>
     <color name="cc__color_accent">@color/cc__color_accent_default</color>
-    <color name="cc__color_primary">#3F51B5</color>
-    <item name="cc__color_primary_dark" type="color">#303F9F</item>
-
-    <attr name="statusBarBackground"/>
 </resources>

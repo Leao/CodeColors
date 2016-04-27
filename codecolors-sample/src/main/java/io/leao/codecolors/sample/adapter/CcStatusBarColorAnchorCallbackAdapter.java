@@ -3,8 +3,8 @@ package io.leao.codecolors.sample.adapter;
 import android.support.design.widget.CoordinatorLayout;
 import android.view.View;
 
-import io.leao.codecolors.adapter.CcAttrCallbackAdapter;
-import io.leao.codecolors.res.CcColorStateList;
+import io.leao.codecolors.core.adapter.CcAttrCallbackAdapter;
+import io.leao.codecolors.core.res.CcColorStateList;
 import io.leao.codecolors.sample.R;
 
 public class CcStatusBarColorAnchorCallbackAdapter implements CcAttrCallbackAdapter<CoordinatorLayout> {

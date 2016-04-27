@@ -1,36 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context=".activity.MainActivity"
     tools:showIn="@layout/activity_main">
+
+    <io.leao.codecolors.sample.widget.SimpleTextClock
+        android:id="@+id/clock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/cc__color_accent"
+        android:gravity="center"
+        android:paddingBottom="@dimen/clock_vertical_padding"
+        android:paddingTop="@dimen/clock_vertical_padding"
+        android:textAlignment="center"
+        android:textSize="@dimen/clock_size"/>
 
     <Button
         android:id="@android:id/button1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/main_change_color"/>
+        android:layout_below="@id/clock"
+        android:text="@string/button_cycle_colors"
+        app:backgroundTint="?attr/colorPrimary"/>
 
     <Button
+        android:id="@android:id/button2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/cc__color_primary_dark"
-        android:text="@string/main_dummy"/>
+        android:layout_below="@android:id/button1"
+        android:text="@string/button_pick_color"/>
 
-    <View
-        android:layout_width="100dip"
-        android:layout_height="50dip"
-        android:background="@drawable/embedded_drawable_background"/>
+    <EditText
+        android:id="@android:id/text1"
+        android:layout_width="170dip"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@android:id/button2"
+        android:layout_toRightOf="@android:id/button2"
+        android:hint="@string/hint_pick_color"
+        android:imeOptions="actionDone"
+        android:singleLine="true"/>
 
-    <include layout="@layout/content_custom"/>
 
-</LinearLayout>
+</RelativeLayout>
