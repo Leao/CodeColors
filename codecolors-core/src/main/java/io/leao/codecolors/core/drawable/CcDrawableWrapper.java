@@ -16,7 +16,7 @@ import io.leao.codecolors.core.CcCore;
 import io.leao.codecolors.core.res.CcColorStateList;
 import io.leao.codecolors.core.res.CcResources;
 
-class CcDrawableWrapper extends InsetDrawable implements CcColorStateList.Callback {
+public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList.Callback {
     protected CcConstantState mState;
     protected Drawable mDrawable;
 
@@ -24,6 +24,13 @@ class CcDrawableWrapper extends InsetDrawable implements CcColorStateList.Callba
         super(drawable, 0);
         mState = state;
         mDrawable = drawable;
+    }
+
+    /**
+     * @return the wrapped drawable
+     */
+    public Drawable getDrawable() {
+        return mDrawable;
     }
 
     @Override
