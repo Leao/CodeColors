@@ -10,6 +10,7 @@ import io.leao.codecolors.sample.adapter.CcStatusBarColorAnchorCallbackAdapter;
 public class CodeColorsSample extends Application {
     private static final String LOG_TAG = CodeColorsSample.class.getSimpleName();
 
+    @Override
     public void onCreate() {
         super.onCreate();
 
