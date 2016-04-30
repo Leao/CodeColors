@@ -13,30 +13,30 @@ import io.leao.codecolors.core.manager.CcSetupManager;
 import io.leao.codecolors.core.res.CcColorStateList;
 
 public class CodeColors {
-    public static void setup(Context context) {
-        setup(context, null);
+    public static void start(Context context) {
+        start(context, null);
     }
 
-    public static void setup(Context context, Callback callback) {
-        setup(context, true, callback);
+    public static void start(Context context, Callback callback) {
+        start(context, true, callback);
     }
 
-    public static void setup(Context context, boolean useDefaultCallbackAdapters, final Callback callback) {
+    public static void start(Context context, boolean useDefaultCallbackAdapters, final Callback callback) {
         CcCore.getSetupManager().setup(context, useDefaultCallbackAdapters, new CcSetupManager.Callback() {
             @Override
             public void onCodeColorsSetupSuccess() {
-                callback.onCodeColorsSetupSuccess();
+                callback.onCodeColorsStarted();
             }
 
             @Override
             public void onCodeColorsSetupFailure(Exception e) {
-                callback.onCodeColorsSetupFailure(e);
+                callback.onCodeColorsFailed(e);
             }
         });
     }
 
     /**
-     * @return {@code true} if {@link #setup(Context, boolean, Callback)} completed successfully;
+     * @return {@code true} if {@link #start(Context, boolean, Callback)} completed successfully;
      * {@code false}, otherwise.
      */
     public static boolean isActive() {
@@ -104,8 +104,8 @@ public class CodeColors {
     }
 
     public interface Callback {
-        void onCodeColorsSetupSuccess();
+        void onCodeColorsStarted();
 
-        void onCodeColorsSetupFailure(Exception e);
+        void onCodeColorsFailed(Exception e);
     }
 }
