@@ -27,7 +27,7 @@ android {
 dependencies {
     // For development purposes (local).
     //compile project(':codecolors-appcompat')
-    compile 'io.leao:codecolors-appcompat:0.1.3'
+    compile 'io.leao:codecolors-appcompat:0.1.4'
     compile 'com.android.support:appcompat-v7:23.1.1'
     compile 'com.android.support:design:23.1.1'
     compile fileTree(dir: 'libs', include: ['*.jar'])

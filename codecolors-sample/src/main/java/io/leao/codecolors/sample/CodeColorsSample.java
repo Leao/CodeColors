@@ -17,23 +17,23 @@ public class CodeColorsSample extends Application {
         long time = System.currentTimeMillis();
 
         // Activate code colors.
-        CodeColors.setup(this, new CodeColors.Callback() {
+        CodeColors.start(this, new CodeColors.Callback() {
             @Override
-            public void onCodeColorsSetupSuccess() {
+            public void onCodeColorsStarted() {
                 CodeColors.addAttrCallbackAdapter(new CcStatusBarColorAnchorCallbackAdapter());
                 CodeColors.addViewDefStyleAdapter(new CcCoordinatorLayoutDefStyleAdapter());
             }
 
             @Override
-            public void onCodeColorsSetupFailure(Exception e) {
+            public void onCodeColorsFailed(Exception e) {
                 // Do nothing.
             }
         });
 
         if (CodeColors.isActive()) {
-            Log.i(LOG_TAG, "CodeColors active in " + (System.currentTimeMillis() - time) + "ms.");
+            Log.i(LOG_TAG, "CodeColors started in " + (System.currentTimeMillis() - time) + "ms.");
         } else {
-            Log.i(LOG_TAG, "CodeColors activation failed.");
+            Log.i(LOG_TAG, "CodeColors failed.");
         }
     }
 }
