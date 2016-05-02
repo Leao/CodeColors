@@ -10,7 +10,7 @@ import android.graphics.ColorFilter;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.v4.view.TintableBackgroundView;
-import android.support.v7.widget.TintManager;
+import android.support.v7.widget.AppCompatDrawableManager;
 import android.view.View;
 
 import io.leao.codecolors.appcompat.tint.CcTintManager;
@@ -78,9 +78,10 @@ public class CcAppCompatDrawableWrapper extends CcDrawableWrapper {
     public void invalidateColor(CcColorStateList color) {
         Context context = getContext();
         if (context != null) {
+            AppCompatDrawableManager drawableManager = AppCompatDrawableManager.get();
+            // The context wrapper ensures that the manager doesn't reuse old tint lists.
             Context contextWrapper = new ContextWrapper(context);
-            TintManager tintManager = TintManager.get(contextWrapper);
-            ColorStateList tintList = tintManager.getTintList(mState.mId);
+            ColorStateList tintList = drawableManager.getTintList(contextWrapper, mState.mId);
 
             TintableBackgroundView view = getTintableBackgroundView();
             if (tintList != null && view != null && ((View) view).getBackground() == this) {
@@ -90,7 +91,7 @@ public class CcAppCompatDrawableWrapper extends CcDrawableWrapper {
                 }
                 mTintableBackgroundViewTintList = tintList;
             } else {
-                CcTintManager.tintDrawable(context, tintManager, tintList, this, mState.mId);
+                CcTintManager.tintDrawable(context, tintList, this, mState.mId);
             }
         } else {
             super.invalidateColor(color);

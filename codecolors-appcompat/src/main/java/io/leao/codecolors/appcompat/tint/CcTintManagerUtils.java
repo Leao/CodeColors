@@ -1,26 +1,112 @@
 package io.leao.codecolors.appcompat.tint;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
-import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.DrawableRes;
+import android.support.annotation.NonNull;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.util.LruCache;
+import android.support.v7.widget.DrawableUtils;
+
+import io.leao.codecolors.R;
+
+import static io.leao.codecolors.appcompat.tint.CcThemeUtils.getThemeAttrColor;
 
 /**
- * Copy of some methods from {@link android.support.v7.widget.TintManager} and
+ * Copy of constants and methods from {@link android.support.v7.widget.AppCompatDrawableManager} and
  * {@link android.support.v7.widget.ThemeUtils}, to replicate their behavior.
  * <p/>
  * Used by {@link CcTintManager}.
  */
+@SuppressLint("PrivateResource")
 class CcTintManagerUtils {
     /*
      * TintManager.
      */
 
-    private static final PorterDuff.Mode DEFAULT_MODE = PorterDuff.Mode.SRC_IN;
+    static final PorterDuff.Mode DEFAULT_MODE = PorterDuff.Mode.SRC_IN;
+
+    /**
+     * Drawables which should be tinted with the value of {@code R.attr.colorControlNormal},
+     * using the default mode using a raw color filter.
+     */
+    static final int[] COLORFILTER_TINT_COLOR_CONTROL_NORMAL = {
+            R.drawable.abc_textfield_search_default_mtrl_alpha,
+            R.drawable.abc_textfield_default_mtrl_alpha,
+            R.drawable.abc_ab_share_pack_mtrl_alpha
+    };
+
+    /**
+     * Drawables which should be tinted with the value of {@code R.attr.colorControlNormal}, using
+     * {@link DrawableCompat}'s tinting functionality.
+     */
+    static final int[] TINT_COLOR_CONTROL_NORMAL = {
+            R.drawable.abc_ic_ab_back_mtrl_am_alpha,
+            R.drawable.abc_ic_go_search_api_mtrl_alpha,
+            R.drawable.abc_ic_search_api_mtrl_alpha,
+            R.drawable.abc_ic_commit_search_api_mtrl_alpha,
+            R.drawable.abc_ic_clear_mtrl_alpha,
+            R.drawable.abc_ic_menu_share_mtrl_alpha,
+            R.drawable.abc_ic_menu_copy_mtrl_am_alpha,
+            R.drawable.abc_ic_menu_cut_mtrl_alpha,
+            R.drawable.abc_ic_menu_selectall_mtrl_alpha,
+            R.drawable.abc_ic_menu_paste_mtrl_am_alpha,
+            R.drawable.abc_ic_menu_moreoverflow_mtrl_alpha,
+            R.drawable.abc_ic_voice_search_api_mtrl_alpha
+    };
+
+    /**
+     * Drawables which should be tinted with the value of {@code R.attr.colorControlActivated},
+     * using a color filter.
+     */
+    static final int[] COLORFILTER_COLOR_CONTROL_ACTIVATED = {
+            R.drawable.abc_textfield_activated_mtrl_alpha,
+            R.drawable.abc_textfield_search_activated_mtrl_alpha,
+            R.drawable.abc_cab_background_top_mtrl_alpha,
+            R.drawable.abc_text_cursor_material
+    };
+
+    /**
+     * Drawables which should be tinted with the value of {@code android.R.attr.colorBackground},
+     * using the {@link android.graphics.PorterDuff.Mode#MULTIPLY} mode and a color filter.
+     */
+    static final int[] COLORFILTER_COLOR_BACKGROUND_MULTIPLY = {
+            R.drawable.abc_popup_background_mtrl_mult,
+            R.drawable.abc_cab_background_internal_bg,
+            R.drawable.abc_menu_hardkey_panel_mtrl_mult
+    };
+
+    /**
+     * Drawables which should be tinted using a state list containing values of
+     * {@code R.attr.colorControlNormal} and {@code R.attr.colorControlActivated}
+     */
+    static final int[] TINT_COLOR_CONTROL_STATE_LIST = {
+            R.drawable.abc_edit_text_material,
+            R.drawable.abc_tab_indicator_material,
+            R.drawable.abc_textfield_search_material,
+            R.drawable.abc_spinner_mtrl_am_alpha,
+            R.drawable.abc_spinner_textfield_background_material,
+            R.drawable.abc_ratingbar_full_material,
+            R.drawable.abc_switch_track_mtrl_alpha,
+            R.drawable.abc_switch_thumb_material,
+            R.drawable.abc_btn_default_mtrl_shape,
+            R.drawable.abc_btn_borderless_material
+    };
+
+    /**
+     * Drawables which should be tinted using a state list containing values of
+     * {@code R.attr.colorControlNormal} and {@code R.attr.colorControlActivated} for the checked
+     * state.
+     */
+    static final int[] TINT_CHECKABLE_BUTTON_LIST = {
+            R.drawable.abc_btn_check_material,
+            R.drawable.abc_btn_radio_material
+    };
 
     private static final ColorFilterLruCache COLOR_FILTER_CACHE = new ColorFilterLruCache(6);
 
@@ -55,8 +141,8 @@ class CcTintManagerUtils {
         }
     }
 
-    public static PorterDuffColorFilter createTintFilter(ColorStateList tint,
-                                                         PorterDuff.Mode tintMode, final int[] state) {
+    public static PorterDuffColorFilter createTintFilter(ColorStateList tint, PorterDuff.Mode tintMode,
+                                                          final int[] state) {
         if (tint == null || tintMode == null) {
             return null;
         }
@@ -81,19 +167,43 @@ class CcTintManagerUtils {
         d.setColorFilter(getPorterDuffColorFilter(color, mode == null ? DEFAULT_MODE : mode));
     }
 
-    /*
-     * ThemeUtils.
-     */
+    public static boolean tintDrawableUsingColorFilter(@NonNull Context context, @DrawableRes final int resId,
+                                                       @NonNull Drawable drawable) {
+        PorterDuff.Mode tintMode = DEFAULT_MODE;
+        boolean colorAttrSet = false;
+        int colorAttr = 0;
+        int alpha = -1;
 
-    private static final int[] TEMP_ARRAY = new int[1];
-
-    public static int getThemeAttrColor(Context context, int attr) {
-        TEMP_ARRAY[0] = attr;
-        TypedArray a = context.obtainStyledAttributes(null, TEMP_ARRAY);
-        try {
-            return a.getColor(0, 0);
-        } finally {
-            a.recycle();
+        if (arrayContains(COLORFILTER_TINT_COLOR_CONTROL_NORMAL, resId)) {
+            colorAttr = R.attr.colorControlNormal;
+            colorAttrSet = true;
+        } else if (arrayContains(COLORFILTER_COLOR_CONTROL_ACTIVATED, resId)) {
+            colorAttr = R.attr.colorControlActivated;
+            colorAttrSet = true;
+        } else if (arrayContains(COLORFILTER_COLOR_BACKGROUND_MULTIPLY, resId)) {
+            colorAttr = android.R.attr.colorBackground;
+            colorAttrSet = true;
+            tintMode = PorterDuff.Mode.MULTIPLY;
+        } else if (resId == R.drawable.abc_list_divider_mtrl_alpha) {
+            colorAttr = android.R.attr.colorForeground;
+            colorAttrSet = true;
+            alpha = Math.round(0.16f * 255);
         }
+
+        if (colorAttrSet) {
+            if (DrawableUtils.canSafelyMutateDrawable(drawable)) {
+                drawable = drawable.mutate();
+            }
+
+            final int color = getThemeAttrColor(context, colorAttr);
+            drawable.setColorFilter(getPorterDuffColorFilter(color, tintMode));
+
+            if (alpha != -1) {
+                drawable.setAlpha(alpha);
+            }
+
+            return true;
+        }
+        return false;
     }
 }
