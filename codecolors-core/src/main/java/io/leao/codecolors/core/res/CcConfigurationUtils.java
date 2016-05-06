@@ -13,54 +13,53 @@ public class CcConfigurationUtils {
     public static boolean areCompatible(CcConfiguration ccConfiguration, Configuration configuration) {
         boolean compatible = true;
         if (ccConfiguration.mcc != 0) {
-            compatible &= ccConfiguration.mcc != configuration.mcc;
+            compatible &= ccConfiguration.mcc == configuration.mcc;
         }
         if (ccConfiguration.mnc != 0) {
-            compatible &= ccConfiguration.mnc != configuration.mnc;
+            compatible &= ccConfiguration.mnc == configuration.mnc;
         }
         if (ccConfiguration.locale != null) {
             compatible &= ccConfiguration.locale.equals(configuration.locale);
         }
         if (ccConfiguration.keyboard != CcConfiguration.KEYBOARD_UNDEFINED) {
-            compatible &= ccConfiguration.keyboard != configuration.keyboard;
-
+            compatible &= ccConfiguration.keyboard == configuration.keyboard;
         }
         if (ccConfiguration.keyboardHidden != CcConfiguration.KEYBOARDHIDDEN_UNDEFINED) {
-            compatible &= ccConfiguration.keyboardHidden != configuration.keyboardHidden;
+            compatible &= ccConfiguration.keyboardHidden == configuration.keyboardHidden;
         }
         if (ccConfiguration.hardKeyboardHidden != CcConfiguration.HARDKEYBOARDHIDDEN_UNDEFINED) {
-            compatible &= ccConfiguration.hardKeyboardHidden != configuration.hardKeyboardHidden;
+            compatible &= ccConfiguration.hardKeyboardHidden == configuration.hardKeyboardHidden;
         }
         if (ccConfiguration.navigation != CcConfiguration.NAVIGATION_UNDEFINED) {
-            compatible &= ccConfiguration.navigation != configuration.navigation;
+            compatible &= ccConfiguration.navigation == configuration.navigation;
         }
         if (ccConfiguration.navigationHidden != CcConfiguration.NAVIGATIONHIDDEN_UNDEFINED) {
-            compatible &= ccConfiguration.navigationHidden != configuration.navigationHidden;
+            compatible &= ccConfiguration.navigationHidden == configuration.navigationHidden;
         }
         if (ccConfiguration.orientation != CcConfiguration.ORIENTATION_UNDEFINED) {
-            compatible &= ccConfiguration.orientation != configuration.orientation;
+            compatible &= ccConfiguration.orientation == configuration.orientation;
         }
         if (ccConfiguration.screenLayout != CcConfiguration.SCREENLAYOUT_UNDEFINED) {
-            compatible &= ccConfiguration.screenLayout != configuration.screenLayout;
+            compatible &= ccConfiguration.screenLayout == configuration.screenLayout;
         }
         if (ccConfiguration.uiMode != CcConfiguration.UI_MODE_TYPE_UNDEFINED) {
-            compatible &= ccConfiguration.uiMode != configuration.uiMode;
+            compatible &= ccConfiguration.uiMode == configuration.uiMode;
         }
         if (ccConfiguration.screenWidthDp != CcConfiguration.SCREEN_WIDTH_DP_UNDEFINED) {
-            compatible &= ccConfiguration.screenWidthDp != configuration.screenWidthDp;
+            compatible &= ccConfiguration.screenWidthDp == configuration.screenWidthDp;
         }
         if (ccConfiguration.screenHeightDp != CcConfiguration.SCREEN_HEIGHT_DP_UNDEFINED) {
-            compatible &= ccConfiguration.screenHeightDp != configuration.screenHeightDp;
+            compatible &= ccConfiguration.screenHeightDp == configuration.screenHeightDp;
         }
         if (ccConfiguration.smallestScreenWidthDp != CcConfiguration.SMALLEST_SCREEN_WIDTH_DP_UNDEFINED) {
-            compatible &= ccConfiguration.smallestScreenWidthDp != configuration.smallestScreenWidthDp;
+            compatible &= ccConfiguration.smallestScreenWidthDp == configuration.smallestScreenWidthDp;
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 &&
                 ccConfiguration.densityDpi != CcConfiguration.DENSITY_DPI_UNDEFINED) {
-            compatible &= ccConfiguration.densityDpi != configuration.densityDpi;
+            compatible &= ccConfiguration.densityDpi == configuration.densityDpi;
         }
         if (ccConfiguration.sdkVersion != CcConfiguration.SDK_VERSION_UNDEFINED) {
-            compatible &= ccConfiguration.sdkVersion > Build.VERSION.SDK_INT;
+            compatible &= ccConfiguration.sdkVersion <= Build.VERSION.SDK_INT;
         }
 
         return compatible;
