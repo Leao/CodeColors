@@ -5,11 +5,18 @@ import android.os.Build;
 import android.os.Parcel;
 
 import java.util.Locale;
-import java.util.Set;
 
 import io.leao.codecolors.plugin.res.CcConfiguration;
 
 public class CcConfigurationUtils {
+    public static boolean equals(CcConfiguration configuration1, CcConfiguration configuration2) {
+        if (configuration1 == null) {
+            return configuration2 == null;
+        } else {
+            return configuration1.equals(configuration2);
+        }
+    }
+
     public static boolean areCompatible(CcConfiguration ccConfiguration, Configuration configuration) {
         boolean compatible = true;
         if (ccConfiguration.mcc != 0) {
@@ -63,18 +70,6 @@ public class CcConfigurationUtils {
         }
 
         return compatible;
-    }
-
-    public static CcConfiguration getBestConfiguration(Configuration contextConfiguration,
-                                                       Set<CcConfiguration> configurations) {
-        CcConfiguration lastConfiguration = null;
-        for (CcConfiguration configuration : configurations) {
-            if (CcConfigurationUtils.areCompatible(configuration, contextConfiguration)) {
-                return configuration;
-            }
-            lastConfiguration = configuration;
-        }
-        return lastConfiguration;
     }
 
     public static void writeToParcel(CcConfiguration configuration, Parcel dest, int flags) {

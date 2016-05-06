@@ -1,24 +1,21 @@
 package io.leao.codecolors.plugin.source;
 
-import com.squareup.javapoet.ArrayTypeName;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import javax.lang.model.element.Modifier;
@@ -41,11 +38,6 @@ public class DependenciesGenerator {
         Set<CcConfiguration> configurations = new TreeSet<>();
 
         List<FieldSpec> privateResourcesFields = new ArrayList<>();
-
-        Map<Resource, Map<CcConfiguration, Integer>> resourceConfigurationDependenciesIndexes =
-                new HashMap<>(resources.size());
-
-        List<FieldSpec> resourceDependenciesFields = new ArrayList<>();
 
         Iterator<Resource> resourcesIterator = resources.iterator();
         while (resourcesIterator.hasNext()) {
@@ -79,143 +71,104 @@ public class DependenciesGenerator {
             Map<CcConfiguration, Set<Resource>> configurationDependencies =
                     resource.getConfigurationDependencies();
 
-            Map<CcConfiguration, Integer> configurationDependenciesIndexes =
-                    new HashMap<>(configurationDependencies.keySet().size());
-            resourceConfigurationDependenciesIndexes.put(resource, configurationDependenciesIndexes);
-
-            CodeBlock.Builder resourceDependenciesInitializer = CodeBlock.builder()
-                    .add("new $T[]{\n", HashSet.class)
-                    .indent();
-
-            int configurationDependenciesIndex = 0;
-            Iterator<CcConfiguration> configurationDependenciesIterator =
-                    configurationDependencies.keySet().iterator();
-            while (configurationDependenciesIterator.hasNext()) {
-                CcConfiguration configuration = configurationDependenciesIterator.next();
-
+            for (CcConfiguration configuration : configurationDependencies.keySet()) {
                 // Collect configurations.
                 configurations.add(configuration);
-
-                // Fill indexes of dependencies for a specific configuration.
-                configurationDependenciesIndexes.put(configuration, configurationDependenciesIndex++);
-
-                resourceDependenciesInitializer.add(
-                        "new $T<>($T.asList(new $T[]{",
-                        HashSet.class,
-                        Arrays.class,
-                        Object.class);
-
-                Iterator<Resource> dependenciesIterator = configurationDependencies.get(configuration).iterator();
-                while (dependenciesIterator.hasNext()) {
-                    Resource dependency = dependenciesIterator.next();
-                    addResourceId(resourceDependenciesInitializer, dependency, packageName);
-                    if (dependenciesIterator.hasNext()) {
-                        resourceDependenciesInitializer.add(", ");
-                    } else {
-                        break;
-                    }
-                }
-
-                if (configurationDependenciesIterator.hasNext()) {
-                    resourceDependenciesInitializer.add("})),\n");
-                } else {
-                    resourceDependenciesInitializer.add("}))\n");
-                    break;
-                }
             }
-
-            resourceDependenciesFields.add(
-                    FieldSpec.builder(
-                            ArrayTypeName.of(HashSet.class),
-                            createResourceVariableName(resource),
-                            Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
-                            .initializer(resourceDependenciesInitializer.unindent().add("}").build())
-                            .build());
         }
 
         /*
          * Setup configurations.
          */
 
-        FieldSpec configurationsField = GeneratorUtils.generateConfigurationsField(configurations);
+        Map<CcConfiguration, Integer> configurationIndexes = new HashMap<>();
+        FieldSpec configurationsField =
+                GeneratorUtils.generateConfigurationsField(
+                        configurations, new GeneratorUtils.Callback<CcConfiguration>() {
+                            @Override
+                            public void onNext(CcConfiguration object, int index) {
+                                configurationIndexes.put(object, index);
+                            }
+                        });
 
         /*
-         * Configurations with resource and dependencies.
+         * Resources with configurations and dependencies.
          */
 
-        // HashMap<Object, Set<Object>>.
-        ParameterizedTypeName resourceDependenciesType = ParameterizedTypeName.get(
-                ClassName.get(HashMap.class),
-                ClassName.get(Object.class),
-                ParameterizedTypeName.get(Set.class, Object.class));
 
-        // TreeMap<CcConfiguration, HashMap<Object, Set<Object>>>.
+        // Object[][]
+        TypeName configurationDependenciesType = TypeName.get(Object[][].class);
+
+        // HashMap<Object, Object[][]>
         ParameterizedTypeName configurationResourceDependenciesType = ParameterizedTypeName.get(
-                ClassName.get(TreeMap.class),
-                ClassName.get(CcConfiguration.class),
-                resourceDependenciesType);
+                ClassName.get(HashMap.class), ClassName.get(Object.class), configurationDependenciesType);
 
-        // Put configuration resource dependencies code block.
-        CodeBlock.Builder putConfigurationResourceDependenciesBuilder = CodeBlock.builder();
-        putConfigurationResourceDependenciesBuilder.indent();
+        // Put resource dependencies code block.
+        CodeBlock.Builder putResourceConfigurationDependenciesBuilder = CodeBlock.builder().indent();
 
-        int configurationIndex = 0;
-        for (CcConfiguration configuration : configurations) {
-
-            CodeBlock.Builder putResourceDependenciesBuilder = CodeBlock.builder().indent();
-
-            for (Resource resource : resources) {
-                // If the resource doesn't have dependencies, continue.
-                if (!resource.hasDependencies()) {
-                    continue;
-                }
-
-                Map<CcConfiguration, Set<Resource>> configurationDependencies =
-                        resource.getConfigurationDependencies();
-
-                int configurationDependenciesIndex;
-                if (configurationDependencies.containsKey(configuration)) {
-                    configurationDependenciesIndex =
-                            resourceConfigurationDependenciesIndexes.get(resource).get(configuration);
-                } else {
-                    configurationDependenciesIndex = 0;
-                }
-
-                putResourceDependenciesBuilder
-                        .add("put(\n")
-                        .indent();
-                addResourceId(putResourceDependenciesBuilder, resource, packageName);
-                putResourceDependenciesBuilder
-                        .add(",\n")
-                        .add("$L[$L]", createResourceVariableName(resource), configurationDependenciesIndex)
-                        .unindent()
-                        .add(");\n");
+        for (Resource resource : resources) {
+            // If the resource doesn't have dependencies, continue.
+            if (!resource.hasDependencies()) {
+                continue;
             }
-            putResourceDependenciesBuilder.unindent();
 
-            putConfigurationResourceDependenciesBuilder
+            Map<CcConfiguration, Set<Resource>> configurationDependencies =
+                    resource.getConfigurationDependencies();
+
+            CodeBlock.Builder configurationsBuilder = CodeBlock.builder().indent().add("{");
+            CodeBlock.Builder dependenciesBuilder = CodeBlock.builder().indent();
+
+            Iterator<CcConfiguration> configurationsIterator = configurationDependencies.keySet().iterator();
+            while (configurationsIterator.hasNext()) {
+                CcConfiguration configuration = configurationsIterator.next();
+                int configurationIndex = configurationIndexes.get(configuration);
+                configurationsBuilder.add("$L", configurationIndex);
+
+
+                dependenciesBuilder.add("{");
+                Set<Resource> dependencies = configurationDependencies.get(configuration);
+                Iterator<Resource> dependenciesIterator = dependencies.iterator();
+                while (dependenciesIterator.hasNext()) {
+                    Resource dependency = dependenciesIterator.next();
+                    addResourceId(dependenciesBuilder, dependency, packageName);
+                    if (dependenciesIterator.hasNext()) {
+                        dependenciesBuilder.add(", ");
+                    } else {
+                        dependenciesBuilder.add("}");
+                    }
+                }
+
+                if (configurationsIterator.hasNext()) {
+                    configurationsBuilder.add(", ");
+                    dependenciesBuilder.add(",\n");
+                } else {
+                    configurationsBuilder.add("},").unindent();
+                }
+            }
+
+            putResourceConfigurationDependenciesBuilder
                     .add("put(\n")
-                    .indent()
-                    .add("sConfigurations[$L],\n", configurationIndex++)
-                    .add("new $T() {{\n$L}}\n", resourceDependenciesType, putResourceDependenciesBuilder.build())
+                    .indent();
+            addResourceId(putResourceConfigurationDependenciesBuilder, resource, packageName);
+            putResourceConfigurationDependenciesBuilder
+                    .add(",\n")
+                    .add("new $T{\n$L\n$L\n}\n", configurationDependenciesType, configurationsBuilder.build(),
+                            dependenciesBuilder.unindent().build())
                     .unindent()
                     .add(");\n");
         }
-        putConfigurationResourceDependenciesBuilder.unindent();
 
         FieldSpec dependenciesField =
                 FieldSpec.builder(configurationResourceDependenciesType, CcConst.DEPENDENCIES_FIELD_NAME)
                         .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
                         .initializer("new $T() {{\n$L}}", configurationResourceDependenciesType,
-                                putConfigurationResourceDependenciesBuilder.build())
+                                putResourceConfigurationDependenciesBuilder.unindent().build())
                         .build();
-
 
         TypeSpec.Builder codeColorResourcesClass = TypeSpec.classBuilder(CcConst.DEPENDENCIES_CLASS_NAME)
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .addFields(privateResourcesFields)
                 .addField(configurationsField)
-                .addFields(resourceDependenciesFields)
                 .addField(dependenciesField);
 
         GeneratorUtils.addSuppressWarningsAnnotations(codeColorResourcesClass);
@@ -254,23 +207,5 @@ public class DependenciesGenerator {
     private static String getAndroidResourceId(Resource resource) {
         String nameBase = resource.isPublic() ? ANDROID_RESOURCE_ID_PUBLIC_BASE : ANDROID_RESOURCE_ID_PRIVATE_BASE;
         return String.format(nameBase, resource.getType().getName(), resource.getName());
-    }
-
-    private static String createResourceVariableName(Resource resource) {
-        switch (resource.getType()) {
-            case DRAWABLE:
-                return "Drawable_" + resource.getName();
-            case ANDROID_DRAWABLE:
-                return "AndroidDrawable_" + resource.getName();
-            case COLOR:
-                return "Color_" + resource.getName();
-            case ANDROID_COLOR:
-                return "AndroidColor_" + resource.getName();
-            case ATTR:
-                return "Attr_" + resource.getName();
-            case ANDROID_ATTR:
-                return "AndroidAttr_" + resource.getName();
-        }
-        throw new IllegalStateException("Resource type not supported: " + resource.getType());
     }
 }

@@ -10,18 +10,13 @@ import java.util.Iterator;
 
 import javax.lang.model.element.Modifier;
 
+import io.leao.codecolors.plugin.CcConst;
 import io.leao.codecolors.plugin.res.CcConfiguration;
 
 public class GeneratorUtils {
-    public static final String CONFIGURATIONS_FIELD_NAME = "sConfigurations";
-
-    public static FieldSpec generateConfigurationsField(Iterable<CcConfiguration> configurations) {
-        return generateConfigurationsField(configurations, null);
-    }
-
     public static FieldSpec generateConfigurationsField(Iterable<CcConfiguration> configurations,
                                                         Callback<CcConfiguration> callback) {
-        return generateConfigurationsField(configurations, callback, CONFIGURATIONS_FIELD_NAME);
+        return generateConfigurationsField(configurations, callback, CcConst.CONFIGURATIONS_FIELD_NAME);
     }
 
     public static FieldSpec generateConfigurationsField(Iterable<CcConfiguration> configurations,

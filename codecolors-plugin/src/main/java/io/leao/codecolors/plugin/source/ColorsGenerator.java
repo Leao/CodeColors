@@ -9,7 +9,6 @@ import com.squareup.javapoet.TypeSpec;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -55,7 +54,7 @@ public class ColorsGenerator {
 
         ClassName rClassName = ClassName.get(packageName, "R");
 
-        CodeBlock.Builder putColorConfigurationsBuilder = CodeBlock.builder();
+        CodeBlock.Builder putColorConfigurationsBuilder = CodeBlock.builder().indent();
 
         CodeBlock.Builder putColorValueBuilder = CodeBlock.builder().indent();
 
@@ -65,32 +64,24 @@ public class ColorsGenerator {
                     .add("put(\n")
                     .indent()
                     .add("$T$L,\n", rClassName, String.format(COLOR_ID_BASE, color))
-                    .add("new $T($T.asList(new $T[]{\n",
-                            ParameterizedTypeName.get(TreeSet.class, CcConfiguration.class),
-                            Arrays.class,
-                            CcConfiguration.class)
+                    .add("new $T{", int[].class)
                     .indent();
 
             Set<CcConfiguration> configurations = colorConfigurations.get(color);
             Iterator<CcConfiguration> configurationsIterator = configurations.iterator();
             while (configurationsIterator.hasNext()) {
                 CcConfiguration configuration = configurationsIterator.next();
-                putColorConfigurationsBuilder
-                        .add("$L[$L]",
-                                GeneratorUtils.CONFIGURATIONS_FIELD_NAME,
-                                allConfigurationsIndexes.get(configuration));
+                putColorConfigurationsBuilder.add("$L", allConfigurationsIndexes.get(configuration));
                 if (configurationsIterator.hasNext()) {
-                    putColorConfigurationsBuilder.add(",\n");
+                    putColorConfigurationsBuilder.add(", ");
                 } else {
-                    putColorConfigurationsBuilder.add("\n");
-                    break;
+                    putColorConfigurationsBuilder
+                            .add("}\n")
+                            .unindent()
+                            .add(");\n")
+                            .unindent();
                 }
             }
-
-            putColorConfigurationsBuilder
-                    .unindent()
-                    .add("})));\n")
-                    .unindent();
 
             // Color value.
             putColorValueBuilder
@@ -101,17 +92,15 @@ public class ColorsGenerator {
                             String.format(COLOR_ID_BASE, ColorUtils.getDefaultValue(color)));
         }
 
-        ParameterizedTypeName colorConfigurationsType = ParameterizedTypeName.get(
-                ClassName.get(HashMap.class),
-                ClassName.get(Integer.class),
-                ParameterizedTypeName.get(Set.class, CcConfiguration.class));
+        ParameterizedTypeName colorConfigurationsType =
+                ParameterizedTypeName.get(HashMap.class, Integer.class, int[].class);
         FieldSpec colorConfigurationsField =
                 FieldSpec.builder(colorConfigurationsType, CcConst.COLOR_CONFIGURATIONS_FIELD_NAME)
                         .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
                         .initializer(
                                 "new $T() {{\n$L}}",
                                 colorConfigurationsType,
-                                putColorConfigurationsBuilder.build())
+                                putColorConfigurationsBuilder.unindent().build())
                         .build();
 
         ParameterizedTypeName colorValueType = ParameterizedTypeName.get(HashMap.class, Integer.class, Integer.class);

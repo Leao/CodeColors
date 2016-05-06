@@ -51,12 +51,15 @@ public class CcColorStateList extends ColorStateList {
         return mConfiguration;
     }
 
-    public void onConfigurationChanged(@NonNull CcConfiguration configuration, ColorStateList defaultColor) {
-        if (mConfiguration == null) {
+    public void onConfigurationChanged(CcConfiguration configuration, ColorStateList defaultColor) {
+        if (configuration == null) {
+            mConfiguration = null;
+        } else if (mConfiguration == null) {
             mConfiguration = new CcConfigurationParcelable(configuration);
         } else {
             mConfiguration.setTo(configuration);
         }
+
         mColorHandler.setDefaultColor(defaultColor);
     }
 
