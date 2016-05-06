@@ -12,8 +12,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
-import io.leao.codecolors.core.adapter.CcTextColorsColorCallbackAdapter;
 import io.leao.codecolors.core.CcCore;
+import io.leao.codecolors.core.adapter.CcTextColorsColorCallbackAdapter;
 import io.leao.codecolors.core.drawable.CcColorDrawable;
 import io.leao.codecolors.core.drawable.CcDrawableCache;
 import io.leao.codecolors.core.res.CcColorStateList;
