@@ -92,11 +92,12 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
     static class CcConstantState extends ConstantState {
         Resources mResources;
         int mId;
+
+        ConstantState mDrawableState;
+
         Set<Integer> mResolvedIds;
         Set<Integer> mUnresolvedAttrs;
         Set<Integer> mThemeIds; // Resolved mUnresolvedAttrs. Not shared between constant states.
-
-        ConstantState mDrawableState;
 
         int mChangingConfigurations;
 
@@ -104,27 +105,30 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
             mResources = res;
             mId = id;
 
-            mResolvedIds = new HashSet<>();
-            mResolvedIds.add(id); // Add own id, as it has dependencies.
-            mUnresolvedAttrs = new HashSet<>();
-            // Get dependencies. Cannot resolve them right away, because the Theme is not yet available.
-            CcCore.getDependenciesManager().getDependencies(res, id, mResolvedIds, mUnresolvedAttrs);
-            // Minimum size as large as mUnresolvedAttrs, but it could be larger, due to other dependencies.
-            mThemeIds = new HashSet<>(mUnresolvedAttrs.size());
-
             TypedValue value = new TypedValue();
-            res.getValue(mId, value, true);
-            mDrawableState = CcResources.loadDrawableForCookie(res, value, mId, null).getConstantState();
+            res.getValue(id, value, true);
+            mDrawableState = CcResources.loadDrawableForCookie(res, value, id, null).getConstantState();
+
+            Set<Integer> resolvedIds = new HashSet<>();
+            Set<Integer> unresolvedAttrs = new HashSet<>();
+            // Add own id, as it has dependencies.
+            resolvedIds.add(id);
+            // Get dependencies. Cannot resolve them right away, because the Theme is not yet available.
+            CcCore.getDependenciesManager().getDependencies(res, id, resolvedIds, unresolvedAttrs);
+
+            mResolvedIds = resolvedIds;
+            mUnresolvedAttrs = unresolvedAttrs;
+            mThemeIds = new HashSet<>(unresolvedAttrs.size()); // As large as mUnresolvedAttrs, but it can be larger.
         }
 
         public CcConstantState(CcConstantState orig, ConstantState drawableState) {
             mResources = orig.mResources;
             mId = orig.mId;
+            mDrawableState = drawableState;
             mResolvedIds = orig.mResolvedIds;
             mUnresolvedAttrs = orig.mUnresolvedAttrs;
             mThemeIds = new HashSet<>(orig.mThemeIds);
             mChangingConfigurations = orig.mChangingConfigurations;
-            mDrawableState = drawableState;
         }
 
         @Override
