@@ -14,8 +14,8 @@ public class CcAppCompatDrawableCache extends CcDrawableCache {
     }
 
     @Override
-    protected CcDrawableWrapper.ConstantState onCreateDrawableWrapperConstantState(int id, Drawable.ConstantState cs) {
-        CcDrawableWrapper.ConstantState wrapper = super.onCreateDrawableWrapperConstantState(id, cs);
+    protected CcDrawableWrapper.CcConstantState onCreateDrawableWrapperConstantState(int id) {
+        CcDrawableWrapper.CcConstantState wrapper = super.onCreateDrawableWrapperConstantState(id);
         if (wrapper == null && Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             int[] attrs = CcTintManager.getAttrs(id);
             if (attrs != null) {

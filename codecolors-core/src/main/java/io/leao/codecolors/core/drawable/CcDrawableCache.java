@@ -17,43 +17,43 @@ import io.leao.codecolors.core.CcCore;
 public class CcDrawableCache extends LongSparseArray<Drawable.ConstantState> {
     protected Resources mResources;
     protected String mPackageName;
-    protected Set<Long> mOriginalKeys;
+    protected Set<Long> mCheckDependenciesKeys;
 
     public CcDrawableCache(Context context, LongSparseArray<Drawable.ConstantState> cache) {
         mResources = context.getApplicationContext().getResources();
         mPackageName = context.getApplicationContext().getPackageName();
 
         if (cache != null) {
-            mOriginalKeys = new HashSet<>(cache.size());
+            mCheckDependenciesKeys = new HashSet<>(cache.size());
 
             int N = cache.size();
             for (int i = 0; i < N; i++) {
                 long key = cache.keyAt(i);
-                mOriginalKeys.add(key);
+                mCheckDependenciesKeys.add(key);
                 put(key, cache.valueAt(i));
             }
         } else {
-            mOriginalKeys = new HashSet<>(0);
+            mCheckDependenciesKeys = new HashSet<>(0);
         }
     }
 
     @Override
     public Drawable.ConstantState get(long key, Drawable.ConstantState valueIfKeyNotFound) {
-        Drawable.ConstantState cs = super.get(key, valueIfKeyNotFound);
+        Drawable.ConstantState cs = super.get(key, null);
         if (cs == null) {
-            cs = getConstantState(key, null);
-            if (cs != null) {
-                put(key, cs);
-            }
-        } else if (mOriginalKeys.contains(key)) {
-            mOriginalKeys.remove(key);
+            cs = getConstantState(key, valueIfKeyNotFound);
+        } else if (mCheckDependenciesKeys.contains(key)) {
+            // Each key only needs to be checked once for dependencies.
+            mCheckDependenciesKeys.remove(key);
+            // If the key has dependencies, replace its value with a wrapper.
             cs = getConstantState(key, cs);
             put(key, cs);
         }
+
         return cs;
     }
 
-    private Drawable.ConstantState getConstantState(long key, Drawable.ConstantState cs) {
+    private Drawable.ConstantState getConstantState(long key, Drawable.ConstantState defaultCs) {
         int assetCookie = (int) (key >> 32);
         int data = (int) key;
         int id;
@@ -64,16 +64,16 @@ public class CcDrawableCache extends LongSparseArray<Drawable.ConstantState> {
         }
 
         if (id != 0) {
-            CcDrawableWrapper.ConstantState wrapper = onCreateDrawableWrapperConstantState(id, cs);
+            CcDrawableWrapper.CcConstantState wrapper = onCreateDrawableWrapperConstantState(id);
             if (wrapper != null) {
                 return wrapper;
             }
         }
 
-        return cs;
+        return defaultCs;
     }
 
-    protected CcDrawableWrapper.ConstantState onCreateDrawableWrapperConstantState(int id, Drawable.ConstantState cs) {
+    protected CcDrawableWrapper.CcConstantState onCreateDrawableWrapperConstantState(int id) {
         if (CcCore.getDependenciesManager().hasDependencies(mResources, id)) {
             return new CcDrawableWrapper.CcConstantState(mResources, id);
         }
