@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 
+import io.leao.codecolors.CodeColors;
 import io.leao.codecolors.appcompat.view.CcAppCompatLayoutInflater;
 import io.leao.codecolors.core.CcCore;
 import io.leao.codecolors.core.view.CcLayoutInflater;
@@ -23,7 +24,7 @@ public class CcAppCompatActivity extends AppCompatActivity {
     public Object getSystemService(@NonNull String name) {
         Object systemService = super.getSystemService(name);
 
-        if (LAYOUT_INFLATER_SERVICE.equals(name)) {
+        if (CodeColors.isActive() && LAYOUT_INFLATER_SERVICE.equals(name)) {
             if (mLayoutInflater == null) {
                 LayoutInflater layoutInflater = (LayoutInflater) systemService;
                 // Copy the existing layout inflater and clone it to this context.
