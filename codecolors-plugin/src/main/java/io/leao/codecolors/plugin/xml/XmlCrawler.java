@@ -14,19 +14,25 @@ import javax.xml.parsers.ParserConfigurationException;
 
 public class XmlCrawler {
     public static <T> Document crawl(File file, T trail, Callback<T> callback) {
-        try {
-            DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
-            docBuilderFactory.setNamespaceAware(true);
-            DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-            Document document = docBuilder.parse(file);
+        if (file.exists()) {
+            try {
+                DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+                docBuilderFactory.setNamespaceAware(true);
+                DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
+                Document document = docBuilder.parse(file);
 
-            crawl(document.getDocumentElement(), trail, callback);
+                crawl(document.getDocumentElement(), trail, callback);
 
-            return document;
-        } catch (ParserConfigurationException | SAXException | IOException e) {
-            System.out.println("Error crawling file " + file.getName() + ": " + e.toString());
-            return null;
+                // Success.
+                return document;
+            } catch (ParserConfigurationException | SAXException | IOException e) {
+                System.out.println("Error crawling xml " + file.getName() + ": " + e.toString());
+            }
+        } else {
+            System.out.println("Warning crawling xml: " + file + " doesn't exist");
         }
+
+        return null;
     }
 
     private static <T> void crawl(Node node, T trail, Callback<T> callback) {

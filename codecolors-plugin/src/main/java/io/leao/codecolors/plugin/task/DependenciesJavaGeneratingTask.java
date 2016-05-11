@@ -11,17 +11,16 @@ import java.util.Set;
 
 import io.leao.codecolors.plugin.res.DependenciesParser;
 import io.leao.codecolors.plugin.res.Resource;
-import io.leao.codecolors.plugin.source.DependenciesGenerator;
 import io.leao.codecolors.plugin.source.ColorConfigurationsGenerator;
+import io.leao.codecolors.plugin.source.DependenciesGenerator;
+import io.leao.codecolors.plugin.util.ResourceUtils;
 
 public class DependenciesJavaGeneratingTask extends JavaGeneratingTask {
     private static final String NAME_BASE = "generateCcDependencies";
 
     private File mMergeResourcesDir;
-    private File mSdkResourcesFile;
 
-    public DependenciesJavaGeneratingTask(Project project, BaseVariant variant,
-                                          SdkDependenciesTask sdkDependenciesTask) {
+    public DependenciesJavaGeneratingTask(Project project, BaseVariant variant) {
         super(project, variant, NAME_BASE);
 
         // Depends on merged resources.
@@ -29,23 +28,21 @@ public class DependenciesJavaGeneratingTask extends JavaGeneratingTask {
         addDependsOn(mergeResourcesTask);
         mMergeResourcesDir = mergeResourcesTask.getOutputDir();
         addInputFile(mMergeResourcesDir);
-
-        // Depends on sdk resources dependencies.
-        addDependsOn(sdkDependenciesTask);
-        mSdkResourcesFile = sdkDependenciesTask.getOutputFile();
-        addInputFile(mSdkResourcesFile);
     }
 
     @Override
     public void generate(IncrementalTaskInputs inputs) {
-        Resource.Pool resourcesPool = new CcResourcePool(getProject(), getVariant(), mSdkResourcesFile);
+        File androidSdkResourcesFile =
+                ResourceUtils.getResourceAsFile(AndroidSdkDependenciesTask.RESOURCES_OUTPUT_FILE_NAME);
+        Resource.Pool resourcesPool = new CcResourcePool(getProject(), getVariant(), androidSdkResourcesFile);
 
         // Parse and get configuration resource dependencies.
         DependenciesParser dependenciesParser = new DependenciesParser(resourcesPool);
         dependenciesParser.parseDependencies(mMergeResourcesDir);
 
-        DependenciesGenerator.generateDependencies(
-                dependenciesParser.getResources(),
+        DependenciesGenerator dependenciesGenerator = new DependenciesGenerator();
+        dependenciesGenerator.generateDependencies(
+                resourcesPool.getResources(),
                 getVariant().getGenerateBuildConfig().getBuildConfigPackageName(),
                 getVariant().getApplicationId(),
                 getOutputDir());
@@ -60,8 +57,8 @@ public class DependenciesJavaGeneratingTask extends JavaGeneratingTask {
         }
 
         @Override
-        protected boolean isCodeColor(String name, Resource.Type type) {
-            return super.isCodeColor(name, type) || mColors.contains(name);
+        protected boolean getDefaultIsCodeColor(String name, Resource.Type type) {
+            return super.getDefaultIsCodeColor(name, type) || mColors.contains(name);
         }
     }
 }

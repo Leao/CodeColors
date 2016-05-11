@@ -250,36 +250,37 @@ public class CcCallbackManager {
                     List<CcAttrCallbackAdapter> adapters = mAdapters.get(attr);
                     if (adapters != null) {
                         int resourceId = ta.getResourceId(index, 0);
-                        if (CcCore.getDependenciesManager().hasDependencies(context.getResources(), resourceId)) {
-                            List<CacheResult> cacheResults = mCacheResults.get(attr);
-                            Set<Integer> dependencies = null;
-                            for (int j = 0; j < adapters.size(); j++) {
-                                CcAttrCallbackAdapter adapter = adapters.get(j);
-                                InflateResult inflateResult = mTempInflateResult.reuse();
-                                if (adapter.onInflate(view, attr, inflateResult)) {
-                                    CacheResult cacheResult = cacheResults.get(j);
 
-                                    if (dependencies == null) {
-                                        dependencies = TempUtils.getIntegerSet();
-                                        dependencies.add(resourceId);
-                                        CcCore.getDependenciesManager().resolveDependencies(
-                                                context.getTheme(), context.getResources(), resourceId, dependencies);
-                                    }
+                        List<CacheResult> cacheResults = mCacheResults.get(attr);
+                        Set<Integer> resolvedIds = null;
+                        for (int j = 0; j < adapters.size(); j++) {
+                            CcAttrCallbackAdapter adapter = adapters.get(j);
+                            InflateResult inflateResult = mTempInflateResult.reuse();
+                            if (adapter.onInflate(view, attr, inflateResult)) {
+                                CacheResult cacheResult = cacheResults.get(j);
 
-                                    // Add callbacks to all dependencies of resourceId.
-                                    // If there are dependencies, resourceId is included in the set.
-                                    // Otherwise, the set is empty.
-                                    for (Integer dependency : dependencies) {
-                                        CcColorStateList codeColor = CcCore.getColorsManager().getColor(dependency);
-                                        if (codeColor != null) {
-                                            codeColor.addAnchorCallback(inflateResult.anchor, cacheResult.callback);
-                                        }
+                                if (resolvedIds == null) {
+                                    resolvedIds = TempUtils.getIntegerSet();
+                                    resolvedIds.add(resourceId);
+                                    CcCore.getDependenciesManager().resolveDependencies(
+                                            context.getTheme(), context.getResources(), resourceId, resolvedIds);
+                                }
+
+                                // Add callbacks to all dependencies of resourceId.
+                                // If there are dependencies, resourceId is included in the set.
+                                // Otherwise, the set is empty.
+                                for (Integer dependency : resolvedIds) {
+                                    CcColorStateList codeColor = CcCore.getColorsManager().getColor(dependency);
+                                    if (codeColor != null) {
+                                        codeColor.addAnchorCallback(inflateResult.anchor, cacheResult.callback);
                                     }
                                 }
                             }
+                        }
 
+                        if (resolvedIds != null) {
                             // Recycle set for future reuse.
-                            TempUtils.recycleIntegerSet(dependencies);
+                            TempUtils.recycleIntegerSet(resolvedIds);
                         }
                     }
                 }

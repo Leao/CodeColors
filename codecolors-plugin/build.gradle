@@ -2,6 +2,12 @@ apply plugin: 'java'
 apply plugin: 'java-gradle-plugin'
 apply from: 'maven.gradle'
 
+task generateAndroidSdkDependencies(type:JavaExec) {
+    main = 'io.leao.codecolors.plugin.task.AndroidSdkDependenciesTask'
+    classpath = sourceSets.main.runtimeClasspath
+    args rootDir.path, projectDir.path
+}
+
 sourceSets {
     main {
         java {

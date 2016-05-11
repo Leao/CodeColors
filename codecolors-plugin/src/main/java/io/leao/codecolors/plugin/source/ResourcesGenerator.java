@@ -1,8 +1,5 @@
 package io.leao.codecolors.plugin.source;
 
-import com.google.common.io.ByteStreams;
-
-import org.gradle.api.GradleException;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -10,7 +7,6 @@ import org.w3c.dom.Element;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,6 +16,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import io.leao.codecolors.plugin.file.FileUtils;
 import io.leao.codecolors.plugin.res.ColorUtils;
+import io.leao.codecolors.plugin.util.ResourceUtils;
 import io.leao.codecolors.plugin.xml.XmlUtils;
 
 /**
@@ -45,18 +42,7 @@ public class ResourcesGenerator {
 
     public ResourcesGenerator(File resDir) {
         mResDir = resDir;
-        mColorBaseFileContent = readResource(RESOURCE_NAME_COLOR_BASE);
-    }
-
-    private String readResource(String resourceName) {
-        try {
-            InputStream inputStream = getClass().getResourceAsStream("/" + resourceName);
-            String content = new String(ByteStreams.toByteArray(inputStream));
-            inputStream.close();
-            return content;
-        } catch (IOException e) {
-            throw new GradleException(String.format("Cannot read resource %s: %s", resourceName, e.toString()));
-        }
+        mColorBaseFileContent = ResourceUtils.readResource(RESOURCE_NAME_COLOR_BASE);
     }
 
     public void addColor(String folderName, String color, String value) {

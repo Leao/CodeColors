@@ -47,7 +47,7 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
     public Drawable mutate() {
         if (super.mutate() == this) {
             ConstantState mutatedState = mDrawable.getConstantState();
-            if (mState.mDrawableState != mutatedState) {
+            if (mState.mBaseConstantState != mutatedState) {
                 mState = mState.createState(mutatedState);
             }
         }
@@ -92,8 +92,7 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
     static class CcConstantState extends ConstantState {
         Resources mResources;
         int mId;
-
-        ConstantState mDrawableState;
+        ConstantState mBaseConstantState;
 
         Set<Integer> mResolvedIds;
         Set<Integer> mUnresolvedAttrs;
@@ -101,17 +100,24 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
 
         int mChangingConfigurations;
 
-        public CcConstantState(Resources res, int id) {
-            mResources = res;
-            mId = id;
-
+        private static ConstantState loadBaseConstantState(Resources res, int id) {
             TypedValue value = new TypedValue();
             res.getValue(id, value, true);
-            mDrawableState = CcResources.loadDrawableForCookie(res, value, id, null).getConstantState();
+            return CcResources.loadDrawableForCookie(res, value, id, null).getConstantState();
+        }
+
+        public CcConstantState(Resources res, int id) {
+            this(res, id, loadBaseConstantState(res, id));
+        }
+
+        public CcConstantState(Resources res, int id, ConstantState baseConstantState) {
+            mResources = res;
+            mId = id;
+            mBaseConstantState = baseConstantState;
 
             Set<Integer> resolvedIds = new HashSet<>();
             Set<Integer> unresolvedAttrs = new HashSet<>();
-            // Add own id, as it has dependencies.
+            // Add own id, as a possible code-color.
             resolvedIds.add(id);
             // Get dependencies. Cannot resolve them right away, because the Theme is not yet available.
             CcCore.getDependenciesManager().getDependencies(res, id, resolvedIds, unresolvedAttrs);
@@ -121,30 +127,33 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
             mThemeIds = new HashSet<>(unresolvedAttrs.size()); // As large as mUnresolvedAttrs, but it can be larger.
         }
 
-        public CcConstantState(CcConstantState orig, ConstantState drawableState) {
+        public CcConstantState(CcConstantState orig, ConstantState baseConstantState) {
             mResources = orig.mResources;
             mId = orig.mId;
-            mDrawableState = drawableState;
+            mBaseConstantState = baseConstantState;
             mResolvedIds = orig.mResolvedIds;
             mUnresolvedAttrs = orig.mUnresolvedAttrs;
             mThemeIds = new HashSet<>(orig.mThemeIds);
             mChangingConfigurations = orig.mChangingConfigurations;
         }
 
-        @Override
+        public Drawable.ConstantState getBaseConstantState() {
+            return mBaseConstantState;
+        }
+
         public Drawable newDrawable() {
             return newDrawable(null);
         }
 
         @Override
         public Drawable newDrawable(Resources res) {
-            return newDrawableInternal(mDrawableState.newDrawable(res));
+            return newDrawableInternal(mBaseConstantState.newDrawable(res));
         }
 
         @TargetApi(Build.VERSION_CODES.LOLLIPOP)
         @Override
         public Drawable newDrawable(Resources res, Resources.Theme theme) {
-            Drawable drawable = newDrawableInternal(mDrawableState.newDrawable(res, theme));
+            Drawable drawable = newDrawableInternal(mBaseConstantState.newDrawable(res, theme));
             if (theme != null) {
                 drawable.applyTheme(theme);
             }
@@ -154,12 +163,12 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
         protected Drawable newDrawableInternal(Drawable baseDrawable) {
             // Some drawables keep changing their "constant" state.
             // Make sure to also change our state when that happens.
-            ConstantState baseDrawableState = baseDrawable.getConstantState();
+            ConstantState baseConstantState = baseDrawable.getConstantState();
             CcConstantState state;
-            if (mDrawableState == baseDrawableState) {
+            if (mBaseConstantState == baseConstantState) {
                 state = this;
             } else {
-                state = createState(baseDrawableState);
+                state = createState(baseConstantState);
             }
 
             CcDrawableWrapper drawable = state.createDrawable(baseDrawable);
@@ -170,8 +179,8 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
             return drawable;
         }
 
-        protected CcConstantState createState(ConstantState drawableState) {
-            return new CcConstantState(this, drawableState);
+        protected CcConstantState createState(ConstantState baseConstantState) {
+            return new CcConstantState(this, baseConstantState);
         }
 
         protected CcDrawableWrapper createDrawable(Drawable drawable) {
@@ -190,11 +199,11 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
         @Override
         public int getChangingConfigurations() {
             return mChangingConfigurations
-                    | (mDrawableState != null ? mDrawableState.getChangingConfigurations() : 0);
+                    | (mBaseConstantState != null ? mBaseConstantState.getChangingConfigurations() : 0);
         }
 
         public boolean canConstantState() {
-            return mDrawableState != null;
+            return mBaseConstantState != null;
         }
     }
 }

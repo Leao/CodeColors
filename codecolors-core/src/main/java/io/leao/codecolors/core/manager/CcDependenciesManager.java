@@ -27,6 +27,8 @@ public class CcDependenciesManager {
     // Keys are either the id or the name of the resource.
     private Map<Integer, Object> mIdKey = new HashMap<>();
     private Map<Object, Integer> mKeyId = new HashMap<>();
+    // If the ids are of attr type or not.
+    private Map<Integer, Boolean> mIdIsAttr = new HashMap<>();
 
     private Map<Resources.Theme, Map<Integer, Integer>> mThemeResolvedAttrs = new HashMap<>();
 
@@ -70,10 +72,15 @@ public class CcDependenciesManager {
         if (dependencies != null) {
             for (Object dependency : dependencies) {
                 int dependencyId = getId(resources, dependency);
-                if (TYPE_ATTR.equals(resources.getResourceTypeName(dependencyId))) {
-                    outUnresolvedAttrs.add(dependencyId);
-                } else {
-                    outResolvedIds.add(dependencyId);
+                if (dependencyId != 0) {
+                    Boolean isAttr = isAttr(resources, dependencyId);
+                    if (isAttr != null) {
+                        if (isAttr) {
+                            outUnresolvedAttrs.add(dependencyId);
+                        } else {
+                            outResolvedIds.add(dependencyId);
+                        }
+                    }
                 }
             }
         }
@@ -209,5 +216,27 @@ public class CcDependenciesManager {
             mKeyId.put(key, id);
             return id;
         }
+    }
+
+    /**
+     * @return true, if id is of attr type; false, if id is not of attr type; null, if couldn't determine id's type.
+     */
+    private synchronized Boolean isAttr(Resources resources, int id) {
+        if (mIdIsAttr.containsKey(id)) {
+            return mIdIsAttr.get(id);
+        }
+
+        String type;
+        try {
+            type = resources.getResourceTypeName(id);
+        } catch (Resources.NotFoundException e) {
+            type = null;
+        }
+
+        Boolean isAttr = type != null ? TYPE_ATTR.equals(type) : null;
+
+        // Cache id-isAttr pair.
+        mIdIsAttr.put(id, isAttr);
+        return isAttr;
     }
 }

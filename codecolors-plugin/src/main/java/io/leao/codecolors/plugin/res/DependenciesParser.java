@@ -1,5 +1,6 @@
 package io.leao.codecolors.plugin.res;
 
+import org.gradle.api.GradleException;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -13,8 +14,8 @@ import io.leao.codecolors.plugin.aapt.AaptConfig;
 import io.leao.codecolors.plugin.file.FileCrawler;
 import io.leao.codecolors.plugin.file.FileCrawlerXmlFileCallback;
 import io.leao.codecolors.plugin.file.FileUtils;
-import io.leao.codecolors.plugin.xml.XmlUtils;
 import io.leao.codecolors.plugin.xml.XmlCrawler;
+import io.leao.codecolors.plugin.xml.XmlUtils;
 
 public class DependenciesParser
         extends FileCrawlerXmlFileCallback<CcConfiguration>
@@ -193,7 +194,7 @@ public class DependenciesParser
                     // Throw.
             }
         }
-        throw new IllegalStateException(
+        throw new GradleException(
                 "Error: impossible to map resource with name " + dependency + " to a valid Resource.");
     }
 

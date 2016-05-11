@@ -38,22 +38,37 @@ public class CcDrawableCache extends LongSparseArray<Drawable.ConstantState> {
     }
 
     @Override
+    public Drawable.ConstantState valueAt(int index) {
+        /*
+         * valueAt(int) is called by the system to iterate and validate the content of the preloaded drawables.
+         * We return the default drawable, even if it is already wrapped, making sure everything works as expected.
+         */
+        Drawable.ConstantState cs = super.valueAt(index);
+        if (cs instanceof CcDrawableWrapper.CcConstantState) {
+            return ((CcDrawableWrapper.CcConstantState) cs).getBaseConstantState();
+        } else {
+            return cs;
+        }
+    }
+
+    @Override
     public Drawable.ConstantState get(long key, Drawable.ConstantState valueIfKeyNotFound) {
         Drawable.ConstantState cs = super.get(key, null);
         if (cs == null) {
-            cs = getConstantState(key, valueIfKeyNotFound);
+            cs = getConstantState(key, null, valueIfKeyNotFound);
         } else if (mCheckDependenciesKeys.contains(key)) {
             // Each key only needs to be checked once for dependencies.
             mCheckDependenciesKeys.remove(key);
             // If the key has dependencies, replace its value with a wrapper.
-            cs = getConstantState(key, cs);
+            cs = getConstantState(key, cs, cs);
             put(key, cs);
         }
 
         return cs;
     }
 
-    private Drawable.ConstantState getConstantState(long key, Drawable.ConstantState defaultCs) {
+    private Drawable.ConstantState getConstantState(long key, Drawable.ConstantState baseCs,
+                                                    Drawable.ConstantState defaultCs) {
         int assetCookie = (int) (key >> 32);
         int data = (int) key;
         int id;
@@ -64,7 +79,7 @@ public class CcDrawableCache extends LongSparseArray<Drawable.ConstantState> {
         }
 
         if (id != 0) {
-            CcDrawableWrapper.CcConstantState wrapper = onCreateDrawableWrapperConstantState(id);
+            CcDrawableWrapper.CcConstantState wrapper = onCreateDrawableWrapperConstantState(id, baseCs);
             if (wrapper != null) {
                 return wrapper;
             }
@@ -73,9 +88,12 @@ public class CcDrawableCache extends LongSparseArray<Drawable.ConstantState> {
         return defaultCs;
     }
 
-    protected CcDrawableWrapper.CcConstantState onCreateDrawableWrapperConstantState(int id) {
+    protected CcDrawableWrapper.CcConstantState onCreateDrawableWrapperConstantState(int id,
+                                                                                     Drawable.ConstantState baseCs) {
         if (CcCore.getDependenciesManager().hasDependencies(mResources, id)) {
-            return new CcDrawableWrapper.CcConstantState(mResources, id);
+            return baseCs != null ?
+                    new CcDrawableWrapper.CcConstantState(mResources, id, baseCs) :
+                    new CcDrawableWrapper.CcConstantState(mResources, id);
         }
         return null;
     }

@@ -671,6 +671,8 @@ public class CcConfiguration implements Comparable<CcConfiguration>, Serializabl
     }
 
     protected void buildString(StringBuilder sb) {
+        sb.append(sdkVersion);
+        sb.append(" ");
         sb.append(fontScale);
         sb.append(" ");
         if (mcc != 0) {
@@ -961,7 +963,11 @@ public class CcConfiguration implements Comparable<CcConfiguration>, Serializabl
      */
     @Override
     public int compareTo(CcConfiguration that) {
-        return androidCompareTo(that) * -1; // Sort in the reverse of the default android order.
+        return compareTo(that, false);
+    }
+
+    public int compareTo(CcConfiguration that, boolean ignoreSdkVersion) {
+        return androidCompareTo(that, ignoreSdkVersion) * -1; // Sort in the reverse of the default android order.
     }
 
     /**
@@ -969,7 +975,7 @@ public class CcConfiguration implements Comparable<CcConfiguration>, Serializabl
      * <p>
      * However, we want to sort the configurations in reverse order.
      */
-    private int androidCompareTo(CcConfiguration that) {
+    private int androidCompareTo(CcConfiguration that, boolean ignoreSdkVersion) {
         int n;
         float a = this.fontScale;
         float b = that.fontScale;
@@ -1017,8 +1023,10 @@ public class CcConfiguration implements Comparable<CcConfiguration>, Serializabl
         if (n != 0) return n;
         n = this.densityDpi - that.densityDpi;
         if (n != 0) return n;
-        n = this.sdkVersion - that.sdkVersion;
-        if (n != 0) return n;
+        if (!ignoreSdkVersion) {
+            n = this.sdkVersion - that.sdkVersion;
+            if (n != 0) return n;
+        }
 
         return n;
     }
@@ -1039,7 +1047,6 @@ public class CcConfiguration implements Comparable<CcConfiguration>, Serializabl
 
     public int hashCode() {
         int result = 17;
-        result = 31 * result + sdkVersion;
         result = 31 * result + Float.floatToIntBits(fontScale);
         result = 31 * result + mcc;
         result = 31 * result + mnc;
@@ -1057,6 +1064,7 @@ public class CcConfiguration implements Comparable<CcConfiguration>, Serializabl
         result = 31 * result + screenHeightDp;
         result = 31 * result + smallestScreenWidthDp;
         result = 31 * result + densityDpi;
+        result = 31 * result + sdkVersion;
         return result;
     }
 }

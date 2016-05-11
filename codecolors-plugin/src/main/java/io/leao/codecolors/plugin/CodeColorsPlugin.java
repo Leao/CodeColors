@@ -1,7 +1,6 @@
 package io.leao.codecolors.plugin;
 
 import com.android.build.gradle.AppExtension;
-import com.android.build.gradle.BaseExtension;
 import com.android.build.gradle.LibraryExtension;
 import com.android.build.gradle.api.BaseVariant;
 
@@ -12,11 +11,10 @@ import org.gradle.api.Project;
 import io.leao.codecolors.plugin.extension.CodeColorsExtension;
 import io.leao.codecolors.plugin.task.ColorsJavaGeneratingTask;
 import io.leao.codecolors.plugin.task.DependenciesJavaGeneratingTask;
-import io.leao.codecolors.plugin.task.MergeResourcesConfigurationTask;
 import io.leao.codecolors.plugin.task.JavaGeneratingTask;
+import io.leao.codecolors.plugin.task.MergeResourcesConfigurationTask;
 import io.leao.codecolors.plugin.task.ResGeneratingTask;
 import io.leao.codecolors.plugin.task.ResourcesResGeneratingTask;
-import io.leao.codecolors.plugin.task.SdkDependenciesTask;
 
 /**
  * Plugin to preprocess resources and generate Java sources.
@@ -35,17 +33,16 @@ public class CodeColorsPlugin implements Plugin<Project> {
                 Object extension = project.getProperties().get("android");
                 if (extension instanceof AppExtension) {
                     AppExtension appExtension = (AppExtension) extension;
-                    appExtension.getApplicationVariants().all(createResourcesTaskCreator(project, appExtension));
+                    appExtension.getApplicationVariants().all(createResourcesTaskCreator(project));
                 } else if (extension instanceof LibraryExtension) {
                     LibraryExtension libraryExtension = (LibraryExtension) extension;
-                    libraryExtension.getLibraryVariants().all(createResourcesTaskCreator(project, libraryExtension));
+                    libraryExtension.getLibraryVariants().all(createResourcesTaskCreator(project));
                 }
             }
         });
     }
 
-    private static Action<BaseVariant> createResourcesTaskCreator(final Project project,
-                                                                  final BaseExtension extension) {
+    private static Action<BaseVariant> createResourcesTaskCreator(final Project project) {
         return new Action<BaseVariant>() {
             @Override
             public void execute(final BaseVariant variant) {
@@ -55,10 +52,8 @@ public class CodeColorsPlugin implements Plugin<Project> {
 
                 MergeResourcesConfigurationTask.create(project, variant, resourcesResGeneratingTask);
 
-                SdkDependenciesTask sdkDependenciesTask = SdkDependenciesTask.create(project, extension, variant);
-
                 DependenciesJavaGeneratingTask dependenciesJavaGeneratingTask =
-                        new DependenciesJavaGeneratingTask(project, variant, sdkDependenciesTask);
+                        new DependenciesJavaGeneratingTask(project, variant);
                 JavaGeneratingTask.register(dependenciesJavaGeneratingTask);
 
                 ColorsJavaGeneratingTask colorsJavaGeneratingTask =

@@ -16,7 +16,7 @@ import io.leao.codecolors.plugin.xml.XmlUtils;
 
 /**
  * Parses project colors.
- * <p/>
+ * <p>
  * Returns the list of colors by folder name, and exports the list of {@link CcConfiguration}s by color.
  */
 public class ResFileParser implements XmlCrawler.Callback<ResFileParser.XmlCrawlerTrail> {

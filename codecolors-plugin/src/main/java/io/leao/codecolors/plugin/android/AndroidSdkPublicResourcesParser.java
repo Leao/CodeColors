@@ -1,14 +1,15 @@
-package io.leao.codecolors.plugin.res;
+package io.leao.codecolors.plugin.android;
 
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.io.File;
 
+import io.leao.codecolors.plugin.res.Resource;
 import io.leao.codecolors.plugin.xml.XmlCrawler;
 import io.leao.codecolors.plugin.xml.XmlUtils;
 
-public class PublicResourcesParser implements XmlCrawler.Callback<Void> {
+public class AndroidSdkPublicResourcesParser implements XmlCrawler.Callback<Void> {
     private static final String RESOURCE_PUBLIC = "public";
 
     private static final String ATTRIBUTE_NAME = "name";
@@ -18,10 +19,12 @@ public class PublicResourcesParser implements XmlCrawler.Callback<Void> {
     private static final String TYPE_COLOR = "color";
     private static final String TYPE_ATTR = "attr";
 
-    private final Resource.Pool mResourcesPool;
+    private Resource.Pool mResourcesPool;
+    private int mAndroidSdkVersion;
 
-    public PublicResourcesParser(Resource.Pool resourcesPool) {
+    public AndroidSdkPublicResourcesParser(Resource.Pool resourcesPool, int androidSdkVersion) {
         mResourcesPool = resourcesPool;
+        mAndroidSdkVersion = androidSdkVersion;
     }
 
     public void parsePublicResources(File file) {
@@ -37,7 +40,7 @@ public class PublicResourcesParser implements XmlCrawler.Callback<Void> {
             if ((name = XmlUtils.getAttributeValue(node, ATTRIBUTE_NAME)) != null &&
                     (type = getNodeTypeAttribute(node)) != null) {
                 Resource resource = mResourcesPool.getOrCreateResource(name, type);
-                resource.setIsPublic(true);
+                resource.setIsPublic(mAndroidSdkVersion, true);
             }
         }
         return false;

@@ -16,23 +16,29 @@ public class Resource implements Serializable {
 
     private String mName;
     private Type mType;
-    private boolean mIsPublic;
-    // True if of attribute type, or if included in the code colors list.
-    private boolean mIsCodeColor;
+    private Visibility mVisibility;
+    private boolean mIsCodeColor; // True if of attribute type, or if included in the code colors list.
 
-    private Map<CcConfiguration, Boolean> mConfigurationHasCodeColors;
+    private Map<Integer, Boolean> mSdkVersionIsPublic;
     private Map<CcConfiguration, Set<Resource>> mConfigurationDependencies;
+
+    private boolean mIsPruned;
 
     // Dependents do not need to be persisted, since they are only important when creating the dependency graph, and,
     // if persisted, they persist the circular dependency between resources, that creates a hashCode() issue on
     // deserialization.
     private transient Map<CcConfiguration, Set<Resource>> mConfigurationDependents;
 
-    private Resource(String name, Type type, boolean isPublic, boolean isCodeColor) {
+    private Resource(String name, Type type, Visibility visibility, boolean isCodeColor) {
         mName = name;
         mType = type;
-        mIsPublic = isPublic;
+        mVisibility = visibility;
         mIsCodeColor = isCodeColor;
+    }
+
+    @Override
+    public String toString() {
+        return mName;
     }
 
     public String getName() {
@@ -43,33 +49,35 @@ public class Resource implements Serializable {
         return mType;
     }
 
-    public void setIsPublic(boolean isPublic) {
-        mIsPublic = isPublic;
+    public Visibility getVisibility() {
+        return mVisibility;
+    }
+
+    public void setVisibility(Visibility visibility) {
+        mVisibility = visibility;
     }
 
     public boolean isPublic() {
-        return mIsPublic;
+        return mVisibility == Visibility.PUBLIC;
     }
 
-    public boolean hasCodeColors() {
-        if (mIsCodeColor) {
-            return true;
+    public boolean isPublic(int sdkVersion) {
+        if (mSdkVersionIsPublic != null) {
+            return mSdkVersionIsPublic.getOrDefault(sdkVersion, isPublic());
+        } else {
+            return isPublic();
         }
-
-        if (mConfigurationHasCodeColors != null) {
-            for (Boolean hasCodeColors : mConfigurationHasCodeColors.values()) {
-                if (hasCodeColors) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
-    public boolean hasCodeColors(CcConfiguration configuration) {
-        return mIsCodeColor ||
-                (mConfigurationHasCodeColors != null && mConfigurationHasCodeColors.getOrDefault(configuration, false));
+    public void setIsPublic(int sdkVersion, boolean isPublic) {
+        if (mSdkVersionIsPublic == null) {
+            mSdkVersionIsPublic = new HashMap<>();
+        }
+        mSdkVersionIsPublic.put(sdkVersion, isPublic);
+    }
 
+    public boolean isCodeColor() {
+        return mIsCodeColor;
     }
 
     public Map<CcConfiguration, Set<Resource>> getConfigurationDependencies() {
@@ -95,34 +103,21 @@ public class Resource implements Serializable {
         if (mConfigurationDependencies == null) {
             mConfigurationDependencies = new TreeMap<>();
         }
+
         Set<Resource> dependencies = mConfigurationDependencies.get(configuration);
-        if (dependencies == null) {
-            dependencies = new HashSet<>();
-            mConfigurationDependencies.put(configuration, dependencies);
-        }
 
-        if (!dependencies.contains(dependency)) {
-            // Add code color info.
-            if (mConfigurationHasCodeColors == null) {
-                mConfigurationHasCodeColors = new HashMap<>();
-            }
-            Boolean hasCodeColors = mConfigurationHasCodeColors.get(configuration);
-            // Only overwrite hasCodeColors value if it is not true.
-            if (hasCodeColors == null || !hasCodeColors) {
-                mConfigurationHasCodeColors.put(configuration, dependency.hasCodeColors());
-            }
-
-            // Add dependency-dependent relation.
-            dependencies.add(dependency);
-            dependency.addDependent(configuration, this);
+        // If we don't have the dependency.
+        if (dependencies == null || !dependencies.contains(dependency)) {
+            addDependencyOrDependent(dependencies, configuration, dependency);
 
             // Also add all dependency's dependencies.
-            if (mConfigurationDependencies != null) {
-                Set<Resource> dependencyDependencies = mConfigurationDependencies.get(configuration);
+            Map<CcConfiguration, Set<Resource>> dependencyConfigurationDependencies =
+                    dependency.getConfigurationDependencies();
+            if (dependencyConfigurationDependencies != null) {
+                Set<Resource> dependencyDependencies = dependencyConfigurationDependencies.get(configuration);
                 if (dependencyDependencies != null) {
                     for (Resource dependencyDependency : dependencyDependencies) {
-                        dependencies.add(dependencyDependency);
-                        dependencyDependency.addDependent(configuration, this);
+                        addDependencyOrDependent(dependencies, configuration, dependencyDependency);
                     }
                 }
             }
@@ -139,36 +134,78 @@ public class Resource implements Serializable {
         }
     }
 
+    private void addDependencyOrDependent(Set<Resource> dependencies, CcConfiguration configuration,
+                                          Resource dependency) {
+        // If the dependency is a code-color, add it to the list of dependencies.
+        // Otherwise, add this resource as dependent on the dependency resource,
+        // to allow the propagation of other sub-dependencies.
+        if (dependency.isCodeColor()) {
+            if (dependencies == null) {
+                dependencies = new HashSet<>();
+                mConfigurationDependencies.put(configuration, dependencies);
+            }
+            dependencies.add(dependency);
+        } else {
+            dependency.addDependent(configuration, this);
+        }
+    }
+
     public void pruneDependencies() {
         // Code color dependencies must be preserved.
-        if (mIsCodeColor) {
+        if (mIsCodeColor || mIsPruned) {
             return;
         }
 
-        if (mConfigurationHasCodeColors != null) {
-            for (CcConfiguration configuration : mConfigurationHasCodeColors.keySet()) {
-                boolean hasCodeColors = mConfigurationHasCodeColors.get(configuration);
-                // If a configuration has code colors, we remove only the dependencies that doesn't have code colors.
-                // If a configuration doesn't have code colors, we remove the configuration altogether for the list
-                // of dependencies.
-                // In both cases, we remove this resource as a dependent.
-                if (hasCodeColors) {
-                    Iterator<Resource> dependenciesIterator = mConfigurationDependencies.get(configuration).iterator();
-                    while (dependenciesIterator.hasNext()) {
-                        Resource dependency = dependenciesIterator.next();
-                        if (!dependency.hasCodeColors(configuration)) {
-                            dependenciesIterator.remove();
-                            dependency.removeDependent(configuration, this);
-                        }
-                    }
+        if (mConfigurationDependencies != null) {
+            // Tries to remove duplicate dependencies which only difference is the SDK version.
+            Iterator<CcConfiguration> configurationsIterator = mConfigurationDependencies.keySet().iterator();
+            Set<CcConfiguration> removableConfigurations = new HashSet<>();
+
+            CcConfiguration previousConfiguration = null;
+            while (configurationsIterator.hasNext()) {
+                if (previousConfiguration == null) {
+                    previousConfiguration = configurationsIterator.next();
                 } else {
-                    for (Resource dependency : mConfigurationDependencies.get(configuration)) {
-                        dependency.removeDependent(configuration, this);
+                    CcConfiguration configuration = configurationsIterator.next();
+                    if (matchConfigurationDependencies(previousConfiguration, configuration)) {
+                        // If the configuration and dependencies match, and the only difference if the SDK version,
+                        // keep the configurationDependencies with the lower SDK version and remove the other.
+                        removableConfigurations.add(previousConfiguration);
                     }
-                    mConfigurationDependencies.remove(configuration);
+                    previousConfiguration = configuration;
+                }
+            }
+
+            // Remove unnecessary configurations.
+            for (CcConfiguration configuration : removableConfigurations) {
+                mConfigurationDependencies.remove(configuration);
+            }
+        }
+
+        // Prune only once.
+        mIsPruned = true;
+    }
+
+    private boolean matchConfigurationDependencies(CcConfiguration thisConfiguration,
+                                                   CcConfiguration thatConfiguration) {
+        if (thisConfiguration.compareTo(thatConfiguration, true) == 0) {
+            Set<Resource> thisDependencies = mConfigurationDependencies.get(thisConfiguration);
+            Set<Resource> thatDependencies = mConfigurationDependencies.get(thatConfiguration);
+            if (thisDependencies.size() == thatDependencies.size()) {
+                // Check if the list of dependencies are equal.
+                for (Resource dependency : thisDependencies) {
+                    if (!thatDependencies.contains(dependency) ||
+                            (dependency.isPublic(thisConfiguration.sdkVersion) !=
+                                    dependency.isPublic(thatConfiguration.sdkVersion))) {
+                        // The dependencies are not equal if they do not have the same resources,
+                        // or if the visibility of the resources is not the same on both SDK versions.
+                        return false;
+                    }
                 }
             }
         }
+        // Success, dependencies are equal.
+        return true;
     }
 
     protected void addDependent(CcConfiguration configuration, Resource dependent) {
@@ -181,15 +218,6 @@ public class Resource implements Serializable {
             mConfigurationDependents.put(configuration, dependents);
         }
         dependents.add(dependent);
-    }
-
-    protected void removeDependent(CcConfiguration configuration, Resource dependent) {
-        if (mConfigurationDependents != null) {
-            Set<Resource> dependents = mConfigurationDependents.get(configuration);
-            if (dependents != null) {
-                dependents.remove(dependent);
-            }
-        }
     }
 
     @Override
@@ -229,6 +257,33 @@ public class Resource implements Serializable {
         }
     }
 
+    /**
+     * {@link Visibility} atomic types are {@link #PUBLIC} and {@link #PRIVATE}.
+     * <p>
+     * {@link #MIXED} type is composed of {@link #PUBLIC} and {@link #PRIVATE}.
+     * <p>
+     * Use {@link #getComponents()} to access the basic types.
+     */
+    public enum Visibility {
+        PUBLIC,
+        PRIVATE,
+        MIXED(PUBLIC, PRIVATE);
+
+        private Visibility[] mComponents;
+
+        Visibility() {
+            mComponents = new Visibility[]{this};
+        }
+
+        Visibility(Visibility... components) {
+            mComponents = components;
+        }
+
+        public Visibility[] getComponents() {
+            return mComponents;
+        }
+    }
+
     public static class Pool {
         private HashMap<Resource, Resource> mResources;
 
@@ -249,7 +304,7 @@ public class Resource implements Serializable {
         }
 
         public Resource getOrCreateResource(String name, Resource.Type type) {
-            Resource key = new Resource(name, type, isPublic(name, type), isCodeColor(name, type));
+            Resource key = new Resource(name, type, getDefaultVisibility(), getDefaultIsCodeColor(name, type));
             Resource value = mResources.get(key);
             if (value == null) {
                 value = key;
@@ -258,11 +313,11 @@ public class Resource implements Serializable {
             return value;
         }
 
-        protected boolean isPublic(String name, Resource.Type type) {
-            return true;
+        protected Visibility getDefaultVisibility() {
+            return Visibility.PUBLIC;
         }
 
-        protected boolean isCodeColor(String name, Resource.Type type) {
+        protected boolean getDefaultIsCodeColor(String name, Resource.Type type) {
             return type == Type.ATTR || type == Type.ANDROID_ATTR;
         }
 

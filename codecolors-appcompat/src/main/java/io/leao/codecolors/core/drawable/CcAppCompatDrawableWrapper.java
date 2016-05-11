@@ -133,17 +133,26 @@ public class CcAppCompatDrawableWrapper extends CcDrawableWrapper {
 
         public CcAppCompatConstantState(Resources res, int id, int[] attrs) {
             super(res, id);
+            init(attrs);
+        }
+
+        public CcAppCompatConstantState(Resources res, int id, ConstantState baseConstantState, int[] attrs) {
+            super(res, id, baseConstantState);
+            init(attrs);
+        }
+
+        public CcAppCompatConstantState(CcAppCompatConstantState orig, ConstantState newConstantState) {
+            super(orig, newConstantState);
+            init(orig.mAttrs);
+        }
+
+        private void init(int[] attrs) {
             mAttrs = attrs;
         }
 
-        public CcAppCompatConstantState(CcAppCompatConstantState orig, ConstantState newDrawableState) {
-            super(orig, newDrawableState);
-            mAttrs = orig.mAttrs;
-        }
-
         @Override
-        protected CcAppCompatConstantState createState(ConstantState drawableState) {
-            return new CcAppCompatConstantState(this, drawableState);
+        protected CcAppCompatConstantState createState(ConstantState constantState) {
+            return new CcAppCompatConstantState(this, constantState);
         }
 
         @Override

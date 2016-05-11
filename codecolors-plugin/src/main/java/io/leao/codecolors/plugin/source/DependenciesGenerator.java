@@ -8,10 +8,13 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
+import org.gradle.api.GradleException;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -29,48 +32,32 @@ public class DependenciesGenerator {
     private static final String ANDROID_RESOURCE_ID_PUBLIC_BASE = "android.R.%s.%s";
     private static final String ANDROID_RESOURCE_ID_PRIVATE_BASE = "android_R_%s_%s";
 
-    public static void generateDependencies(Set<Resource> resources, String packageName, String applicationId,
-                                            File outputDir) {
+    // List of private resources, avoid fields duplication.
+    Set<Resource> mPrivateResources = new HashSet<>();
+    List<FieldSpec> mPrivateResourcesFields = new ArrayList<>();
+
+    public void generateDependencies(Set<Resource> resources, String packageName, String applicationId,
+                                     File outputDir) {
         /*
          * Setup resources and collect all different configurations.
          */
 
         Set<CcConfiguration> configurations = new TreeSet<>();
 
-        List<FieldSpec> privateResourcesFields = new ArrayList<>();
-
         Iterator<Resource> resourcesIterator = resources.iterator();
         while (resourcesIterator.hasNext()) {
             Resource resource = resourcesIterator.next();
-
-            // If the resource doesn't have code colors, remove it and continue.
-            if (!resource.hasCodeColors()) {
-                resourcesIterator.remove();
-                continue;
-            }
-
-            // Prune dependency resources that don't have code colors.
-            resource.pruneDependencies();
-
-            // Initialize private resource ids.
-            if (!resource.isPublic()) {
-                privateResourcesFields.add(
-                        FieldSpec.builder(
-                                String.class,
-                                getAndroidResourceId(resource),
-                                Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
-                                .initializer("\"android:$L/$L\"", resource.getType().getName(), resource.getName())
-                                .build());
-            }
 
             // If the resource doesn't have dependencies, continue.
             if (!resource.hasDependencies()) {
                 continue;
             }
 
+            // Prune dependency resources that don't have code colors.
+            resource.pruneDependencies();
+
             Map<CcConfiguration, Set<Resource>> configurationDependencies =
                     resource.getConfigurationDependencies();
-
             for (CcConfiguration configuration : configurationDependencies.keySet()) {
                 // Collect configurations.
                 configurations.add(configuration);
@@ -95,6 +82,7 @@ public class DependenciesGenerator {
          * Resources with configurations and dependencies.
          */
 
+        List<FieldSpec> resourceDependenciesFields = new ArrayList<>();
 
         // Object[][]
         TypeName configurationDependenciesType = TypeName.get(Object[][].class);
@@ -121,16 +109,20 @@ public class DependenciesGenerator {
             Iterator<CcConfiguration> configurationsIterator = configurationDependencies.keySet().iterator();
             while (configurationsIterator.hasNext()) {
                 CcConfiguration configuration = configurationsIterator.next();
+                Set<Resource> dependencies = configurationDependencies.get(configuration);
+
                 int configurationIndex = configurationIndexes.get(configuration);
                 configurationsBuilder.add("$L", configurationIndex);
 
-
                 dependenciesBuilder.add("{");
-                Set<Resource> dependencies = configurationDependencies.get(configuration);
                 Iterator<Resource> dependenciesIterator = dependencies.iterator();
                 while (dependenciesIterator.hasNext()) {
                     Resource dependency = dependenciesIterator.next();
-                    addResourceId(dependenciesBuilder, dependency, packageName);
+
+                    boolean isPublic = dependency.isPublic(configuration.sdkVersion);
+                    addPrivateResourceIfNeeded(dependency, isPublic);
+
+                    addResourceId(dependenciesBuilder, dependency, packageName, isPublic);
                     if (dependenciesIterator.hasNext()) {
                         dependenciesBuilder.add(", ");
                     } else {
@@ -146,16 +138,30 @@ public class DependenciesGenerator {
                 }
             }
 
-            putResourceConfigurationDependenciesBuilder
-                    .add("put(\n")
-                    .indent();
-            addResourceId(putResourceConfigurationDependenciesBuilder, resource, packageName);
-            putResourceConfigurationDependenciesBuilder
-                    .add(",\n")
-                    .add("new $T{\n$L\n$L\n}\n", configurationDependenciesType, configurationsBuilder.build(),
-                            dependenciesBuilder.unindent().build())
-                    .unindent()
-                    .add(");\n");
+            resourceDependenciesFields.add(
+                    FieldSpec.builder(
+                            Object[][].class,
+                            getResourceVariableName(resource),
+                            Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
+                            .initializer("new $T{\n$L\n$L\n}", configurationDependenciesType,
+                                    configurationsBuilder.build(), dependenciesBuilder.unindent().build())
+                            .build());
+
+
+            // If the resource is both public and private, initialize its dependencies for both cases.
+            for (Resource.Visibility visibility : resource.getVisibility().getComponents()) {
+                boolean isPublic = visibility == Resource.Visibility.PUBLIC;
+                addPrivateResourceIfNeeded(resource, isPublic);
+
+                putResourceConfigurationDependenciesBuilder
+                        .add("put(\n")
+                        .indent();
+                addResourceId(putResourceConfigurationDependenciesBuilder, resource, packageName, isPublic);
+                putResourceConfigurationDependenciesBuilder
+                        .add(",\n$L", getResourceVariableName(resource))
+                        .unindent()
+                        .add(");\n");
+            }
         }
 
         FieldSpec dependenciesField =
@@ -167,8 +173,9 @@ public class DependenciesGenerator {
 
         TypeSpec.Builder codeColorResourcesClass = TypeSpec.classBuilder(CcConst.DEPENDENCIES_CLASS_NAME)
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-                .addFields(privateResourcesFields)
+                .addFields(mPrivateResourcesFields)
                 .addField(configurationsField)
+                .addFields(resourceDependenciesFields)
                 .addField(dependenciesField);
 
         GeneratorUtils.addSuppressWarningsAnnotations(codeColorResourcesClass);
@@ -185,7 +192,24 @@ public class DependenciesGenerator {
         }
     }
 
-    private static void addResourceId(CodeBlock.Builder codeBlockBuilder, Resource resource, String packageName) {
+    private void addPrivateResourceIfNeeded(Resource resource, boolean isPublic) {
+        // Initialize private resource ids.
+        if (!isPublic && !mPrivateResources.contains(resource)) {
+            mPrivateResourcesFields.add(
+                    FieldSpec.builder(
+                            String.class,
+                            getAndroidResourceId(resource, false),
+                            Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
+                            .initializer("\"android:$L/$L\"", resource.getType().getName(),
+                                    resource.getName())
+                            .build());
+            // Only add resource to privateResourcesFields once.
+            mPrivateResources.add(resource);
+        }
+    }
+
+    private static void addResourceId(CodeBlock.Builder codeBlockBuilder, Resource resource, String packageName,
+                                      boolean isPublic) {
         switch (resource.getType()) {
             case DRAWABLE:
             case COLOR:
@@ -198,14 +222,32 @@ public class DependenciesGenerator {
             case ANDROID_DRAWABLE:
             case ANDROID_COLOR:
             case ANDROID_ATTR:
-                codeBlockBuilder.add(getAndroidResourceId(resource));
+                codeBlockBuilder.add(getAndroidResourceId(resource, isPublic));
                 return;
         }
-        throw new IllegalStateException("Resource type not supported: " + resource.getType());
+        throw new GradleException("Resource type not supported: " + resource.getType());
     }
 
-    private static String getAndroidResourceId(Resource resource) {
-        String nameBase = resource.isPublic() ? ANDROID_RESOURCE_ID_PUBLIC_BASE : ANDROID_RESOURCE_ID_PRIVATE_BASE;
+    private static String getAndroidResourceId(Resource resource, boolean isPublic) {
+        String nameBase = isPublic ? ANDROID_RESOURCE_ID_PUBLIC_BASE : ANDROID_RESOURCE_ID_PRIVATE_BASE;
         return String.format(nameBase, resource.getType().getName(), resource.getName());
+    }
+
+    private static String getResourceVariableName(Resource resource) {
+        switch (resource.getType()) {
+            case DRAWABLE:
+                return "Drawable_" + resource.getName();
+            case ANDROID_DRAWABLE:
+                return "AndroidDrawable_" + resource.getName();
+            case COLOR:
+                return "Color_" + resource.getName();
+            case ANDROID_COLOR:
+                return "AndroidColor_" + resource.getName();
+            case ATTR:
+                return "Attr_" + resource.getName();
+            case ANDROID_ATTR:
+                return "AndroidAttr_" + resource.getName();
+        }
+        throw new GradleException("Resource type not supported: " + resource.getType());
     }
 }
