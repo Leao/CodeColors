@@ -8,17 +8,23 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.util.TypedValue;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Set;
 
 import io.leao.codecolors.core.CcCore;
-import io.leao.codecolors.core.callback.CcInvalidateDrawableCallback;
 import io.leao.codecolors.core.res.CcColorStateList;
 import io.leao.codecolors.core.res.CcResources;
+
+import static io.leao.codecolors.core.drawable.CcDrawableUtils.forceStateChange;
 
 public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList.Callback {
     protected CcConstantState mState;
     protected Drawable mDrawable;
+
+    private Set<Drawable> mPreparedDrawables = Collections.newSetFromMap(new IdentityHashMap<Drawable, Boolean>());
+    private Drawable mPreparingDrawable;
 
     public CcDrawableWrapper(CcConstantState state, Drawable drawable) {
         super(drawable, 0);
@@ -55,7 +61,7 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
     }
 
     @Override
-    public void applyTheme(Resources.Theme t) {
+    public void applyTheme(@NonNull Resources.Theme t) {
         super.applyTheme(t);
 
         if (mState.mUnresolvedAttrs.size() > 0) {
@@ -86,7 +92,43 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
 
     @Override
     public void invalidateColor(CcColorStateList color) {
-        CcInvalidateDrawableCallback.invalidate(this);
+        // Drawables' color could have changed.
+        // Remove all drawables from prepared set.
+        mPreparedDrawables.clear();
+
+        // Invalidate drawable changing its color and updating the view.
+        invalidateDrawable(mDrawable);
+    }
+
+
+    @Override
+    public void invalidateDrawable(Drawable who) {
+        if (mPreparingDrawable == who) {
+            // Do not propagate drawable invalidation twice.
+            return;
+        }
+
+        Drawable current = getCurrent(who);
+        if (!mPreparedDrawables.contains(current)) {
+            mPreparedDrawables.add(current);
+
+            // Store the drawable to which we are forcing a state change, to prevent invalidateSelf() from propagating
+            // its call twice to the view holding the drawable, resulting in the a double invalidation, and double the
+            // time, on some cases.
+            // We could set its callback to null, but setting a callback creates a new WeekReference every time, which
+            // would make this slower.
+            mPreparingDrawable = who;
+            // Force a state change to update the color.
+            forceStateChange(current, false);
+            mPreparingDrawable = null;
+        }
+
+        super.invalidateDrawable(who);
+    }
+
+    private Drawable getCurrent(Drawable who) {
+        Drawable current = who.getCurrent();
+        return current != who ? getCurrent(current) : current;
     }
 
     static class CcConstantState extends ConstantState {
@@ -141,15 +183,18 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
             return mBaseConstantState;
         }
 
+        @NonNull
         public Drawable newDrawable() {
             return newDrawable(null);
         }
 
+        @NonNull
         @Override
         public Drawable newDrawable(Resources res) {
             return newDrawableInternal(mBaseConstantState.newDrawable(res));
         }
 
+        @NonNull
         @TargetApi(Build.VERSION_CODES.LOLLIPOP)
         @Override
         public Drawable newDrawable(Resources res, Resources.Theme theme) {
