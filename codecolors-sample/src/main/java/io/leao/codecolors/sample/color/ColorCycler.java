@@ -4,6 +4,7 @@ import static android.graphics.Color.parseColor;
 
 public class ColorCycler {
     private Integer[][] mColors = new Integer[][]{
+            {null, null, null, null},
             {parseColor("#8BC34A"), parseColor("#689F38"), parseColor("#FF5722"), null},
             {parseColor("#FFC107"), parseColor("#FFA000"), parseColor("#607D8B"), null},
             {parseColor("#9E9E9E"), parseColor("#616161"), parseColor("#FF5252"), null},
@@ -11,7 +12,6 @@ public class ColorCycler {
             {parseColor("#8BC34A"), parseColor("#689F38"), parseColor("#FF5722"), parseColor("#CDDC39")},
             {parseColor("#FFC107"), parseColor("#FFA000"), parseColor("#607D8B"), parseColor("#CDDC39")},
             {parseColor("#9E9E9E"), parseColor("#616161"), parseColor("#FF5252"), parseColor("#CDDC39")},
-            {null, null, null, null},
     };
 
     private int mCurrentTheme = 0;
