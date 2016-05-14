@@ -142,7 +142,7 @@ class CcTintManagerUtils {
     }
 
     public static PorterDuffColorFilter createTintFilter(ColorStateList tint, PorterDuff.Mode tintMode,
-                                                          final int[] state) {
+                                                         final int[] state) {
         if (tint == null || tintMode == null) {
             return null;
         }
