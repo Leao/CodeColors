@@ -30,17 +30,17 @@ public class CcTintableBackgroundColorCallbackAdapter implements CcColorCallback
                 outResult.set(view);
                 outResult.add(
                         (CcColorStateList) backgroundTintList,
-                        new TintableBackgroundRefreshDrawableCallback(backgroundTintList));
+                        new TintableBackgroundCallback(backgroundTintList));
                 return true;
             }
         }
         return false;
     }
 
-    private static class TintableBackgroundRefreshDrawableCallback implements CcColorStateList.AnchorCallback<View> {
+    private static class TintableBackgroundCallback implements CcColorStateList.AnchorCallback<View> {
         private ColorStateList mBackgroundTintList;
 
-        public TintableBackgroundRefreshDrawableCallback(ColorStateList backgroundTintList) {
+        public TintableBackgroundCallback(ColorStateList backgroundTintList) {
             mBackgroundTintList = backgroundTintList;
         }
 
