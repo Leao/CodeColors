@@ -76,21 +76,18 @@ public class CcAppCompatDrawableWrapper extends CcDrawableWrapper {
 
     @Override
     public void setColorFilter(ColorFilter colorFilter) {
-        // Check if we should restore our inner tintList.
+        // Check if we should enforce our inner tintList.
         if (mTintList != null) {
             Drawable rootDrawable = getRootDrawable();
             View view = getView(rootDrawable);
 
             if (isTintableBackground(view, rootDrawable)) {
+                // TintableBackgroundViews store internal tintLists for known drawables.
+                // Those tintLists can become outdated, if they contain attributes that are code-colors.
+                // We make sure to store and enforce different tintList every time the code-colors change.
                 ColorStateList tintList = ((TintableBackgroundView) view).getSupportBackgroundTintList();
                 if (tintList == null) {
                     ((TintableBackgroundView) view).setSupportBackgroundTintList(mTintList);
-                    return;
-                }
-            } else if (isTintableCompoundButton(view, rootDrawable)) {
-                ColorStateList tintList = ((TintableCompoundButton) view).getSupportButtonTintList();
-                if (tintList == null) {
-                    ((TintableCompoundButton) view).setSupportButtonTintList(mTintList);
                     return;
                 }
             }
@@ -120,15 +117,12 @@ public class CcAppCompatDrawableWrapper extends CcDrawableWrapper {
         ColorStateList tintList = drawableManager.getTintList(contextWrapper, mState.mId);
 
         if (tintList != null && isTintableBackground(view, rootDrawable)) {
+            // TintableBackgroundViews store internal tintLists for known drawables.
+            // Those tintLists can become outdated, if they contain attributes that are code-colors.
+            // We make sure to store and enforce different tintList every time the code-colors change.
             ColorStateList viewTintList = ((TintableBackgroundView) view).getSupportBackgroundTintList();
             if (viewTintList == null || viewTintList == mTintList) {
                 ((TintableBackgroundView) view).setSupportBackgroundTintList(tintList);
-            }
-            mTintList = tintList;
-        } else if (tintList != null && isTintableCompoundButton(view, rootDrawable)) {
-            ColorStateList buttonTintList = ((TintableCompoundButton) view).getSupportButtonTintList();
-            if (buttonTintList == null || buttonTintList == mTintList) {
-                ((TintableCompoundButton) view).setSupportButtonTintList(tintList);
             }
             mTintList = tintList;
         } else {
@@ -160,8 +154,7 @@ public class CcAppCompatDrawableWrapper extends CcDrawableWrapper {
     }
 
     private static boolean isTintableBackground(View view, Drawable rootDrawable) {
-        return view instanceof TintableBackgroundView &&
-                view.getBackground() == rootDrawable;
+        return view instanceof TintableBackgroundView && view.getBackground() == rootDrawable;
     }
 
     private static boolean isTintableCompoundButton(View view, Drawable rootDrawable) {
