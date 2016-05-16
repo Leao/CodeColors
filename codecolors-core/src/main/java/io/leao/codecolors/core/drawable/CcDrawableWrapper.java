@@ -23,7 +23,7 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
     protected CcConstantState mState;
     protected Drawable mDrawable;
 
-    private Set<Drawable> mPreparedDrawables = Collections.newSetFromMap(new IdentityHashMap<Drawable, Boolean>());
+    private Set<Drawable> mPreparedDrawables;
     private Drawable mPreparingDrawable;
 
     public CcDrawableWrapper(CcConstantState state, Drawable drawable) {
@@ -62,65 +62,70 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
 
     @Override
     public void applyTheme(@NonNull Resources.Theme t) {
-        super.applyTheme(t);
-
-        if (mState.mUnresolvedAttrs.size() > 0) {
-            if (mState.mThemeIds.size() > 0) {
-                // Remove callbacks from old theme dependencies.
-                for (Integer id : mState.mThemeIds) {
-                    CcColorStateList color = CcCore.getColorsManager().getColor(id);
-                    if (color != null) {
-                        color.removeCallback(this);
-                    }
-                }
-                // Clear old theme ids.
-                mState.mThemeIds.clear();
-            }
-
-            CcCore.getDependenciesManager()
-                    .resolveDependencies(t, mState.mResources, mState.mUnresolvedAttrs, mState.mThemeIds);
-            for (Integer id : mState.mThemeIds) {
-                CcColorStateList color = CcCore.getColorsManager().getColor(id);
-                if (color != null) {
-                    mState.mThemeIds.add(id);
-
-                    color.addCallback(this);
-                }
-            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            super.applyTheme(t);
         }
+
+        mState.applyTheme(t, this);
     }
 
     @Override
     public void invalidateColor(CcColorStateList color) {
-        // Drawables' color could have changed.
-        // Remove all drawables from prepared set.
-        mPreparedDrawables.clear();
-
-        // Invalidate drawable changing its color and updating the view.
-        invalidateDrawable(mDrawable);
+        onInvalidateColor(color);
     }
 
+    /**
+     * @return true, if the drawable was invalidated; false, otherwise.
+     */
+    protected boolean onInvalidateColor(CcColorStateList color) {
+        if (isDependencyColor(color)) {
+            // Drawables' color could have changed.
+            // Make sure the set of prepared drawables is empty.
+            if (mPreparedDrawables == null) {
+                mPreparedDrawables = Collections.newSetFromMap(new IdentityHashMap<Drawable, Boolean>());
+            } else {
+                mPreparedDrawables.clear();
+            }
+
+            // Invalidate drawable changing its color and updating the view.
+            invalidateDrawable(mDrawable);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    protected boolean isDependencyColor(CcColorStateList color) {
+        int colorId = color.getId();
+        return colorId != CcColorStateList.NO_ID &&
+                (mState.mResolvedIds.contains(colorId) || mState.mThemeIds.contains(colorId));
+    }
 
     @Override
     public void invalidateDrawable(Drawable who) {
-        if (mPreparingDrawable == who) {
-            // Do not propagate drawable invalidation twice.
-            return;
-        }
+        // If a code color was invalidated, mPreparedDrawables != null.
+        // It means that we started tracking the drawables that are prepared, or not, forcing a state change, to make
+        // sure their appearance is correct.
+        if (mPreparedDrawables != null) {
+            if (mPreparingDrawable == who) {
+                // Do not propagate drawable invalidation twice.
+                return;
+            }
 
-        Drawable current = getCurrent(who);
-        if (!mPreparedDrawables.contains(current)) {
-            mPreparedDrawables.add(current);
+            Drawable current = getCurrent(who);
+            if (!mPreparedDrawables.contains(current)) {
+                mPreparedDrawables.add(current);
 
-            // Store the drawable to which we are forcing a state change, to prevent invalidateSelf() from propagating
-            // its call twice to the view holding the drawable, resulting in the a double invalidation, and double the
-            // time, on some cases.
-            // We could set its callback to null, but setting a callback creates a new WeekReference every time, which
-            // would make this slower.
-            mPreparingDrawable = who;
-            // Force a state change to update the color.
-            forceStateChange(current, false);
-            mPreparingDrawable = null;
+                // Store the drawable to which we are forcing a state change, to prevent invalidateSelf() from
+                // propagating its call twice to the view holding the drawable, resulting in the a double invalidation,
+                // and double the time, on some cases.
+                // We could set its callback to null, but setting a callback creates a new WeekReference every time,
+                // which would make this slower.
+                mPreparingDrawable = who;
+                // Force a state change to update the color.
+                forceStateChange(current, false);
+                mPreparingDrawable = null;
+            }
         }
 
         super.invalidateDrawable(who);
@@ -232,12 +237,45 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
             return new CcDrawableWrapper(this, drawable);
         }
 
+        protected void applyTheme(Resources.Theme t, CcDrawableWrapper drawable) {
+            if (mUnresolvedAttrs.size() > 0) {
+                if (mThemeIds.size() > 0) {
+                    // Remove callbacks from old theme dependencies.
+                    for (Integer id : mThemeIds) {
+                        removeCallback(id, drawable);
+                    }
+                    // Clear old theme ids.
+                    mThemeIds.clear();
+                }
+
+                CcCore.getDependenciesManager().resolveDependencies(t, mResources, mUnresolvedAttrs, mThemeIds);
+                for (Integer id : mThemeIds) {
+                    if (addCallback(id, drawable)) {
+                        mThemeIds.add(id);
+                    }
+                }
+            }
+        }
+
         protected void addCallbacks(Set<Integer> dependencies, CcDrawableWrapper drawable) {
             for (int dependencyId : dependencies) {
-                CcColorStateList color = CcCore.getColorsManager().getColor(dependencyId);
-                if (color != null) {
-                    color.addCallback(drawable);
-                }
+                addCallback(dependencyId, drawable);
+            }
+        }
+
+        protected boolean addCallback(int id, CcDrawableWrapper drawable) {
+            CcColorStateList color = CcCore.getColorsManager().getColor(id);
+            if (color != null) {
+                color.addCallback(drawable);
+                return true;
+            }
+            return false;
+        }
+
+        protected void removeCallback(int id, CcDrawableWrapper drawable) {
+            CcColorStateList color = CcCore.getColorsManager().getColor(id);
+            if (color != null) {
+                color.removeCallback(drawable);
             }
         }
 

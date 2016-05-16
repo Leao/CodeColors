@@ -8,77 +8,61 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v4.view.TintableBackgroundView;
-import android.support.v4.widget.CompoundButtonCompat;
-import android.support.v4.widget.TintableCompoundButton;
 import android.support.v7.widget.AppCompatDrawableManager;
 import android.view.View;
-import android.widget.CompoundButton;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import io.leao.codecolors.appcompat.tint.CcTintManager;
 import io.leao.codecolors.core.res.CcColorStateList;
 
-public class CcAppCompatDrawableWrapper extends CcDrawableWrapper {
-    private boolean mCheckContext = true;
+import static io.leao.codecolors.core.drawable.CcAppCompatDrawableUtils.getRootDrawable;
+import static io.leao.codecolors.core.drawable.CcAppCompatDrawableUtils.getView;
+import static io.leao.codecolors.core.drawable.CcAppCompatDrawableUtils.getContext;
 
+public class CcAppCompatDrawableWrapper extends CcDrawableWrapper {
+    private boolean mCheckTheme = true;
+
+    private boolean mUpdateTintList;
     private ColorStateList mTintList;
 
-    public CcAppCompatDrawableWrapper(CcDrawableWrapper.CcConstantState state, Drawable drawable) {
+    public CcAppCompatDrawableWrapper(CcAppCompatDrawableWrapper.CcConstantState state, Drawable drawable) {
         super(state, drawable);
+        mUpdateTintList = true;
     }
 
     @Override
     public void draw(@NonNull Canvas canvas) {
-        checkContext();
+        checkTheme();
         super.draw(canvas);
     }
 
-    @Override
-    protected boolean onStateChange(int[] state) {
-        boolean changed = super.onStateChange(state);
+    private void checkTheme() {
+        if (mCheckTheme) {
+            mCheckTheme = false;
 
-        // Update tint list if it's not directly in the workflow of an AppCompat tintable view.
-        Drawable rootDrawable = getRootDrawable();
-        View view = getView(rootDrawable);
-        Context context = getContext(view);
-        if (context != null) {
-            if (!isTintableBackground(view, rootDrawable) && !isTintableCompoundButton(view, rootDrawable)) {
-                updateAppCompatTint(context, view, rootDrawable);
+            Context context = getContext(getView(getRootDrawable(this)));
+            if (context != null) {
+                applyTheme(context.getTheme());
             }
         }
-
-        return changed;
     }
 
-    private void checkContext() {
-        if (mCheckContext) {
-            mCheckContext = false;
-
-            Context context = getContext(getView(getRootDrawable()));
-            if (context != null) {
-                TypedArray ta = context.obtainStyledAttributes(((CcAppCompatConstantState) mState).mAttrs);
-                try {
-                    int N = ta.getIndexCount();
-                    for (int i = 0; i < N; i++) {
-                        int index = ta.getIndex(i);
-                        ColorStateList color = ta.getColorStateList(index);
-                        if (color instanceof CcColorStateList) {
-                            ((CcColorStateList) color).addCallback(this);
-                        }
-                    }
-                } finally {
-                    ta.recycle();
-                }
-            }
-        }
+    @Override
+    public void applyTheme(@NonNull Resources.Theme t) {
+        mCheckTheme = false;
+        super.applyTheme(t);
     }
 
     @Override
     public void setColorFilter(ColorFilter colorFilter) {
         // Check if we should enforce our inner tintList.
         if (mTintList != null) {
-            Drawable rootDrawable = getRootDrawable();
+            Drawable rootDrawable = getRootDrawable(this);
             View view = getView(rootDrawable);
 
             if (isTintableBackground(view, rootDrawable)) {
@@ -99,57 +83,67 @@ public class CcAppCompatDrawableWrapper extends CcDrawableWrapper {
     }
 
     @Override
-    public void invalidateColor(CcColorStateList color) {
-        Drawable rootDrawable = getRootDrawable();
-        View view = getView(rootDrawable);
-        Context context = getContext(view);
-        if (context != null) {
-            updateAppCompatTint(context, view, rootDrawable);
+    protected boolean onInvalidateColor(CcColorStateList color) {
+        boolean isTintColor = isTintColor(color);
+        if (isTintColor) {
+            mUpdateTintList = true;
+        }
+
+        boolean invalidated = super.onInvalidateColor(color);
+
+        /*
+         * Make sure the drawable is properly invalidated.
+         */
+        if (invalidated) {
+            return true;
+        } else if (isTintColor) {
+            // Invalidate drawable if it is a tint color and was not invalidated by super.
+            invalidateDrawable(mDrawable);
+            return true;
         } else {
-            super.invalidateColor(color);
+            return false;
         }
     }
 
-    protected void updateAppCompatTint(Context context, View view, Drawable rootDrawable) {
-        AppCompatDrawableManager drawableManager = AppCompatDrawableManager.get();
-        // The context wrapper ensures that the manager doesn't reuse old tint lists.
-        Context contextWrapper = new ContextWrapper(context);
-        ColorStateList tintList = drawableManager.getTintList(contextWrapper, mState.mId);
+    protected boolean isTintColor(CcColorStateList color) {
+        int colorId = color.getId();
+        return colorId != CcColorStateList.NO_ID &&
+                ((CcAppCompatConstantState) mState).mTintIds.contains(color.getId());
+    }
 
-        if (tintList != null && isTintableBackground(view, rootDrawable)) {
-            // TintableBackgroundViews store internal tintLists for known drawables.
-            // Those tintLists can become outdated, if they contain attributes that are code-colors.
-            // We make sure to store and enforce different tintList every time the code-colors change.
-            ColorStateList viewTintList = ((TintableBackgroundView) view).getSupportBackgroundTintList();
-            if (viewTintList == null || viewTintList == mTintList) {
-                ((TintableBackgroundView) view).setSupportBackgroundTintList(tintList);
+    @Override
+    public void invalidateDrawable(Drawable who) {
+        updateTintList();
+        super.invalidateDrawable(who);
+    }
+
+    protected void updateTintList() {
+        if (mUpdateTintList) {
+            mUpdateTintList = false;
+
+            Drawable rootDrawable = getRootDrawable(this);
+            View view = getView(rootDrawable);
+            Context context = getContext(view);
+            if (context != null) {
+                AppCompatDrawableManager drawableManager = AppCompatDrawableManager.get();
+                // The context wrapper ensures that the manager doesn't reuse old tint lists.
+                Context contextWrapper = new ContextWrapper(context);
+                ColorStateList tintList = drawableManager.getTintList(contextWrapper, mState.mId);
+
+                if (tintList != null && isTintableBackground(view, rootDrawable)) {
+                    ColorStateList viewTintList = ((TintableBackgroundView) view).getSupportBackgroundTintList();
+                    // TintableBackgroundViews store internal tintLists for known drawables.
+                    // Those tintLists can become outdated, if they contain attributes that are code-colors.
+                    // We make sure to store and enforce different tintList every time the code-colors change.
+                    if (viewTintList == null || viewTintList == mTintList) {
+                        ((TintableBackgroundView) view).setSupportBackgroundTintList(tintList);
+                    }
+                    mTintList = tintList;
+                } else {
+                    // If tint list is null, tintDrawable will still try to set color filters.
+                    CcTintManager.tintDrawable(context, tintList, mDrawable, mState.mId);
+                }
             }
-            mTintList = tintList;
-        } else {
-            // If tint list is null, tintDrawable will still try to set color filters.
-            CcTintManager.tintDrawable(context, tintList, mDrawable, mState.mId);
-        }
-    }
-
-    private Context getContext(View view) {
-        return view != null ? view.getContext() : null;
-    }
-
-    private View getView(Drawable rootDrawable) {
-        Drawable.Callback callback = rootDrawable.getCallback();
-        return callback instanceof View ? (View) callback : null;
-    }
-
-    private Drawable getRootDrawable() {
-        return getRootDrawable(this);
-    }
-
-    private Drawable getRootDrawable(Drawable drawable) {
-        Drawable.Callback callback = drawable.getCallback();
-        if (callback instanceof Drawable) {
-            return getRootDrawable((Drawable) callback);
-        } else {
-            return drawable;
         }
     }
 
@@ -157,31 +151,28 @@ public class CcAppCompatDrawableWrapper extends CcDrawableWrapper {
         return view instanceof TintableBackgroundView && view.getBackground() == rootDrawable;
     }
 
-    private static boolean isTintableCompoundButton(View view, Drawable rootDrawable) {
-        return view instanceof TintableCompoundButton &&
-                CompoundButtonCompat.getButtonDrawable((CompoundButton) view) == rootDrawable;
-    }
-
     static class CcAppCompatConstantState extends CcConstantState {
         private int[] mAttrs;
+        private Set<Integer> mTintIds;
 
         public CcAppCompatConstantState(Resources res, int id, int[] attrs) {
             super(res, id);
-            init(attrs);
+            init(attrs, new HashSet<Integer>());
         }
 
         public CcAppCompatConstantState(Resources res, int id, ConstantState baseConstantState, int[] attrs) {
             super(res, id, baseConstantState);
-            init(attrs);
+            init(attrs, new HashSet<Integer>());
         }
 
         public CcAppCompatConstantState(CcAppCompatConstantState orig, ConstantState newConstantState) {
             super(orig, newConstantState);
-            init(orig.mAttrs);
+            init(orig.mAttrs, new HashSet<>(orig.mTintIds));
         }
 
-        private void init(int[] attrs) {
+        private void init(int[] attrs, Set<Integer> tintIds) {
             mAttrs = attrs;
+            mTintIds = tintIds;
         }
 
         @Override
@@ -191,7 +182,41 @@ public class CcAppCompatDrawableWrapper extends CcDrawableWrapper {
 
         @Override
         protected CcAppCompatDrawableWrapper createDrawable(Drawable drawable) {
-            return new CcAppCompatDrawableWrapper(this, drawable);
+            CcAppCompatDrawableWrapper wrapper = new CcAppCompatDrawableWrapper(this, drawable);
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                // Tint attributes are always theme dependent.
+                // Mutate drawable on older versions, as they didn't have theme support.
+                wrapper.mutate();
+            }
+            return wrapper;
+        }
+
+        @Override
+        protected void applyTheme(Resources.Theme t, CcDrawableWrapper drawable) {
+            if (mTintIds.size() > 0) {
+                // Remove callbacks from old tint dependencies.
+                for (Integer id : mTintIds) {
+                    removeCallback(id, drawable);
+                }
+                // Clear old tint ids.
+                mTintIds.clear();
+            }
+
+            TypedArray ta = t.obtainStyledAttributes(mAttrs);
+            try {
+                int N = ta.getIndexCount();
+                for (int i = 0; i < N; i++) {
+                    int index = ta.getIndex(i);
+                    int id = ta.getResourceId(index, 0);
+                    if (addCallback(id, drawable)) {
+                        mTintIds.add(id);
+                    }
+                }
+            } finally {
+                ta.recycle();
+            }
+
+            super.applyTheme(t, drawable);
         }
     }
 }
