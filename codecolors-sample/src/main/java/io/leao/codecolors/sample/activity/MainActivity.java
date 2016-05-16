@@ -11,6 +11,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,9 +25,12 @@ import io.leao.codecolors.sample.R;
 import io.leao.codecolors.sample.color.ColorCycler;
 
 public class MainActivity extends CcAppCompatActivity {
+    private CheckBox mAnimationCheckBox;
+
     private ColorCycler mColorCycler = new ColorCycler();
     private Pattern mHexPattern = Pattern.compile("^#?([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$");
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -75,35 +79,17 @@ public class MainActivity extends CcAppCompatActivity {
                 pickColor();
             }
         });
+
+        mAnimationCheckBox = (CheckBox) findViewById(android.R.id.checkbox);
     }
 
     private void cycleColors() {
         mColorCycler.cycle();
-        animateColorsTo(
+        updateColorsTo(
                 mColorCycler.getPrimary(),
                 mColorCycler.getPrimaryDark(),
                 mColorCycler.getAccent(),
                 mColorCycler.getAccentPressed());
-    }
-
-    private void animateColorsTo(Integer primary, Integer primaryDark, Integer accent, Integer accentPressed) {
-        animateColorTo(R.color.cc__color_primary, primary).start();
-        animateColorTo(R.color.cc__color_primary_dark, primaryDark).start();
-        CcColorStateList.AnimationBuilder builder = animateColorTo(R.color.cc__color_accent, accent);
-        if (accentPressed != null) {
-            builder.setState(new int[]{android.R.attr.state_pressed}, Color.CYAN);
-        } else {
-            builder.removeState(new int[]{android.R.attr.state_pressed});
-        }
-        builder.start();
-    }
-
-    private CcColorStateList.AnimationBuilder animateColorTo(int resId, Integer color) {
-        if (color != null) {
-            return CodeColors.animate(resId).setColor(color);
-        } else {
-            return CodeColors.animate(resId).setColor(null);
-        }
     }
 
     private void pickColor() {
@@ -112,10 +98,58 @@ public class MainActivity extends CcAppCompatActivity {
             String colorHex = colorEditText.getText().toString();
             if (mHexPattern.matcher(colorHex).matches()) {
                 int color = Color.parseColor(ensureParsableColor(colorHex));
-                animateColorsTo(color, color, color, null);
+                updateColorsTo(color, color, color, null);
             } else {
                 Snackbar.make(colorEditText, R.string.color_not_valid, Snackbar.LENGTH_SHORT).show();
             }
+        }
+    }
+
+    private void updateColorsTo(Integer primary, Integer primaryDark, Integer accent, Integer accentPressed) {
+        if (mAnimationCheckBox.isChecked()) {
+            animateColorsTo(primary, primaryDark, accent, accentPressed);
+        } else {
+            setColorsTo(primary, primaryDark, accent, accentPressed);
+        }
+    }
+
+    private void setColorsTo(Integer primary, Integer primaryDark, Integer accent, Integer accentPressed) {
+        setColor(R.color.cc__color_primary, primary).submit();
+        setColor(R.color.cc__color_primary_dark, primaryDark).submit();
+        CcColorStateList.SetBuilder builder = setColor(R.color.cc__color_accent, accent);
+        if (accentPressed != null) {
+            builder.setState(new int[]{android.R.attr.state_pressed}, accentPressed);
+        } else {
+            builder.removeState(new int[]{android.R.attr.state_pressed});
+        }
+        builder.submit();
+    }
+
+    private CcColorStateList.SetBuilder setColor(int resId, Integer color) {
+        if (color != null) {
+            return CodeColors.set(resId).setColor(color);
+        } else {
+            return CodeColors.set(resId).setColor(null);
+        }
+    }
+
+    private void animateColorsTo(Integer primary, Integer primaryDark, Integer accent, Integer accentPressed) {
+        animateColorTo(R.color.cc__color_primary, primary).submit();
+        animateColorTo(R.color.cc__color_primary_dark, primaryDark).submit();
+        CcColorStateList.AnimateBuilder builder = animateColorTo(R.color.cc__color_accent, accent);
+        if (accentPressed != null) {
+            builder.setState(new int[]{android.R.attr.state_pressed}, accentPressed);
+        } else {
+            builder.removeState(new int[]{android.R.attr.state_pressed});
+        }
+        builder.submit();
+    }
+
+    private CcColorStateList.AnimateBuilder animateColorTo(int resId, Integer color) {
+        if (color != null) {
+            return CodeColors.animate(resId).setColor(color);
+        } else {
+            return CodeColors.animate(resId).setColor(null);
         }
     }
 

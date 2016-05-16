@@ -13,7 +13,7 @@
         android:id="@+id/clock"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/cc__color_accent"
+        android:background="@color/cc__color_primary"
         android:gravity="center"
         android:paddingBottom="@dimen/clock_vertical_padding"
         android:paddingTop="@dimen/clock_vertical_padding"
@@ -45,5 +45,12 @@
         android:imeOptions="actionDone"
         android:singleLine="true"/>
 
+    <CheckBox
+        android:id="@android:id/checkbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@android:id/button2"
+        android:checked="true"
+        android:text="@string/checkbox_anime"/>
 
 </RelativeLayout>

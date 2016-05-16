@@ -6,6 +6,8 @@
     <string name="button_pick_color">Pick color</string>
     <string name="hint_pick_color">Color (e.g., #ff0000)</string>
 
+    <string name="checkbox_anime">Animate</string>
+
     <string name="color_not_valid">The picked color is invalid.</string>
 
     <string name="snackbar_regular">Just your regular snackbar.</string>

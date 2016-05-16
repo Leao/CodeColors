@@ -2,7 +2,8 @@
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
+        <item name="windowActionModeOverlay">true</item>
+
         <item name="colorPrimary">@color/cc__color_primary</item>
         <item name="colorPrimaryDark">@color/cc__color_primary_dark</item>
         <item name="colorAccent">@color/cc__color_accent</item>
