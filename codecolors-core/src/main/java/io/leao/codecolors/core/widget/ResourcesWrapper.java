@@ -1,4 +1,4 @@
-package io.leao.codecolors.appcompat.widget;
+package io.leao.codecolors.core.widget;
 
 import android.annotation.TargetApi;
 import android.content.res.AssetFileDescriptor;

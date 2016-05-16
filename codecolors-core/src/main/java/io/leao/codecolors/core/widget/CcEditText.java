@@ -1,32 +1,38 @@
-package io.leao.codecolors.appcompat.widget;
+package io.leao.codecolors.core.widget;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.support.v7.widget.AppCompatEditText;
+import android.os.Build;
 import android.util.AttributeSet;
-
-import io.leao.codecolors.core.widget.CcDrawableCallbackContextWrapper;
+import android.widget.EditText;
 
 /**
  * Same as its super class, but wraps its {@link Context} with a {@link CcDrawableCallbackContextWrapper} to control the
  * creation of interesting {@link Drawable}s and {@link android.view.View}s, and being able to properly invalidate them
  * when code-colors are updated.
  */
-public class CcAppCompatEditText extends AppCompatEditText {
+public class CcEditText extends EditText {
     private CcDrawableCallbackContextWrapper mContextWrapper;
 
-    public CcAppCompatEditText(Context context) {
+    public CcEditText(Context context) {
         super(CcDrawableCallbackContextWrapper.wrap(context));
         ensureContextWrapper();
     }
 
-    public CcAppCompatEditText(Context context, AttributeSet attrs) {
+    public CcEditText(Context context, AttributeSet attrs) {
         super(CcDrawableCallbackContextWrapper.wrap(context), attrs);
         ensureContextWrapper();
     }
 
-    public CcAppCompatEditText(Context context, AttributeSet attrs, int defStyleAttr) {
+    public CcEditText(Context context, AttributeSet attrs, int defStyleAttr) {
         super(CcDrawableCallbackContextWrapper.wrap(context), attrs, defStyleAttr);
+        ensureContextWrapper();
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    public CcEditText(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+        super(CcDrawableCallbackContextWrapper.wrap(context), attrs, defStyleAttr, defStyleRes);
         ensureContextWrapper();
     }
 

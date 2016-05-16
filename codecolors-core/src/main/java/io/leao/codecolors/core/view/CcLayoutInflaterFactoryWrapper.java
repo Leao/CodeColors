@@ -31,6 +31,9 @@ public class CcLayoutInflaterFactoryWrapper implements LayoutInflater.Factory2 {
         // This workflow also exists in AppCompat library, but instead of creating the views ourselves, we simply change
         // the name of the view to inflate, to make sure the context is still themified by the AppCompat library.
         switch (name) {
+            case "EditText":
+                name = "io.leao.codecolors.core.widget.CcEditText";
+                break;
             case "Toolbar":
                 name = "io.leao.codecolors.core.widget.CcToolbar";
                 break;
