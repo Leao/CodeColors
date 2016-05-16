@@ -97,7 +97,7 @@ public class CcColorsManager {
     public synchronized CcColorStateList getColor(@ColorRes int resId) {
         CcColorStateList color = mColorCccsl.get(resId);
         if (color == null && mColorValue.containsKey(resId)) {
-            color = new CcColorStateList();
+            color = new CcColorStateList(resId);
             mColorCccsl.put(resId, color);
         }
         return color;

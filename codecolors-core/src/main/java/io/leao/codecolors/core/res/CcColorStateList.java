@@ -16,9 +16,12 @@ import java.util.WeakHashMap;
 import io.leao.codecolors.plugin.res.CcConfiguration;
 
 public class CcColorStateList extends ColorStateList {
+    public static final int NO_ID = 0;
+
     private static final int DEFAULT_COLOR = Color.BLUE;
     private static final int[][] EMPTY = new int[][]{new int[0]};
 
+    private int mId;
     private AnimatedDefaultColorHandler mColorHandler;
     private CcConfigurationParcelable mConfiguration;
 
@@ -26,11 +29,16 @@ public class CcColorStateList extends ColorStateList {
     private AnimationBuilder mAnimationBuilder;
 
     public CcColorStateList() {
-        this(new AnimatedDefaultColorHandler());
+        this(NO_ID);
     }
 
-    private CcColorStateList(AnimatedDefaultColorHandler colorHandler) {
+    public CcColorStateList(int id) {
+        this(id, new AnimatedDefaultColorHandler());
+    }
+
+    private CcColorStateList(int id, AnimatedDefaultColorHandler colorHandler) {
         super(EMPTY, new int[]{DEFAULT_COLOR});
+        mId = id;
         mColorHandler = colorHandler;
         mColorHandler.setOnColorChangedListener(new DefaultColorHandler.OnColorChangedListener() {
             @Override
@@ -41,10 +49,14 @@ public class CcColorStateList extends ColorStateList {
     }
 
     private CcColorStateList(Parcel source) {
-        this(AnimatedDefaultColorHandler.CREATOR.createFromParcel(source));
+        this(source.readInt(), AnimatedDefaultColorHandler.CREATOR.createFromParcel(source));
         if (source.readByte() == 1) {
             mConfiguration = CcConfigurationParcelable.CREATOR.createFromParcel(source);
         }
+    }
+
+    public int getId() {
+        return mId;
     }
 
     public CcConfiguration getConfiguration() {
@@ -66,7 +78,7 @@ public class CcColorStateList extends ColorStateList {
     @NonNull
     @Override
     public CcColorStateList withAlpha(int alpha) {
-        return new CcColorStateList(mColorHandler.withAlpha(alpha));
+        return new CcColorStateList(NO_ID, mColorHandler.withAlpha(alpha));
     }
 
     @Override
@@ -287,6 +299,8 @@ public class CcColorStateList extends ColorStateList {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(mId);
+
         mColorHandler.writeToParcel(dest, flags);
 
         if (mConfiguration != null) {
