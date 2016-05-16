@@ -8,6 +8,10 @@ import io.leao.codecolors.core.manager.CcConfigurationManager;
 import io.leao.codecolors.core.manager.CcDependenciesManager;
 import io.leao.codecolors.core.manager.CcSetupManager;
 
+/**
+ * {@link CcCore} is a hub class that has two different implementations, depending on the library version: 'codecolors'
+ * or 'codecolors-appcompat'.
+ */
 public class CcCore {
     private final static CcSetupManager sSetupManager;
     private final static CcDependenciesManager sDependenciesManager;
