@@ -77,7 +77,7 @@ public class CcDrawableCallbackContextWrapper extends ContextWrapper {
         Object systemService = super.getSystemService(name);
 
         if (WINDOW_SERVICE.equals(name)) {
-            if (mWindowManager == null) {
+            if (mWindowManager == null || mWindowManager.getBaseWindowManager() != systemService) {
                 mWindowManager = new DrawableCallbackWindowManagerWrapper((WindowManager) systemService);
             }
             return mWindowManager;
@@ -157,7 +157,11 @@ public class CcDrawableCallbackContextWrapper extends ContextWrapper {
         @Override
         public void addView(View view, ViewGroup.LayoutParams params) {
             super.addView(view, params);
-            mViews.add(view);
+
+            // Store only "simple" views, and not ViewGroups, as they could be very expensive to invalidate.
+            if (!(view instanceof ViewGroup)) {
+                mViews.add(view);
+            }
         }
 
         public void invalidateViews() {

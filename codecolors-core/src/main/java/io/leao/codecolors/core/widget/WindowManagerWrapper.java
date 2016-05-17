@@ -12,6 +12,10 @@ class WindowManagerWrapper implements WindowManager {
         mWindowManager = windowManager;
     }
 
+    public WindowManager getBaseWindowManager() {
+        return mWindowManager;
+    }
+
     @Override
     public Display getDefaultDisplay() {
         return mWindowManager.getDefaultDisplay();
