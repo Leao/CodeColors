@@ -28,11 +28,20 @@ class BaseColorHandler implements ColorHandler<BaseColorHandler>, Parcelable {
 
     public List<StateIndexValue> mStateIndexValueList;
 
+    private BaseColorHandler(int stateCapacity) {
+        mStateIndexValueList = new ArrayList<>(stateCapacity);
+    }
+
     public BaseColorHandler() {
-        mStateIndexValueList = new ArrayList<>();
+        this(0);
     }
 
     public BaseColorHandler(BaseColorHandler orig) {
+        this(orig.mStateIndexValueList.size());
+        setTo(orig);
+    }
+
+    public void setTo(BaseColorHandler orig) {
         mColor = orig.mColor;
         mColors = orig.mColors;
 
@@ -42,7 +51,7 @@ class BaseColorHandler implements ColorHandler<BaseColorHandler>, Parcelable {
 
         mTransparentCount = orig.mTransparentCount;
 
-        mStateIndexValueList = new ArrayList<>(orig.mStateIndexValueList.size());
+        mStateIndexValueList.clear();
         for (StateIndexValue stateIndexValue : orig.mStateIndexValueList) {
             mStateIndexValueList.add(new StateIndexValue(stateIndexValue));
         }

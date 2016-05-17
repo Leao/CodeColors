@@ -103,49 +103,16 @@ public class CcColorsManager {
         return color;
     }
 
-    public synchronized void setColor(int resId, int color) {
+    public synchronized CcColorStateList.SetBuilder set(int resId) {
         CcColorStateList cccsl = getColor(resId);
         if (cccsl != null) {
-            cccsl.setColor(color);
+            return cccsl.set();
+        } else {
+            return null;
         }
     }
 
-    public synchronized void setColor(int resId, ColorStateList color) {
-        CcColorStateList cccsl = getColor(resId);
-        if (cccsl != null) {
-            cccsl.setColor(color);
-        }
-    }
-
-    public synchronized void setStates(int resId, int[][] states, int[] colors) {
-        CcColorStateList cccsl = getColor(resId);
-        if (cccsl != null) {
-            cccsl.setStates(states, colors);
-        }
-    }
-
-    public synchronized void setState(int resId, int[] state, int color) {
-        CcColorStateList cccsl = getColor(resId);
-        if (cccsl != null) {
-            cccsl.setState(state, color);
-        }
-    }
-
-    public synchronized void removeStates(int resId, int[][] states) {
-        CcColorStateList cccsl = getColor(resId);
-        if (cccsl != null) {
-            cccsl.removeStates(states);
-        }
-    }
-
-    public synchronized void removeState(int resId, int[] state) {
-        CcColorStateList cccsl = getColor(resId);
-        if (cccsl != null) {
-            cccsl.removeState(state);
-        }
-    }
-
-    public synchronized CcColorStateList.AnimationBuilder animate(int resId) {
+    public synchronized CcColorStateList.AnimateBuilder animate(int resId) {
         CcColorStateList cccsl = getColor(resId);
         if (cccsl != null) {
             return cccsl.animate();

@@ -1,7 +1,6 @@
 package io.leao.codecolors;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.support.annotation.NonNull;
 import android.view.View;
 
@@ -47,31 +46,11 @@ public class CodeColors {
         return CcCore.getColorsManager().getColor(resId);
     }
 
-    public static void setColor(int resId, int color) {
-        CcCore.getColorsManager().setColor(resId, color);
+    public static CcColorStateList.SetBuilder set(int resId) {
+        return CcCore.getColorsManager().set(resId);
     }
 
-    public static void setColor(int resId, ColorStateList color) {
-        CcCore.getColorsManager().setColor(resId, color);
-    }
-
-    public static void setState(int resId, int[] state, int color) {
-        CcCore.getColorsManager().setState(resId, state, color);
-    }
-
-    public static void setStates(int resId, int[][] states, int[] colors) {
-        CcCore.getColorsManager().setStates(resId, states, colors);
-    }
-
-    public static void removeState(int resId, int[] state) {
-        CcCore.getColorsManager().removeState(resId, state);
-    }
-
-    public static void removeStates(int resId, int[][] states) {
-        CcCore.getColorsManager().removeStates(resId, states);
-    }
-
-    public static CcColorStateList.AnimationBuilder animate(int resId) {
+    public static CcColorStateList.AnimateBuilder animate(int resId) {
         return CcCore.getColorsManager().animate(resId);
     }
 

@@ -3,7 +3,6 @@ package io.leao.codecolors.core.res;
 import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
-import android.content.res.ColorStateList;
 import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -18,9 +17,15 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
 
     protected BaseColorHandler mAnimationColorHandler;
 
+    protected AnimateBuilder mAnimateBuilder;
+
     protected ValueAnimator mAnimation;
+
     protected CcColorStateList.AnimationCallback mAnimationCallback;
+    protected ValueAnimator mDefaultAnimation;
+    protected AnimationListener mAnimationListener;
     protected AnimationUpdateListener mAnimationUpdateListener;
+    protected AnimationPauseListener mAnimationPauseListener;
 
     public AnimatedDefaultColorHandler() {
         this(new BaseColorHandler(), new BaseColorHandler());
@@ -35,6 +40,76 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
     protected AnimatedDefaultColorHandler(Parcel source) {
         super(source);
         mAnimationColorHandler = new BaseColorHandler(mColorHandler);
+    }
+
+    @Override
+    public CcColorStateList.SetBuilder set() {
+        endAnimation(true);
+        return super.set();
+    }
+
+    @Override
+    protected void onSet(boolean changed) {
+        mAnimationColorHandler.setTo(mColorHandler);
+        super.onSet(changed);
+    }
+
+    public CcColorStateList.AnimateBuilder animate() {
+        endAnimation(true);
+        if (mAnimateBuilder == null) {
+            mAnimateBuilder = new AnimateBuilder(mAnimationColorHandler, new AnimateBuilder.Callback() {
+                @Override
+                public void onSubmit(AnimateBuilder builder) {
+                    onAnimate(
+                            builder.getAnimation(),
+                            builder.getDuration(),
+                            builder.getInterpolator(),
+                            builder.getCallback());
+                }
+            });
+        }
+        return mAnimateBuilder;
+    }
+
+    public ValueAnimator onAnimate(@Nullable ValueAnimator animation, @Nullable Integer duration,
+                                   @Nullable Interpolator interpolator,
+                                   @Nullable CcColorStateList.AnimationCallback callback) {
+        mAnimationCallback = callback;
+
+        if (animation != null) {
+            mAnimation = animation;
+        } else {
+            if (mDefaultAnimation == null) {
+                mDefaultAnimation = ValueAnimator.ofFloat(0, 1);
+            }
+            mAnimation = mDefaultAnimation;
+        }
+        // Listener.
+        if (mAnimationListener == null) {
+            mAnimationListener = new AnimationListener();
+        }
+        mAnimation.addListener(mAnimationListener);
+
+        // Update listener (make sure to reset it).
+        if (mAnimationUpdateListener == null) {
+            mAnimationUpdateListener = new AnimationUpdateListener();
+        }
+        mAnimation.addUpdateListener(mAnimationUpdateListener.reset());
+
+        // Pause listener.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            if (mAnimationPauseListener == null) {
+                mAnimationPauseListener = new AnimationPauseListener();
+            }
+            mAnimation.addPauseListener(mAnimationPauseListener);
+        }
+
+        // Duration and interpolator.
+        mAnimation.setDuration(duration != null ? duration : DEFAULT_ANIMATION_DURATION_MS);
+        mAnimation.setInterpolator(interpolator != null ? interpolator : DEFAULT_ANIMATION_INTERPOLATOR);
+        mAnimation.start();
+
+        return mAnimation;
     }
 
     @Override
@@ -68,17 +143,6 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
     }
 
     @Override
-    public boolean setColor(ColorStateList color) {
-        boolean ended = endAnimation(true);
-        boolean changed = super.setColor(color);
-        mAnimationColorHandler.setColor(color);
-        if (ended && !changed) {
-            onColorChanged();
-        }
-        return changed;
-    }
-
-    @Override
     public Integer getColorForState(@Nullable int[] stateSet, Integer defaultColor) {
         if (mAnimation == null || !mAnimation.isStarted() || mAnimation.getAnimatedFraction() == 0) {
             return super.getColorForState(stateSet, defaultColor);
@@ -92,107 +156,10 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
         }
     }
 
-    @Override
-    public boolean setStates(int[][] states, int[] colors) {
-        boolean ended = endAnimation(true);
-        boolean changed = super.setStates(states, colors);
-        mAnimationColorHandler.setStates(states, colors);
-        if (ended && !changed) {
-            onColorChanged();
-        }
-        return changed;
-    }
-
-    @Override
-    public boolean setState(int[] state, int color) {
-        boolean ended = endAnimation(true);
-        boolean changed = super.setState(state, color);
-        mAnimationColorHandler.setState(state, color);
-        if (ended && !changed) {
-            onColorChanged();
-        }
-        return changed;
-    }
-
-    @Override
-    public boolean removeStates(int[][] states) {
-        boolean ended = endAnimation(true);
-        boolean changed = super.removeStates(states);
-        mAnimationColorHandler.removeStates(states);
-        if (ended && !changed) {
-            onColorChanged();
-        }
-        return changed;
-    }
-
-    @Override
-    public boolean removeState(int[] state) {
-        boolean ended = endAnimation(true);
-        boolean changed = super.removeState(state);
-        mAnimationColorHandler.removeState(state);
-        if (ended && !changed) {
-            onColorChanged();
-        }
-        return changed;
-    }
-
-    public boolean setAnimationColor(int color) {
-        return setAnimationColor(ColorStateList.valueOf(color));
-    }
-
-    public boolean setAnimationColor(ColorStateList color) {
-        endAnimation(false);
-        return mAnimationColorHandler.setColor(color);
-    }
-
-    public boolean setAnimationStates(int[][] states, int[] colors) {
-        endAnimation(false);
-        return mAnimationColorHandler.setStates(states, colors);
-    }
-
-    public boolean setAnimationState(int[] state, int color) {
-        endAnimation(false);
-        return mAnimationColorHandler.setState(state, color);
-    }
-
-    public boolean removeAnimationStates(int[][] states) {
-        endAnimation(false);
-        return mAnimationColorHandler.removeStates(states);
-    }
-
-    public boolean removeAnimationState(int[] state) {
-        endAnimation(false);
-        return mAnimationColorHandler.removeState(state);
-    }
-
-    public ValueAnimator startAnimation(@Nullable Integer duration,
-                                        @Nullable Interpolator interpolator,
-                                        @Nullable CcColorStateList.AnimationCallback callback) {
-        mAnimationCallback = callback;
-
-        if (mAnimation == null) {
-            mAnimation = ValueAnimator.ofFloat(0, 1);
-            // Listener.
-            mAnimation.addListener(new AnimationListener());
-            // Update listener.
-            mAnimationUpdateListener = new AnimationUpdateListener();
-            mAnimation.addUpdateListener(mAnimationUpdateListener);
-            // Pause listener.
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                mAnimation.addPauseListener(new AnimationPauseListener());
-            }
-        }
-        mAnimation.setDuration(duration != null ? duration : DEFAULT_ANIMATION_DURATION_MS);
-        mAnimation.setInterpolator(interpolator != null ? interpolator : DEFAULT_ANIMATION_INTERPOLATOR);
-        mAnimation.start();
-
-        return mAnimation;
-    }
-
-    public boolean endAnimation(boolean blockOnColorChangedCall) {
+    public boolean endAnimation(boolean blockOnColorChanged) {
         if (mAnimation != null && mAnimation.isStarted()) {
-            if (blockOnColorChangedCall && mAnimationUpdateListener != null) {
-                mAnimationUpdateListener.blockOnColorChangedCall();
+            if (blockOnColorChanged && mAnimationUpdateListener != null) {
+                mAnimationUpdateListener.blockOnColorChangedOnEnd();
             }
             mAnimation.end();
             return true;
@@ -257,8 +224,14 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
             }
 
             // Reset handler state.
-            mColorHandler = new BaseColorHandler(mAnimationColorHandler);
+            mColorHandler.setTo(mAnimationColorHandler);
+
+            // Remove our listeners, as the animation may be external to this ColorHandler.
+            removeListeners((ValueAnimator) animation);
+
+            // Reset animation.
             mAnimationCallback = null;
+            mAnimation = null;
         }
 
         @Override
@@ -274,6 +247,14 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
                 mAnimationCallback.onAnimationRepeat(animation);
             }
         }
+
+        private void removeListeners(ValueAnimator animation) {
+            animation.removeListener(mAnimationListener);
+            animation.removeUpdateListener(mAnimationUpdateListener);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                animation.removePauseListener(mAnimationPauseListener);
+            }
+        }
     }
 
     /**
@@ -281,10 +262,19 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
      */
     private class AnimationUpdateListener implements ValueAnimator.AnimatorUpdateListener {
         private float mUpdateFraction;
-        private boolean mBlockOnColorChangedCall;
+        private boolean mBlockOnColorChangedOnEnd;
 
-        public void blockOnColorChangedCall() {
-            mBlockOnColorChangedCall = true;
+        /**
+         * Reset listener state before a new animation.
+         */
+        public AnimationUpdateListener reset() {
+            mUpdateFraction = 0;
+            mBlockOnColorChangedOnEnd = false;
+            return this;
+        }
+
+        public void blockOnColorChangedOnEnd() {
+            mBlockOnColorChangedOnEnd = true;
         }
 
         @Override
@@ -298,15 +288,11 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
             if (updateFraction != mUpdateFraction) {
                 mUpdateFraction = updateFraction;
 
-                if (mUpdateFraction != 1 || !mBlockOnColorChangedCall) {
+                // Call onColorChanged() for every update that does not end the animation,
+                // or if we are not blocking its call when the animation ends.
+                if (mUpdateFraction != 1 || !mBlockOnColorChangedOnEnd) {
                     onColorChanged();
                 }
-            }
-
-            // Reset listener state.
-            if (mUpdateFraction == 1) {
-                mUpdateFraction = 0;
-                mBlockOnColorChangedCall = false;
             }
         }
     }
@@ -329,6 +315,56 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
             if (mAnimationCallback instanceof CcColorStateList.AnimationCallbackKitKat) {
                 ((CcColorStateList.AnimationCallbackKitKat) mAnimationCallback).onAnimationResume(animation);
             }
+        }
+    }
+
+    public static class AnimateBuilder extends Builder<AnimateBuilder> implements CcColorStateList.AnimateBuilder {
+        private ValueAnimator mAnimation;
+        private Integer mDuration;
+        private Interpolator mInterpolator;
+        private CcColorStateList.AnimationCallback mCallback;
+
+        public AnimateBuilder(BaseColorHandler baseColorHandler, Callback callback) {
+            super(baseColorHandler, callback);
+        }
+
+        public ValueAnimator getAnimation() {
+            return mAnimation;
+        }
+
+        public AnimateBuilder setAnimation(ValueAnimator animation) {
+            mAnimation = animation;
+            return this;
+        }
+
+        public Integer getDuration() {
+            return mDuration;
+        }
+
+        public AnimateBuilder setDuration(int duration) {
+            mDuration = duration;
+            return this;
+        }
+
+        public Interpolator getInterpolator() {
+            return mInterpolator;
+        }
+
+        public AnimateBuilder setInterpolator(Interpolator interpolator) {
+            mInterpolator = interpolator;
+            return this;
+        }
+
+        public CcColorStateList.AnimationCallback getCallback() {
+            return mCallback;
+        }
+
+        public AnimateBuilder setCallback(CcColorStateList.AnimationCallback callback) {
+            mCallback = callback;
+            return this;
+        }
+
+        interface Callback extends Builder.Callback<AnimateBuilder> {
         }
     }
 }

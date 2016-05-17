@@ -26,7 +26,6 @@ public class CcColorStateList extends ColorStateList {
     private CcConfigurationParcelable mConfiguration;
 
     private CallbackHandler mCallbackHandler = new CallbackHandler();
-    private AnimationBuilder mAnimationBuilder;
 
     public CcColorStateList() {
         this(NO_ID);
@@ -102,37 +101,12 @@ public class CcColorStateList extends ColorStateList {
         return mColorHandler.getColorForState(stateSet, defaultColor);
     }
 
-    public void setColor(int color) {
-        mColorHandler.setColor(color);
+    public SetBuilder set() {
+        return mColorHandler.set();
     }
 
-    public void setColor(ColorStateList color) {
-        mColorHandler.setColor(color);
-    }
-
-    public void setStates(int[][] states, int[] colors) {
-        mColorHandler.setStates(states, colors);
-    }
-
-    public void setState(int[] state, int color) {
-        mColorHandler.setState(state, color);
-    }
-
-    public void removeStates(int[][] states) {
-        mColorHandler.removeStates(states);
-    }
-
-    public void removeState(int[] state) {
-        mColorHandler.removeState(state);
-    }
-
-    public AnimationBuilder animate() {
-        if (mAnimationBuilder == null) {
-            mAnimationBuilder = new AnimationBuilder();
-        } else {
-            mAnimationBuilder.reset();
-        }
-        return mAnimationBuilder;
+    public AnimateBuilder animate() {
+        return mColorHandler.animate();
     }
 
     public void endAnimation() {
@@ -182,65 +156,33 @@ public class CcColorStateList extends ColorStateList {
         mCallbackHandler.invalidateColor(this);
     }
 
-    public class AnimationBuilder {
-        private Integer mDuration;
-        private Interpolator mInterpolator;
-        private AnimationCallback mCallback;
+    public interface SetBuilder extends Builder<SetBuilder> {
+    }
 
-        protected void reset() {
-            mDuration = null;
-            mInterpolator = null;
-            mCallback = null;
-        }
+    public interface AnimateBuilder extends Builder<AnimateBuilder> {
+        AnimateBuilder setAnimation(ValueAnimator animation);
 
-        public AnimationBuilder setColor(int color) {
-            mColorHandler.setAnimationColor(color);
-            return this;
-        }
+        AnimateBuilder setDuration(int duration);
 
-        public AnimationBuilder setColor(ColorStateList color) {
-            mColorHandler.setAnimationColor(color);
-            return this;
-        }
+        AnimateBuilder setInterpolator(Interpolator interpolator);
 
-        public AnimationBuilder setStates(int[][] states, int[] colors) {
-            mColorHandler.setAnimationStates(states, colors);
-            return this;
-        }
+        AnimateBuilder setCallback(AnimationCallback callback);
+    }
 
-        public AnimationBuilder setState(int[] state, int color) {
-            mColorHandler.setAnimationState(state, color);
-            return this;
-        }
+    protected interface Builder<T extends Builder> {
+        T setColor(int color);
 
-        public AnimationBuilder removeStates(int[][] states) {
-            mColorHandler.removeAnimationStates(states);
-            return this;
-        }
+        T setColor(ColorStateList color);
 
-        public AnimationBuilder removeState(int[] state) {
-            mColorHandler.removeAnimationState(state);
-            return this;
-        }
+        T setStates(int[][] states, int[] colors);
 
-        public AnimationBuilder setDuration(int duration) {
-            mDuration = duration;
-            return this;
-        }
+        T setState(int[] state, int color);
 
-        public AnimationBuilder setInterpolator(Interpolator interpolator) {
-            mInterpolator = interpolator;
-            return this;
-        }
+        T removeStates(int[][] states);
 
-        public AnimationBuilder setCallback(AnimationCallback callback) {
-            mCallback = callback;
-            return this;
-        }
+        T removeState(int[] state);
 
-        public ValueAnimator start() {
-            return mColorHandler.startAnimation(mDuration, mInterpolator, mCallback);
-        }
+        void submit();
     }
 
     public interface Callback {
