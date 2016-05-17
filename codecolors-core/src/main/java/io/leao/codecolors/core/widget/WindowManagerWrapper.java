@@ -6,38 +6,38 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 
 class WindowManagerWrapper implements WindowManager {
-    private WindowManager mWindowManager;
+    private WindowManager mBaseWindowManager;
 
-    public WindowManagerWrapper(WindowManager windowManager) {
-        mWindowManager = windowManager;
+    public WindowManagerWrapper(WindowManager baseWindowManager) {
+        mBaseWindowManager = baseWindowManager;
     }
 
     public WindowManager getBaseWindowManager() {
-        return mWindowManager;
+        return mBaseWindowManager;
     }
 
     @Override
     public Display getDefaultDisplay() {
-        return mWindowManager.getDefaultDisplay();
+        return mBaseWindowManager.getDefaultDisplay();
     }
 
     @Override
     public void removeViewImmediate(View view) {
-        mWindowManager.removeViewImmediate(view);
+        mBaseWindowManager.removeViewImmediate(view);
     }
 
     @Override
     public void addView(View view, ViewGroup.LayoutParams params) {
-        mWindowManager.addView(view, params);
+        mBaseWindowManager.addView(view, params);
     }
 
     @Override
     public void updateViewLayout(View view, ViewGroup.LayoutParams params) {
-        mWindowManager.updateViewLayout(view, params);
+        mBaseWindowManager.updateViewLayout(view, params);
     }
 
     @Override
     public void removeView(View view) {
-        mWindowManager.removeView(view);
+        mBaseWindowManager.removeView(view);
     }
 }
