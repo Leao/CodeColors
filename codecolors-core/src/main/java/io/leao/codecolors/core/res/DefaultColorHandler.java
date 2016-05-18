@@ -6,13 +6,15 @@ import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-class DefaultColorHandler implements ColorHandler<DefaultColorHandler>, Parcelable {
+/**
+ * Varies its color depending on the color of a main color handler, but falls back to the color of a secondary color
+ * handler, when the main one has no value for the current state.
+ * <p>
+ * The secondary color handler cannot be edited.
+ */
+class DefaultColorHandler implements ColorGetter<DefaultColorHandler>, Parcelable {
     protected BaseColorHandler mDefaultColorHandler;
     protected BaseColorHandler mColorHandler;
-
-    protected SetBuilder mSetBuilder;
-
-    protected OnColorChangedListener mOnColorChangedListener;
 
     public DefaultColorHandler(@NonNull BaseColorHandler defaultColorHandler,
                                @NonNull BaseColorHandler colorHandler) {
@@ -25,22 +27,8 @@ class DefaultColorHandler implements ColorHandler<DefaultColorHandler>, Parcelab
                 (BaseColorHandler) source.readParcelable(DefaultColorHandler.class.getClassLoader()));
     }
 
-    public CcColorStateList.SetBuilder set() {
-        if (mSetBuilder == null) {
-            mSetBuilder = new SetBuilder(mColorHandler, new SetBuilder.Callback() {
-                @Override
-                public void onSubmit(SetBuilder builder) {
-                    onSet(builder.hasChanged());
-                }
-            });
-        }
-        return mSetBuilder;
-    }
-
-    protected void onSet(boolean changed) {
-        if (changed) {
-            onColorChanged();
-        }
+    public ColorSetter getColorSetter() {
+        return mColorHandler;
     }
 
     @Override
@@ -97,20 +85,6 @@ class DefaultColorHandler implements ColorHandler<DefaultColorHandler>, Parcelab
         return color != null ? color : defaultColor;
     }
 
-    public void setOnColorChangedListener(OnColorChangedListener listener) {
-        mOnColorChangedListener = listener;
-    }
-
-    protected void onColorChanged() {
-        if (mOnColorChangedListener != null) {
-            mOnColorChangedListener.onColorChanged();
-        }
-    }
-
-    public interface OnColorChangedListener {
-        void onColorChanged();
-    }
-
     @Override
     public int describeContents() {
         return 0;
@@ -134,68 +108,4 @@ class DefaultColorHandler implements ColorHandler<DefaultColorHandler>, Parcelab
                     return new DefaultColorHandler(source);
                 }
             };
-
-    public static class SetBuilder extends Builder<SetBuilder> implements CcColorStateList.SetBuilder {
-
-        public SetBuilder(BaseColorHandler baseColorHandler, Callback callback) {
-            super(baseColorHandler, callback);
-        }
-
-        interface Callback extends Builder.Callback<SetBuilder> {
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    protected static class Builder<T extends Builder> {
-        protected BaseColorHandler mBaseColorHandler;
-        private Callback<T> mCallback;
-
-        private boolean mChanged;
-
-        public Builder(BaseColorHandler baseColorHandler, Callback<T> callback) {
-            mBaseColorHandler = baseColorHandler;
-            mCallback = callback;
-        }
-
-        public T setColor(int color) {
-            return setColor(ColorStateList.valueOf(color));
-        }
-
-        public T setColor(ColorStateList color) {
-            mChanged |= mBaseColorHandler.setColor(color);
-            return (T) this;
-        }
-
-        public T setStates(int[][] states, int[] colors) {
-            mChanged |= mBaseColorHandler.setStates(states, colors);
-            return (T) this;
-        }
-
-        public T setState(int[] state, int color) {
-            mChanged |= mBaseColorHandler.setState(state, color);
-            return (T) this;
-        }
-
-        public T removeStates(int[][] states) {
-            mChanged |= mBaseColorHandler.removeStates(states);
-            return (T) this;
-        }
-
-        public T removeState(int[] state) {
-            mChanged |= mBaseColorHandler.removeState(state);
-            return (T) this;
-        }
-
-        public void submit() {
-            mCallback.onSubmit((T) this);
-        }
-
-        public boolean hasChanged() {
-            return mChanged;
-        }
-
-        interface Callback<T extends Builder> {
-            void onSubmit(T builder);
-        }
-    }
 }

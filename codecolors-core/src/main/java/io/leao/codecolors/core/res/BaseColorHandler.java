@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-class BaseColorHandler implements ColorHandler<BaseColorHandler>, Parcelable {
+class BaseColorHandler implements ColorGetter<BaseColorHandler>, ColorSetter, Parcelable {
     private static Field sStateSpecsField;
     private static Field sColorsField;
 
@@ -71,6 +71,7 @@ class BaseColorHandler implements ColorHandler<BaseColorHandler>, Parcelable {
         return mColor;
     }
 
+    @Override
     public boolean setColor(ColorStateList color) {
         if (mColor != color) {
             if (color != null) {
@@ -84,6 +85,7 @@ class BaseColorHandler implements ColorHandler<BaseColorHandler>, Parcelable {
         }
     }
 
+    @SuppressWarnings("TryWithIdenticalCatches")
     private void onNewColor(ColorStateList color) {
         mColor = color;
 
@@ -149,6 +151,7 @@ class BaseColorHandler implements ColorHandler<BaseColorHandler>, Parcelable {
         }
     }
 
+    @Override
     public boolean setStates(int[][] states, int[] colors) {
         boolean changed = false;
         for (int i = states.length - 1; i >= 0; i--) {
@@ -157,6 +160,7 @@ class BaseColorHandler implements ColorHandler<BaseColorHandler>, Parcelable {
         return changed;
     }
 
+    @Override
     public boolean setState(int[] state, int color) {
         // Empty state potentially means a new default color.
         if (state.length == 0) {
@@ -213,6 +217,7 @@ class BaseColorHandler implements ColorHandler<BaseColorHandler>, Parcelable {
         return true;
     }
 
+    @Override
     public boolean removeStates(int[][] states) {
         boolean changed = false;
         for (int[] state : states) {
@@ -221,6 +226,7 @@ class BaseColorHandler implements ColorHandler<BaseColorHandler>, Parcelable {
         return changed;
     }
 
+    @Override
     public boolean removeState(int[] state) {
         for (int i = 0; i < mStateIndexValueList.size(); i++) {
             StateIndexValue stateIndexValue = mStateIndexValueList.get(i);

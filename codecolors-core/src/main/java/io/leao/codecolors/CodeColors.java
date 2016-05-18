@@ -46,11 +46,11 @@ public class CodeColors {
         return CcCore.getColorsManager().getColor(resId);
     }
 
-    public static CcColorStateList.SetBuilder set(int resId) {
+    public static CcColorStateList.SetEditor set(int resId) {
         return CcCore.getColorsManager().set(resId);
     }
 
-    public static CcColorStateList.AnimateBuilder animate(int resId) {
+    public static CcColorStateList.AnimateEditor animate(int resId) {
         return CcCore.getColorsManager().animate(resId);
     }
 

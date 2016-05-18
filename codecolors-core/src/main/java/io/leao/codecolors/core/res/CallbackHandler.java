@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
-public class CallbackHandler {
+class CallbackHandler {
     protected Set<CcColorStateList.Callback> mCallbacks =
             Collections.newSetFromMap(new WeakHashMap<CcColorStateList.Callback, Boolean>());
 

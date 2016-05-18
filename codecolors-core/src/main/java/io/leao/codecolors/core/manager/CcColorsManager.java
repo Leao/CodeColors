@@ -59,22 +59,22 @@ public class CcColorsManager {
     public synchronized void onConfigurationChanged(Resources resources) {
         Configuration configuration = resources.getConfiguration();
 
-        for (Integer color : getColors()) {
-            CcColorStateList cccsl = getColor(color);
+        for (Integer colorResId : getColors()) {
+            CcColorStateList color = getColor(colorResId);
             // End animation, if isStarted.
-            cccsl.endAnimation();
+            color.endAnimation(false);
 
             // Reset default color if the configuration changed.
-            CcConfiguration currentConfiguration = cccsl.getConfiguration();
-            CcConfiguration newConfiguration = getBestConfiguration(configuration, mColorConfigurations.get(color));
+            CcConfiguration currentConfiguration = color.getConfiguration();
+            CcConfiguration newConfiguration = getBestConfiguration(configuration, mColorConfigurations.get(colorResId));
             if (!CcConfigurationUtils.equals(currentConfiguration, newConfiguration)) {
                 ColorStateList csl;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    csl = resources.getColorStateList(mColorValue.get(color), null);
+                    csl = resources.getColorStateList(mColorValue.get(colorResId), null);
                 } else {
-                    csl = resources.getColorStateList(mColorValue.get(color));
+                    csl = resources.getColorStateList(mColorValue.get(colorResId));
                 }
-                cccsl.onConfigurationChanged(newConfiguration, csl);
+                color.onConfigurationChanged(newConfiguration, csl);
             }
         }
     }
@@ -103,19 +103,19 @@ public class CcColorsManager {
         return color;
     }
 
-    public synchronized CcColorStateList.SetBuilder set(int resId) {
-        CcColorStateList cccsl = getColor(resId);
-        if (cccsl != null) {
-            return cccsl.set();
+    public synchronized CcColorStateList.SetEditor set(int resId) {
+        CcColorStateList color = getColor(resId);
+        if (color != null) {
+            return color.set();
         } else {
             return null;
         }
     }
 
-    public synchronized CcColorStateList.AnimateBuilder animate(int resId) {
-        CcColorStateList cccsl = getColor(resId);
-        if (cccsl != null) {
-            return cccsl.animate();
+    public synchronized CcColorStateList.AnimateEditor animate(int resId) {
+        CcColorStateList color = getColor(resId);
+        if (color != null) {
+            return color.animate();
         } else {
             return null;
         }

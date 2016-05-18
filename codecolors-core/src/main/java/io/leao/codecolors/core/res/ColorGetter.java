@@ -2,7 +2,7 @@ package io.leao.codecolors.core.res;
 
 import android.support.annotation.Nullable;
 
-interface ColorHandler<T extends ColorHandler> {
+interface ColorGetter<T extends ColorGetter> {
     T withAlpha(int alpha);
 
     boolean isOpaque();

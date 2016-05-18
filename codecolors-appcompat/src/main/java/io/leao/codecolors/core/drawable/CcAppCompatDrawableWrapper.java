@@ -20,9 +20,9 @@ import java.util.Set;
 import io.leao.codecolors.appcompat.tint.CcTintManager;
 import io.leao.codecolors.core.res.CcColorStateList;
 
+import static io.leao.codecolors.core.drawable.CcAppCompatDrawableUtils.getContext;
 import static io.leao.codecolors.core.drawable.CcAppCompatDrawableUtils.getRootDrawable;
 import static io.leao.codecolors.core.drawable.CcAppCompatDrawableUtils.getView;
-import static io.leao.codecolors.core.drawable.CcAppCompatDrawableUtils.getContext;
 
 public class CcAppCompatDrawableWrapper extends CcDrawableWrapper {
     private boolean mCheckTheme = true;
