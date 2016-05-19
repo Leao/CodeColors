@@ -1,5 +1,8 @@
 package io.leao.codecolors.core.color;
 
+/**
+ * Utility class inspired on {@link android.util.StateSet}.
+ */
 class CcStateSet {
     public static boolean equalsState(int[] stateSpec, int[] stateSet) {
         int[] small, big;
