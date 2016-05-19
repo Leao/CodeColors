@@ -11,7 +11,7 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Set;
 
-import io.leao.codecolors.core.res.CcColorStateList;
+import io.leao.codecolors.core.color.CcColorStateList;
 import io.leao.codecolors.core.res.CcConfigurationUtils;
 import io.leao.codecolors.plugin.CcConst;
 import io.leao.codecolors.plugin.res.CcConfiguration;

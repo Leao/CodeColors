@@ -1,4 +1,4 @@
-package io.leao.codecolors.core.res;
+package io.leao.codecolors.core.color;
 
 class CcStateSet {
     public static boolean equalsState(int[] stateSpec, int[] stateSet) {

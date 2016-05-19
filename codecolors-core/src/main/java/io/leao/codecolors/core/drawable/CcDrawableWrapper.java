@@ -14,7 +14,7 @@ import java.util.IdentityHashMap;
 import java.util.Set;
 
 import io.leao.codecolors.core.CcCore;
-import io.leao.codecolors.core.res.CcColorStateList;
+import io.leao.codecolors.core.color.CcColorStateList;
 import io.leao.codecolors.core.res.CcResources;
 
 import static io.leao.codecolors.core.drawable.CcDrawableUtils.forceStateChange;

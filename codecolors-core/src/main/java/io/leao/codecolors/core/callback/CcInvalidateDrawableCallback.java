@@ -2,7 +2,7 @@ package io.leao.codecolors.core.callback;
 
 import android.graphics.drawable.Drawable;
 
-import io.leao.codecolors.core.res.CcColorStateList;
+import io.leao.codecolors.core.color.CcColorStateList;
 
 import static io.leao.codecolors.core.drawable.CcDrawableUtils.forceStateChange;
 

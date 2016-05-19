@@ -18,7 +18,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import io.leao.codecolors.appcompat.tint.CcTintManager;
-import io.leao.codecolors.core.res.CcColorStateList;
+import io.leao.codecolors.core.color.CcColorStateList;
 
 import static io.leao.codecolors.core.drawable.CcAppCompatDrawableUtils.getContext;
 import static io.leao.codecolors.core.drawable.CcAppCompatDrawableUtils.getRootDrawable;

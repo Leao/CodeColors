@@ -31,7 +31,7 @@ import io.leao.codecolors.core.CcCore;
 import io.leao.codecolors.core.adapter.CcAttrCallbackAdapter;
 import io.leao.codecolors.core.adapter.CcColorCallbackAdapter;
 import io.leao.codecolors.core.adapter.CcDefStyleAdapter;
-import io.leao.codecolors.core.res.CcColorStateList;
+import io.leao.codecolors.core.color.CcColorStateList;
 import io.leao.codecolors.core.util.TempUtils;
 
 public class CcCallbackManager {

@@ -1,4 +1,4 @@
-package io.leao.codecolors.core.res;
+package io.leao.codecolors.core.color;
 
 import android.animation.ValueAnimator;
 import android.content.res.ColorStateList;
@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.WeakHashMap;
 
+import io.leao.codecolors.core.res.CcConfigurationParcelable;
 import io.leao.codecolors.plugin.res.CcConfiguration;
 
 public class CcColorStateList extends ColorStateList {

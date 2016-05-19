@@ -1,4 +1,4 @@
-package io.leao.codecolors.core.res;
+package io.leao.codecolors.core.color;
 
 import android.content.res.ColorStateList;
 import android.graphics.Color;

@@ -7,7 +7,7 @@ import android.view.View;
 
 import io.leao.codecolors.CodeColors;
 import io.leao.codecolors.core.manager.CcCallbackManager;
-import io.leao.codecolors.core.res.CcColorStateList;
+import io.leao.codecolors.core.color.CcColorStateList;
 
 /**
  * Adapter to get the list of {@link CcColorStateList}s and corresponding {@link CcColorStateList.AnchorCallback}s from

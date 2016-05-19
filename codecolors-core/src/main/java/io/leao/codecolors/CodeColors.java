@@ -9,7 +9,7 @@ import io.leao.codecolors.core.adapter.CcAttrCallbackAdapter;
 import io.leao.codecolors.core.adapter.CcColorCallbackAdapter;
 import io.leao.codecolors.core.adapter.CcDefStyleAdapter;
 import io.leao.codecolors.core.manager.CcSetupManager;
-import io.leao.codecolors.core.res.CcColorStateList;
+import io.leao.codecolors.core.color.CcColorStateList;
 
 public class CodeColors {
     public static void start(Context context) {

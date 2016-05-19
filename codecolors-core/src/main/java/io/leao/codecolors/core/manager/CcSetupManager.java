@@ -16,7 +16,7 @@ import io.leao.codecolors.core.CcCore;
 import io.leao.codecolors.core.adapter.CcTextColorsColorCallbackAdapter;
 import io.leao.codecolors.core.drawable.CcColorDrawable;
 import io.leao.codecolors.core.drawable.CcDrawableCache;
-import io.leao.codecolors.core.res.CcColorStateList;
+import io.leao.codecolors.core.color.CcColorStateList;
 import io.leao.codecolors.core.res.CcResources;
 
 public class CcSetupManager {

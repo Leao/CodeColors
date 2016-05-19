@@ -1,4 +1,4 @@
-package io.leao.codecolors.core.res;
+package io.leao.codecolors.core.color;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;

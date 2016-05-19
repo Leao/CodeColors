@@ -3,7 +3,7 @@ package io.leao.codecolors.core.adapter;
 import android.support.annotation.NonNull;
 import android.view.View;
 
-import io.leao.codecolors.core.res.CcColorStateList;
+import io.leao.codecolors.core.color.CcColorStateList;
 
 /**
  * Adapter to set a {@link CcColorStateList.AnchorCallback} on every {@link CcColorStateList} that is a dependency of

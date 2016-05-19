@@ -2,7 +2,7 @@ package io.leao.codecolors.core.callback;
 
 import android.view.View;
 
-import io.leao.codecolors.core.res.CcColorStateList;
+import io.leao.codecolors.core.color.CcColorStateList;
 
 public class CcRefreshDrawableStateCallback<T extends View> implements CcColorStateList.AnchorCallback<T> {
     @Override

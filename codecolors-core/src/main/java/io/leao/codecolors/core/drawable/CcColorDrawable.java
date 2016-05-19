@@ -14,7 +14,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.NonNull;
 
-import io.leao.codecolors.core.res.CcColorStateList;
+import io.leao.codecolors.core.color.CcColorStateList;
 
 /**
  * Inspired in {@link android.graphics.drawable.ColorDrawable}, but instead of making use of a {@code int} color, it
