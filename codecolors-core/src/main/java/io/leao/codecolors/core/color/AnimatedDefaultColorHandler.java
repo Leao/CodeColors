@@ -41,17 +41,31 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
     }
 
     public void setAnimation(ValueAnimator animation) {
-        if (mAnimationListener == null) {
-            mAnimationListener = new AnimationListener();
-        }
+        if (mAnimation != animation) {
+            if (mAnimation != null && mAnimationListener != null) {
+                mAnimation.removeListener(mAnimationListener);
+            }
 
-        mAnimation = animation;
-        mAnimation.addListener(mAnimationListener);
+            if (animation != null) {
+                if (mAnimationListener == null) {
+                    mAnimationListener = new AnimationListener();
+                }
+                animation.addListener(mAnimationListener);
+            }
+
+            mAnimation = animation;
+        }
     }
 
     protected void endAnimation() {
         if (isAnimating()) {
             mAnimation.end();
+        }
+    }
+
+    protected void cancelAnimation() {
+        if (isAnimating()) {
+            mAnimation.cancel();
         }
     }
 

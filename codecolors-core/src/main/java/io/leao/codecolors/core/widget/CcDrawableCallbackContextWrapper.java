@@ -19,7 +19,7 @@ import io.leao.codecolors.core.drawable.CcDrawableWrapper;
 
 /**
  * Wrap the view's {@link Context}, in order to intercept the drawable creation and set the view as its callback.
- * <p/>
+ * <p>
  * By setting the view as the drawable's callback, the CodeColors drawable wrappers will be able to invalidate the
  * view when the code-colors are updated.
  */
@@ -88,7 +88,7 @@ public class CcDrawableCallbackContextWrapper extends ContextWrapper {
 
     /**
      * Called when the drawable couldn't be verified in the original view.
-     * <p/>
+     * <p>
      * Invalidates the views created by this Context's WindowManager, making sure that views like
      * {@link android.widget.Editor.SelectionStartHandleView} and {@link android.widget.Editor.SelectionEndHandleView}
      * are invalidated when code-colors are updated.

@@ -11,6 +11,7 @@ import android.view.animation.Interpolator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.WeakHashMap;
 
 import io.leao.codecolors.core.res.CcConfigurationParcelable;
@@ -26,14 +27,11 @@ public class CcColorStateList extends ColorStateList {
 
     private int mId;
     private AnimatedDefaultColorHandler mColorHandler;
+    private CallbackHandler mCallbackHandler;
     private CcConfigurationParcelable mConfiguration;
-
-    private boolean mBlockInvalidate;
 
     private SetEditor mSetEditor;
     private AnimateEditor mAnimateEditor;
-
-    private CallbackHandler mCallbackHandler = new CallbackHandler();
 
     public CcColorStateList() {
         this(NO_ID);
@@ -47,6 +45,7 @@ public class CcColorStateList extends ColorStateList {
         super(EMPTY, new int[]{DEFAULT_COLOR});
         mId = id;
         mColorHandler = colorHandler;
+        mCallbackHandler = new CallbackHandler();
     }
 
     private CcColorStateList(Parcel source) {
@@ -58,6 +57,14 @@ public class CcColorStateList extends ColorStateList {
 
     public int getId() {
         return mId;
+    }
+
+    AnimatedDefaultColorHandler getColorHandler() {
+        return mColorHandler;
+    }
+
+    CallbackHandler getCallbackHandler() {
+        return mCallbackHandler;
     }
 
     public CcConfiguration getConfiguration() {
@@ -112,13 +119,19 @@ public class CcColorStateList extends ColorStateList {
         return mSetEditor;
     }
 
-    public void set(Editor<?> editor) {
-        endAnimation(true);
+    /**
+     * @return true, if the color changed; false, otherwise.
+     */
+    public boolean set(Editor<?> editor) {
+        endAnimation();
 
+        boolean changed = false;
         for (Editor.Edit edit : editor.getEdits()) {
-            edit.edit(mColorHandler.getColorSetter());
-            edit.edit(mColorHandler.getAnimationColorSetter());
+            // Only account with the main color setter to check if the color changed.
+            changed |= edit.apply(mColorHandler.getColorSetter());
+            edit.apply(mColorHandler.getAnimationColorSetter());
         }
+        return changed;
     }
 
     public AnimateEditor animate() {
@@ -130,24 +143,33 @@ public class CcColorStateList extends ColorStateList {
         return mAnimateEditor;
     }
 
-    public void startAnimation(Editor<?> editor, ValueAnimator animation) {
-        endAnimation(true);
+    /**
+     * @return true, if the color changed and the animation started; false, otherwise.
+     */
+    public boolean animate(Editor<?> editor, ValueAnimator animation) {
+        endAnimation();
 
+        boolean changed = false;
         for (Editor.Edit edit : editor.getEdits()) {
-            edit.edit(mColorHandler.getAnimationColorSetter());
+            changed |= edit.apply(mColorHandler.getAnimationColorSetter());
         }
 
-        // Set animation to influence color.
+        // Set the animation to affect color.
         mColorHandler.setAnimation(animation);
 
-        // Start animation.
-        animation.start();
+        return changed;
     }
 
-    public void endAnimation(boolean blockInvalidate) {
-        mBlockInvalidate = blockInvalidate;
+    public ValueAnimator getAnimation() {
+        return mColorHandler.getAnimation();
+    }
+
+    public void endAnimation() {
         mColorHandler.endAnimation();
-        mBlockInvalidate = false;
+    }
+
+    public void cancelAnimation() {
+        mColorHandler.cancelAnimation();
     }
 
     /**
@@ -156,11 +178,11 @@ public class CcColorStateList extends ColorStateList {
      * That means the callback should be an object used by the application, like a
      * {@link android.graphics.drawable.Drawable} or a {@link android.view.View}.
      */
-    public void addCallback(Callback callback) {
+    public void addCallback(SingleCallback callback) {
         mCallbackHandler.addCallback(callback);
     }
 
-    public void removeCallback(Callback callback) {
+    public void removeCallback(SingleCallback callback) {
         mCallbackHandler.removeCallback(callback);
     }
 
@@ -173,33 +195,42 @@ public class CcColorStateList extends ColorStateList {
      * Refrain from keeping a reference to the {@code anchor} in your {@code callback}. Otherwise, it might generate a
      * memory leak.
      *
-     * @param anchor   the anchor object to which the callback is dependent.
      * @param callback the callback.
+     * @param anchor   the anchor object to which the callback is dependent.
      */
-    public void addAnchorCallback(Object anchor, AnchorCallback callback) {
-        mCallbackHandler.addAnchorCallback(anchor, callback);
+    public void addAnchorCallback(AnchorCallback callback, Object anchor) {
+        mCallbackHandler.addPairCallback(callback, anchor);
     }
 
-    public void removeAnchor(AnchorCallback callback) {
-        mCallbackHandler.removeAnchor(callback);
+    public void removeAnchorCallback(AnchorCallback callback, Object anchor) {
+        mCallbackHandler.removePairCallback(callback, anchor);
     }
 
     public void removeCallback(AnchorCallback callback) {
         mCallbackHandler.removeCallback(callback);
     }
 
+    public void removeAnchor(AnchorCallback callback) {
+        mCallbackHandler.removeAnchor(callback);
+    }
+
     public void invalidateSelf() {
-        if (!mBlockInvalidate) {
-            mCallbackHandler.invalidateColor(this);
-        }
+        mCallbackHandler.invalidateColor(this);
     }
 
-    public interface Callback {
+    public interface SingleCallback extends Callback {
         void invalidateColor(CcColorStateList color);
+
+        void invalidateColors(Set<CcColorStateList> colors);
     }
 
-    public interface AnchorCallback<T> {
+    public interface AnchorCallback<T> extends Callback {
         void invalidateColor(T anchor, CcColorStateList color);
+
+        void invalidateColors(T anchor, Set<CcColorStateList> colors);
+    }
+
+    interface Callback {
     }
 
     public String toString() {
@@ -240,43 +271,49 @@ public class CcColorStateList extends ColorStateList {
 
     public class SetEditor extends Editor<SetEditor> {
         public void submit() {
-            CcColorStateList.this.set(this);
-            // Invalidate color.
-            invalidateSelf();
+            boolean changed = CcColorStateList.this.set(this);
+            if (changed) {
+                // Invalidate color.
+                invalidateSelf();
+            }
         }
     }
 
     public class AnimateEditor extends Editor<AnimateEditor> implements ValueAnimator.AnimatorUpdateListener {
         private ValueAnimator mAnimation;
-        private float mUpdateFraction;
+        private float mLastInvalidateFraction;
 
         public AnimateEditor() {
-            mAnimation = ValueAnimator.ofFloat(0, 1);
-            mAnimation.setDuration(DEFAULT_ANIMATION_DURATION_MS);
-            mAnimation.setInterpolator(DEFAULT_ANIMATION_INTERPOLATOR);
+            mAnimation = createDefaultAnimation();
             // Listener to invalidate color.
             mAnimation.addUpdateListener(this);
         }
 
-        @Override
-        public AnimateEditor reuse() {
-            mUpdateFraction = 0;
-            return super.reuse();
-        }
-
         public void start() {
-            startAnimation(this, mAnimation);
+            boolean changed = animate(this, mAnimation);
+            if (changed) {
+                mLastInvalidateFraction = 0;
+                mAnimation.start();
+            }
         }
 
         @Override
         public void onAnimationUpdate(ValueAnimator animation) {
-            float updateFraction = ((int) (animation.getAnimatedFraction() * 100) / 100f);
+            float invalidateFraction = ((int) (animation.getAnimatedFraction() * 100) / 100f);
 
-            if (updateFraction != mUpdateFraction) {
-                mUpdateFraction = updateFraction;
+            if (invalidateFraction != mLastInvalidateFraction) {
+                mLastInvalidateFraction = invalidateFraction;
+
                 invalidateSelf();
             }
         }
+    }
+
+    public static ValueAnimator createDefaultAnimation() {
+        ValueAnimator animation = ValueAnimator.ofFloat(0, 1);
+        animation.setDuration(DEFAULT_ANIMATION_DURATION_MS);
+        animation.setInterpolator(DEFAULT_ANIMATION_INTERPOLATOR);
+        return animation;
     }
 
     @SuppressWarnings("unchecked")
@@ -325,7 +362,7 @@ public class CcColorStateList extends ColorStateList {
         }
 
         public interface Edit {
-            boolean edit(ColorSetter colorSetter);
+            boolean apply(ColorSetter colorSetter);
         }
 
         private class SetColorEdit implements Edit {
@@ -336,7 +373,7 @@ public class CcColorStateList extends ColorStateList {
             }
 
             @Override
-            public boolean edit(ColorSetter colorSetter) {
+            public boolean apply(ColorSetter colorSetter) {
                 return colorSetter.setColor(mColor);
             }
         }
@@ -351,7 +388,7 @@ public class CcColorStateList extends ColorStateList {
             }
 
             @Override
-            public boolean edit(ColorSetter colorSetter) {
+            public boolean apply(ColorSetter colorSetter) {
                 return colorSetter.setStates(mStates, mColors);
             }
         }
@@ -366,7 +403,7 @@ public class CcColorStateList extends ColorStateList {
             }
 
             @Override
-            public boolean edit(ColorSetter colorSetter) {
+            public boolean apply(ColorSetter colorSetter) {
                 return colorSetter.setState(mState, mColor);
             }
         }
@@ -379,7 +416,7 @@ public class CcColorStateList extends ColorStateList {
             }
 
             @Override
-            public boolean edit(ColorSetter colorSetter) {
+            public boolean apply(ColorSetter colorSetter) {
                 return colorSetter.removeStates(mStates);
             }
         }
@@ -392,7 +429,7 @@ public class CcColorStateList extends ColorStateList {
             }
 
             @Override
-            public boolean edit(ColorSetter colorSetter) {
+            public boolean apply(ColorSetter colorSetter) {
                 return colorSetter.removeState(mState);
             }
         }

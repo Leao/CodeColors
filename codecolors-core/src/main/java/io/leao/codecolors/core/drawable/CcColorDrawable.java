@@ -14,13 +14,15 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.NonNull;
 
+import java.util.Set;
+
 import io.leao.codecolors.core.color.CcColorStateList;
 
 /**
  * Inspired in {@link android.graphics.drawable.ColorDrawable}, but instead of making use of a {@code int} color, it
  * makes use of a {@link CcColorStateList}.
  */
-public class CcColorDrawable extends Drawable implements CcColorStateList.Callback {
+public class CcColorDrawable extends Drawable implements CcColorStateList.SingleCallback {
     private static final int COLOR_DEFAULT = Color.BLUE;
     private static final int ALPHA_OPAQUE = 255;
 
@@ -113,6 +115,16 @@ public class CcColorDrawable extends Drawable implements CcColorStateList.Callba
         }
     }
 
+    @Override
+    public void invalidateColors(Set<CcColorStateList> colors) {
+        // If everything works well, 'colors' should never have more than one item.
+        for (CcColorStateList color : colors) {
+            if (updateUseColor(color, getState(), mCodeColorState.mAlpha)) {
+                invalidateSelf();
+            }
+        }
+    }
+
     /**
      * Returns the alpha value of this drawable's color.
      *
@@ -140,7 +152,7 @@ public class CcColorDrawable extends Drawable implements CcColorStateList.Callba
 
     /**
      * Sets the color filter applied to this color.
-     * <p/>
+     * <p>
      * Only supported on version {@link android.os.Build.VERSION_CODES#LOLLIPOP} and
      * above. Calling this method has no effect on earlier versions.
      *
@@ -243,11 +255,13 @@ public class CcColorDrawable extends Drawable implements CcColorStateList.Callba
             mTintMode = state.mTintMode;
         }
 
+        @NonNull
         @Override
         public Drawable newDrawable() {
             return new CcColorDrawable(this, null);
         }
 
+        @NonNull
         @Override
         public Drawable newDrawable(Resources res) {
             return new CcColorDrawable(this, res);

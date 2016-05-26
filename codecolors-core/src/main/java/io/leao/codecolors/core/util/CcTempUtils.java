@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class TempUtils {
+public class CcTempUtils {
     private static Map<Integer, List<int[]>> sIntArrays = new HashMap<>();
 
     // Order bigger sets first. Supposedly, it helps in reducing the probability of the needed to allocate more memory.
@@ -25,7 +25,7 @@ public class TempUtils {
      * Make sure to call {@link #recycleIntArray(int[])} when you are done with the array.
      */
     public static int[] toIntArray(Collection<Integer> collection) {
-        int[] array = TempUtils.getIntArray(collection.size());
+        int[] array = CcTempUtils.getIntArray(collection.size());
         int i = 0;
         for (Integer value : collection) {
             array[i++] = value;
@@ -68,9 +68,7 @@ public class TempUtils {
      */
     public static Set<Integer> getIntegerSet() {
         if (!sIntegerSets.isEmpty()) {
-            Set<Integer> set = sIntegerSets.pollFirst();
-            set.clear();
-            return set;
+            return sIntegerSets.pollFirst();
         } else {
             return new HashSet<>();
         }
@@ -78,6 +76,7 @@ public class TempUtils {
 
     public static void recycleIntegerSet(Set<Integer> set) {
         if (set != null) {
+            set.clear();
             sIntegerSets.add(set);
         }
     }

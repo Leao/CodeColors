@@ -55,7 +55,7 @@ public class CcDrawableUtils {
     /**
      * Returns a new state that will seem to have changed in {@link Drawable#setState(int[])}, allowing
      * {@link Drawable#onStateChange(int[])} to be called.
-     * <p/>
+     * <p>
      * However, the returned state is the same state with 0 (nothing) as the last item, or the reverse of that.
      */
     public static int[] getForceState(int[] state) {

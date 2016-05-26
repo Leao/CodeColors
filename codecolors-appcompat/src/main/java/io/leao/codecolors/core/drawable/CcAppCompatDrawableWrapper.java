@@ -91,12 +91,30 @@ public class CcAppCompatDrawableWrapper extends CcDrawableWrapper {
 
         boolean invalidated = super.onInvalidateColor(color);
 
+        return invalidateDrawable(invalidated, isTintColor);
+    }
+
+    @Override
+    protected boolean onInvalidateColors(Set<CcColorStateList> colors) {
+        boolean hasTintColors = hasTintColors(colors);
+        if (hasTintColors) {
+            mUpdateTintList = true;
+        }
+
+        boolean invalidated = super.onInvalidateColors(colors);
+
+        return invalidateDrawable(invalidated, hasTintColors);
+    }
+
+    private boolean invalidateDrawable(boolean superInvalidated, boolean hasTintColors) {
         /*
-         * Make sure the drawable is properly invalidated.
+         * Make sure the drawable is properly invalidated:
+         * - if it was invalidated by super, to nothing;
+         * - if it wasn't invalidated by super, but has tint colors, invalidate it now.
          */
-        if (invalidated) {
+        if (superInvalidated) {
             return true;
-        } else if (isTintColor) {
+        } else if (hasTintColors) {
             // Invalidate drawable if it is a tint color and was not invalidated by super.
             invalidateDrawable(mDrawable);
             return true;
@@ -109,6 +127,15 @@ public class CcAppCompatDrawableWrapper extends CcDrawableWrapper {
         int colorId = color.getId();
         return colorId != CcColorStateList.NO_ID &&
                 ((CcAppCompatConstantState) mState).mTintIds.contains(color.getId());
+    }
+
+    protected boolean hasTintColors(Set<CcColorStateList> colors) {
+        for (CcColorStateList color : colors) {
+            if (isTintColor(color)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

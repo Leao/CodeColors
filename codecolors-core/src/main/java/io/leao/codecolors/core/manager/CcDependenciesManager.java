@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import io.leao.codecolors.core.res.CcConfigurationUtils;
-import io.leao.codecolors.core.util.TempUtils;
+import io.leao.codecolors.core.util.CcTempUtils;
 import io.leao.codecolors.plugin.CcConst;
 import io.leao.codecolors.plugin.res.CcConfiguration;
 
@@ -119,13 +119,13 @@ public class CcDependenciesManager {
 
     public synchronized void resolveDependencies(Resources.Theme theme, Resources resources, int id,
                                                  Set<Integer> outResolvedIds) {
-        Set<Integer> unresolvedAttrs = TempUtils.getIntegerSet();
+        Set<Integer> unresolvedAttrs = CcTempUtils.getIntegerSet();
         getDependencies(resources, id, outResolvedIds, unresolvedAttrs);
 
         resolveDependencies(theme, resources, unresolvedAttrs, outResolvedIds);
 
         // Recycle set for reuse.
-        TempUtils.recycleIntegerSet(unresolvedAttrs);
+        CcTempUtils.recycleIntegerSet(unresolvedAttrs);
     }
 
     public synchronized void resolveDependencies(Resources.Theme theme, Resources resources, Set<Integer> attrs,
@@ -141,7 +141,7 @@ public class CcDependenciesManager {
             mThemeResolvedAttrs.put(theme, resolvedAttrs);
         }
 
-        Set<Integer> unresolvedAttrs = TempUtils.getIntegerSet();
+        Set<Integer> unresolvedAttrs = CcTempUtils.getIntegerSet();
         for (int attr : attrs) {
             Integer id = resolvedAttrs.get(attr);
             if (id == null) {
@@ -154,7 +154,7 @@ public class CcDependenciesManager {
             }
         }
 
-        int[] unresolvedAttrsArray = TempUtils.toIntArray(unresolvedAttrs);
+        int[] unresolvedAttrsArray = CcTempUtils.toIntArray(unresolvedAttrs);
         TypedArray ta = theme.obtainStyledAttributes(unresolvedAttrsArray);
         try {
             int N = ta.length();
@@ -175,8 +175,8 @@ public class CcDependenciesManager {
         }
 
         // Recycle set and array for reuse.
-        TempUtils.recycleIntArray(unresolvedAttrsArray);
-        TempUtils.recycleIntegerSet(unresolvedAttrs);
+        CcTempUtils.recycleIntArray(unresolvedAttrsArray);
+        CcTempUtils.recycleIntegerSet(unresolvedAttrs);
     }
 
     private synchronized Object getKey(Resources resources, int id) {

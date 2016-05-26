@@ -63,7 +63,7 @@ public class CcSetupManager {
             // Override preloaded drawables value.
             sPreloadedDrawablesField.set(null, sPreloadedDrawables);
 
-            for (Integer colorResId : colorsManager.getColors()) {
+            for (int colorResId : colorsManager.getColors()) {
                 CcColorStateList color = colorsManager.getColor(colorResId);
 
                 long key = CcResources.createKey(resources, colorResId);

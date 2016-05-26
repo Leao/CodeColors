@@ -19,7 +19,7 @@ import io.leao.codecolors.core.res.CcResources;
 
 import static io.leao.codecolors.core.drawable.CcDrawableUtils.forceStateChange;
 
-public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList.Callback {
+public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList.SingleCallback {
     protected CcConstantState mState;
     protected Drawable mDrawable;
 
@@ -79,16 +79,24 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
      */
     protected boolean onInvalidateColor(CcColorStateList color) {
         if (isDependencyColor(color)) {
-            // Drawables' color could have changed.
-            // Make sure the set of prepared drawables is empty.
-            if (mPreparedDrawables == null) {
-                mPreparedDrawables = Collections.newSetFromMap(new IdentityHashMap<Drawable, Boolean>());
-            } else {
-                mPreparedDrawables.clear();
-            }
+            invalidateDrawable();
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-            // Invalidate drawable changing its color and updating the view.
-            invalidateDrawable(mDrawable);
+    @Override
+    public void invalidateColors(Set<CcColorStateList> colors) {
+        onInvalidateColors(colors);
+    }
+
+    /**
+     * @return true, if the drawable was invalidated; false, otherwise.
+     */
+    protected boolean onInvalidateColors(Set<CcColorStateList> colors) {
+        if (hasDependencyColors(colors)) {
+            invalidateDrawable();
             return true;
         } else {
             return false;
@@ -99,6 +107,28 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
         int colorId = color.getId();
         return colorId != CcColorStateList.NO_ID &&
                 (mState.mResolvedIds.contains(colorId) || mState.mThemeIds.contains(colorId));
+    }
+
+    protected boolean hasDependencyColors(Set<CcColorStateList> colors) {
+        for (CcColorStateList color : colors) {
+            if (isDependencyColor(color)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void invalidateDrawable() {
+        // Drawables' color could have changed.
+        // Make sure the set of prepared drawables is empty.
+        if (mPreparedDrawables == null) {
+            mPreparedDrawables = Collections.newSetFromMap(new IdentityHashMap<Drawable, Boolean>());
+        } else {
+            mPreparedDrawables.clear();
+        }
+
+        // Invalidate drawable changing its color and updating the view.
+        invalidateDrawable(mDrawable);
     }
 
     @Override

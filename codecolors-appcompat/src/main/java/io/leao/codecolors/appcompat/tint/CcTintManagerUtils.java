@@ -20,7 +20,7 @@ import static io.leao.codecolors.appcompat.tint.CcThemeUtils.getThemeAttrColor;
 /**
  * Copy of constants and methods from {@link android.support.v7.widget.AppCompatDrawableManager} and
  * {@link android.support.v7.widget.ThemeUtils}, to replicate their behavior.
- * <p/>
+ * <p>
  * Used by {@link CcTintManager}.
  */
 @SuppressLint("PrivateResource")

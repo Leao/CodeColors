@@ -2,6 +2,8 @@ package io.leao.codecolors.core.callback;
 
 import android.graphics.drawable.Drawable;
 
+import java.util.Set;
+
 import io.leao.codecolors.core.color.CcColorStateList;
 
 import static io.leao.codecolors.core.drawable.CcDrawableUtils.forceStateChange;
@@ -12,12 +14,15 @@ public class CcInvalidateDrawableCallback implements CcColorStateList.AnchorCall
         invalidate(drawable);
     }
 
+    @Override
+    public void invalidateColors(Drawable drawable, Set<CcColorStateList> colors) {
+        invalidate(drawable);
+    }
+
     public static void invalidate(Drawable drawable) {
-        if (drawable != null) {
-            // Force a state change to update the color.
-            forceStateChange(drawable);
-            // Invalidate the drawable (invalidates the view).
-            drawable.invalidateSelf();
-        }
+        // Force a state change to update the color.
+        forceStateChange(drawable);
+        // Invalidate the drawable (invalidates the view).
+        drawable.invalidateSelf();
     }
 }

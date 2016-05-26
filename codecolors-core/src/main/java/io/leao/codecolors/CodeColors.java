@@ -8,8 +8,10 @@ import io.leao.codecolors.core.CcCore;
 import io.leao.codecolors.core.adapter.CcAttrCallbackAdapter;
 import io.leao.codecolors.core.adapter.CcColorCallbackAdapter;
 import io.leao.codecolors.core.adapter.CcDefStyleAdapter;
-import io.leao.codecolors.core.manager.CcSetupManager;
 import io.leao.codecolors.core.color.CcColorStateList;
+import io.leao.codecolors.core.color.MultiAnimateEditor;
+import io.leao.codecolors.core.color.MultiSetEditor;
+import io.leao.codecolors.core.manager.CcSetupManager;
 
 public class CodeColors {
     public static void start(Context context) {
@@ -47,11 +49,19 @@ public class CodeColors {
     }
 
     public static CcColorStateList.SetEditor set(int resId) {
-        return CcCore.getColorsManager().set(resId);
+        return CcCore.getCallbackManager().set(resId);
+    }
+
+    public static MultiSetEditor setMultiple() {
+        return CcCore.getCallbackManager().setMultiple();
     }
 
     public static CcColorStateList.AnimateEditor animate(int resId) {
-        return CcCore.getColorsManager().animate(resId);
+        return CcCore.getCallbackManager().animate(resId);
+    }
+
+    public static MultiAnimateEditor animateMultiple() {
+        return CcCore.getCallbackManager().animateMultiple();
     }
 
     /**
@@ -73,13 +83,6 @@ public class CodeColors {
 
     public static void addViewDefStyleAdapter(@NonNull CcDefStyleAdapter adapter) {
         CcCore.getCallbackManager().addDefStyleAdapter(adapter);
-    }
-
-    public static void addColorCallback(int resId, Object anchor, CcColorStateList.AnchorCallback callback) {
-        CcColorStateList color = getColor(resId);
-        if (color != null) {
-            color.addAnchorCallback(anchor, callback);
-        }
     }
 
     public interface Callback {

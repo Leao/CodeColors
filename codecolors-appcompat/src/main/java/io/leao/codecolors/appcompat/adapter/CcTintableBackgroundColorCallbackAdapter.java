@@ -6,6 +6,8 @@ import android.support.v4.view.TintableBackgroundView;
 import android.util.AttributeSet;
 import android.view.View;
 
+import java.util.Set;
+
 import io.leao.codecolors.core.adapter.CcColorCallbackAdapter;
 import io.leao.codecolors.core.color.CcColorStateList;
 
@@ -45,11 +47,27 @@ public class CcTintableBackgroundColorCallbackAdapter implements CcColorCallback
         }
 
         @Override
-        public void invalidateColor(View anchor, CcColorStateList color) {
-            if (((TintableBackgroundView) anchor).getSupportBackgroundTintList() == mBackgroundTintList) {
-                anchor.refreshDrawableState();
-            } else {
+        public void invalidateColor(View view, CcColorStateList color) {
+            if (!refreshDrawableState(view)) {
                 color.removeCallback(this);
+            }
+        }
+
+        @Override
+        public void invalidateColors(View view, Set<CcColorStateList> colors) {
+            if (!refreshDrawableState(view)) {
+                for (CcColorStateList color : colors) {
+                    color.removeCallback(this);
+                }
+            }
+        }
+
+        private boolean refreshDrawableState(View view) {
+            if (((TintableBackgroundView) view).getSupportBackgroundTintList() == mBackgroundTintList) {
+                view.refreshDrawableState();
+                return true;
+            } else {
+                return false;
             }
         }
     }

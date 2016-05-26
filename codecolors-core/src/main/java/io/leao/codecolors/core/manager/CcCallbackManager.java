@@ -32,9 +32,14 @@ import io.leao.codecolors.core.adapter.CcAttrCallbackAdapter;
 import io.leao.codecolors.core.adapter.CcColorCallbackAdapter;
 import io.leao.codecolors.core.adapter.CcDefStyleAdapter;
 import io.leao.codecolors.core.color.CcColorStateList;
-import io.leao.codecolors.core.util.TempUtils;
+import io.leao.codecolors.core.color.MultiAnimateEditor;
+import io.leao.codecolors.core.color.MultiSetEditor;
+import io.leao.codecolors.core.util.CcTempUtils;
 
 public class CcCallbackManager {
+    private MultiSetEditor mMultiSetEditor;
+    private MultiAnimateEditor mMultiAnimateEditor;
+
     private ColorCallbackAdaptersHandler mColorCallbackAdaptersHandler;
     private AttrCallbackAdaptersHandler mAttrCallbackAdaptersHandler;
     private DefStyleAdaptersHandler mDefStyleAdaptersHandler;
@@ -43,6 +48,42 @@ public class CcCallbackManager {
         mColorCallbackAdaptersHandler = onCreateColorCallbackAdaptersHandler();
         mAttrCallbackAdaptersHandler = onCreateAttrCallbackAdaptersHandler();
         mDefStyleAdaptersHandler = onCreateDefStyleAdaptersHandler();
+    }
+
+    public synchronized CcColorStateList.SetEditor set(int resId) {
+        CcColorStateList color = CcCore.getColorsManager().getColor(resId);
+        if (color != null) {
+            return color.set();
+        } else {
+            return null;
+        }
+    }
+
+    public synchronized MultiSetEditor setMultiple() {
+        if (mMultiSetEditor == null) {
+            mMultiSetEditor = new MultiSetEditor();
+        } else {
+            mMultiSetEditor.reuse();
+        }
+        return mMultiSetEditor;
+    }
+
+    public synchronized CcColorStateList.AnimateEditor animate(int resId) {
+        CcColorStateList color = CcCore.getColorsManager().getColor(resId);
+        if (color != null) {
+            return color.animate();
+        } else {
+            return null;
+        }
+    }
+
+    public synchronized MultiAnimateEditor animateMultiple() {
+        if (mMultiAnimateEditor == null) {
+            mMultiAnimateEditor = new MultiAnimateEditor();
+        } else {
+            mMultiAnimateEditor.reuse();
+        }
+        return mMultiAnimateEditor;
     }
 
     protected ColorCallbackAdaptersHandler onCreateColorCallbackAdaptersHandler() {
@@ -138,7 +179,7 @@ public class CcCallbackManager {
                 }
                 // Set callback, if valid.
                 if (callback != null) {
-                    color.addAnchorCallback(result.anchor, callback);
+                    color.addAnchorCallback(callback, result.anchor);
                 }
             }
         }
@@ -260,7 +301,7 @@ public class CcCallbackManager {
                                 CacheResult cacheResult = cacheResults.get(j);
 
                                 if (resolvedIds == null) {
-                                    resolvedIds = TempUtils.getIntegerSet();
+                                    resolvedIds = CcTempUtils.getIntegerSet();
                                     resolvedIds.add(resourceId);
                                     CcCore.getDependenciesManager().resolveDependencies(
                                             context.getTheme(), context.getResources(), resourceId, resolvedIds);
@@ -272,7 +313,7 @@ public class CcCallbackManager {
                                 for (Integer dependency : resolvedIds) {
                                     CcColorStateList codeColor = CcCore.getColorsManager().getColor(dependency);
                                     if (codeColor != null) {
-                                        codeColor.addAnchorCallback(inflateResult.anchor, cacheResult.callback);
+                                        codeColor.addAnchorCallback(cacheResult.callback, inflateResult.anchor);
                                     }
                                 }
                             }
@@ -280,7 +321,7 @@ public class CcCallbackManager {
 
                         if (resolvedIds != null) {
                             // Recycle set for future reuse.
-                            TempUtils.recycleIntegerSet(resolvedIds);
+                            CcTempUtils.recycleIntegerSet(resolvedIds);
                         }
                     }
                 }
@@ -350,7 +391,7 @@ public class CcCallbackManager {
 
         /**
          * Returns the default style attribute depending on the view class.
-         * <p/>
+         * <p>
          * Order matters: a {@link CheckBox} is also {@link Button}, so we have to be careful when returning the default
          * style attribute.
          */

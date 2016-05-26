@@ -59,10 +59,11 @@ public class CcColorsManager {
     public synchronized void onConfigurationChanged(Resources resources) {
         Configuration configuration = resources.getConfiguration();
 
-        for (Integer colorResId : getColors()) {
+        for (int colorResId : getColors()) {
             CcColorStateList color = getColor(colorResId);
-            // End animation, if isStarted.
-            color.endAnimation(false);
+            // Cancel animation, if isStarted (calls animation end).
+            // Cancelling the animation, instead of ending it, might prevent an unnecessary call to invalidateSelf().
+            color.cancelAnimation();
 
             // Reset default color if the configuration changed.
             CcConfiguration currentConfiguration = color.getConfiguration();
@@ -101,23 +102,5 @@ public class CcColorsManager {
             mColorCccsl.put(resId, color);
         }
         return color;
-    }
-
-    public synchronized CcColorStateList.SetEditor set(int resId) {
-        CcColorStateList color = getColor(resId);
-        if (color != null) {
-            return color.set();
-        } else {
-            return null;
-        }
-    }
-
-    public synchronized CcColorStateList.AnimateEditor animate(int resId) {
-        CcColorStateList color = getColor(resId);
-        if (color != null) {
-            return color.animate();
-        } else {
-            return null;
-        }
     }
 }

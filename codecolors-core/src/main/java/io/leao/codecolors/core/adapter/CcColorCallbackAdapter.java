@@ -33,7 +33,7 @@ public interface CcColorCallbackAdapter<T> {
     /**
      * Called when views are added manually added to {@link CcCallbackManager}. This is the easiest way to add callback
      * to views that were inflated on Java code.
-     * <p/>
+     * <p>
      * Called for all {@link CcColorCallbackAdapter}s after a call to {@link CodeColors#addView(View)}.
      *
      * @return {@code true} if {@code outResult} is successfully set with any colors added; {@code false}, otherwise.
