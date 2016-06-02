@@ -14,7 +14,7 @@ import io.leao.codecolors.core.util.CcTempUtils;
 import io.leao.codecolors.plugin.CcConst;
 import io.leao.codecolors.plugin.res.CcConfiguration;
 
-public class CcDependenciesManager {
+public class CcDependencyManager {
     private static final String CLASS_NAME_BASE = "%s.%s";
     private static final String TYPE_ATTR = "attr";
 

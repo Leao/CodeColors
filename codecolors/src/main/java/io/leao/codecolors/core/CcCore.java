@@ -1,8 +1,8 @@
 package io.leao.codecolors.core;
 
-import io.leao.codecolors.core.manager.CcColorsManager;
+import io.leao.codecolors.core.manager.CcColorManager;
 import io.leao.codecolors.core.manager.CcConfigurationManager;
-import io.leao.codecolors.core.manager.CcDependenciesManager;
+import io.leao.codecolors.core.manager.CcDependencyManager;
 import io.leao.codecolors.core.manager.CcSetupManager;
 import io.leao.codecolors.core.manager.adapter.CcAdapterManager;
 import io.leao.codecolors.core.manager.callback.CcCallbackManager;
@@ -14,8 +14,8 @@ import io.leao.codecolors.core.manager.editor.CcEditorManager;
  */
 public class CcCore {
     private final static CcSetupManager sSetupManager;
-    private final static CcDependenciesManager sDependenciesManager;
-    private final static CcColorsManager sColorsManager;
+    private final static CcDependencyManager sDependencyManager;
+    private final static CcColorManager sColorManager;
     private final static CcEditorManager sEditorManager;
     private final static CcAdapterManager sAdapterManager;
     private final static CcCallbackManager sCallbackManager;
@@ -23,8 +23,8 @@ public class CcCore {
 
     static {
         sSetupManager = new CcSetupManager();
-        sDependenciesManager = new CcDependenciesManager();
-        sColorsManager = new CcColorsManager();
+        sDependencyManager = new CcDependencyManager();
+        sColorManager = new CcColorManager();
         sEditorManager = new CcEditorManager();
         sAdapterManager = new CcAdapterManager();
         sCallbackManager = new CcCallbackManager();
@@ -35,12 +35,12 @@ public class CcCore {
         return sSetupManager;
     }
 
-    public static CcDependenciesManager getDependenciesManager() {
-        return sDependenciesManager;
+    public static CcDependencyManager getDependenciesManager() {
+        return sDependencyManager;
     }
 
-    public static CcColorsManager getColorsManager() {
-        return sColorsManager;
+    public static CcColorManager getColorsManager() {
+        return sColorManager;
     }
 
     public static CcEditorManager getEditorManager() {

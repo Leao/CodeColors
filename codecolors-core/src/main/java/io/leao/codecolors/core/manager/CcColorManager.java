@@ -16,7 +16,7 @@ import io.leao.codecolors.core.res.CcConfigurationUtils;
 import io.leao.codecolors.plugin.CcConst;
 import io.leao.codecolors.plugin.res.CcConfiguration;
 
-public class CcColorsManager {
+public class CcColorManager {
     private static final String CLASS_NAME_BASE = "%s.%s";
 
     private CcConfiguration[] mConfigurations;

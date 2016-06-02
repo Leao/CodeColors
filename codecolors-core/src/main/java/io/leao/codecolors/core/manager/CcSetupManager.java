@@ -30,7 +30,7 @@ public class CcSetupManager {
         try {
             String packageName = context.getPackageName();
             // Initialize colors.
-            CcColorsManager colorsManager = CcCore.getColorsManager();
+            CcColorManager colorsManager = CcCore.getColorsManager();
             colorsManager.init(packageName);
             // Initialize dependencies.
             CcCore.getDependenciesManager().init(packageName);
