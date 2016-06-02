@@ -12,7 +12,7 @@ import android.support.annotation.Nullable;
  * <p>
  * The secondary color handler cannot be edited.
  */
-class DefaultColorHandler implements ColorGetter<DefaultColorHandler>, Parcelable {
+class DefaultColorHandler implements CcColorStateList.ColorGetter<DefaultColorHandler>, Parcelable {
     protected BaseColorHandler mDefaultColorHandler;
     protected BaseColorHandler mColorHandler;
 
@@ -27,7 +27,7 @@ class DefaultColorHandler implements ColorGetter<DefaultColorHandler>, Parcelabl
                 (BaseColorHandler) source.readParcelable(DefaultColorHandler.class.getClassLoader()));
     }
 
-    public ColorSetter getColorSetter() {
+    public CcColorStateList.ColorSetter getColorSetter() {
         return mColorHandler;
     }
 

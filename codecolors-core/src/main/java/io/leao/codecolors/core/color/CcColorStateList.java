@@ -6,14 +6,16 @@ import android.graphics.Color;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
-import java.util.WeakHashMap;
 
+import io.leao.codecolors.core.CcCore;
+import io.leao.codecolors.core.manager.editor.CcEditor;
+import io.leao.codecolors.core.manager.editor.CcEditorAnimate;
+import io.leao.codecolors.core.manager.editor.CcEditorSet;
 import io.leao.codecolors.core.res.CcConfigurationParcelable;
 import io.leao.codecolors.plugin.res.CcConfiguration;
 
@@ -27,11 +29,7 @@ public class CcColorStateList extends ColorStateList {
 
     private int mId;
     private AnimatedDefaultColorHandler mColorHandler;
-    private CallbackHandler mCallbackHandler;
     private CcConfigurationParcelable mConfiguration;
-
-    private SetEditor mSetEditor;
-    private AnimateEditor mAnimateEditor;
 
     public CcColorStateList() {
         this(NO_ID);
@@ -45,7 +43,6 @@ public class CcColorStateList extends ColorStateList {
         super(EMPTY, new int[]{DEFAULT_COLOR});
         mId = id;
         mColorHandler = colorHandler;
-        mCallbackHandler = new CallbackHandler();
     }
 
     private CcColorStateList(Parcel source) {
@@ -61,10 +58,6 @@ public class CcColorStateList extends ColorStateList {
 
     AnimatedDefaultColorHandler getColorHandler() {
         return mColorHandler;
-    }
-
-    CallbackHandler getCallbackHandler() {
-        return mCallbackHandler;
     }
 
     public CcConfiguration getConfiguration() {
@@ -110,23 +103,18 @@ public class CcColorStateList extends ColorStateList {
         return mColorHandler.getColorForState(stateSet, defaultColor);
     }
 
-    public SetEditor set() {
-        if (mSetEditor == null) {
-            mSetEditor = new SetEditor();
-        } else {
-            mSetEditor.reuse();
-        }
-        return mSetEditor;
+    public CcEditorSet set() {
+        return CcCore.getEditorManager().getEditorSet(this);
     }
 
     /**
      * @return true, if the color changed; false, otherwise.
      */
-    public boolean set(Editor<?> editor) {
+    public boolean set(CcEditor<?> editor) {
         endAnimation();
 
         boolean changed = false;
-        for (Editor.Edit edit : editor.getEdits()) {
+        for (CcEditor.Edit edit : editor.getEdits()) {
             // Only account with the main color setter to check if the color changed.
             changed |= edit.apply(mColorHandler.getColorSetter());
             edit.apply(mColorHandler.getAnimationColorSetter());
@@ -134,23 +122,18 @@ public class CcColorStateList extends ColorStateList {
         return changed;
     }
 
-    public AnimateEditor animate() {
-        if (mAnimateEditor == null) {
-            mAnimateEditor = new AnimateEditor();
-        } else {
-            mAnimateEditor.reuse();
-        }
-        return mAnimateEditor;
+    public CcEditorAnimate animate() {
+        return CcCore.getEditorManager().getEditorAnimate(this);
     }
 
     /**
      * @return true, if the color changed and the animation started; false, otherwise.
      */
-    public boolean animate(Editor<?> editor, ValueAnimator animation) {
+    public boolean animate(CcEditor<?> editor, ValueAnimator animation) {
         endAnimation();
 
         boolean changed = false;
-        for (Editor.Edit edit : editor.getEdits()) {
+        for (CcEditor.Edit edit : editor.getEdits()) {
             changed |= edit.apply(mColorHandler.getAnimationColorSetter());
         }
 
@@ -173,49 +156,44 @@ public class CcColorStateList extends ColorStateList {
     }
 
     /**
-     * The added callback is kept in a {@code set} generated from a {@link WeakHashMap}.
+     * The library will keep a weak reference to the callback.
      * <p>
-     * That means the callback should be an object used by the application, like a
-     * {@link android.graphics.drawable.Drawable} or a {@link android.view.View}.
+     * Make sure to maintain a strong reference while it is needed.
      */
     public void addCallback(SingleCallback callback) {
-        mCallbackHandler.addCallback(callback);
+        CcCore.getCallbackManager().addCallback(this, callback);
     }
 
     public void removeCallback(SingleCallback callback) {
-        mCallbackHandler.removeCallback(callback);
+        CcCore.getCallbackManager().removeCallback(this, callback);
     }
 
     /**
-     * The added anchor is the key of a {@link WeakHashMap}.
+     * The library will keep a weak reference to both callback and anchor.
      * <p>
-     * That means the anchor should be an object used by the application, like a
-     * {@link android.graphics.drawable.Drawable} or a {@link android.view.View}.
-     * <p>
-     * Refrain from keeping a reference to the {@code anchor} in your {@code callback}. Otherwise, it might generate a
-     * memory leak.
+     * Make sure to maintain a strong reference while they are needed.
      *
      * @param callback the callback.
      * @param anchor   the anchor object to which the callback is dependent.
      */
     public void addAnchorCallback(AnchorCallback callback, Object anchor) {
-        mCallbackHandler.addPairCallback(callback, anchor);
+        CcCore.getCallbackManager().addPairCallback(this, callback, anchor);
     }
 
     public void removeAnchorCallback(AnchorCallback callback, Object anchor) {
-        mCallbackHandler.removePairCallback(callback, anchor);
+        CcCore.getCallbackManager().removePairCallback(this, callback, anchor);
     }
 
     public void removeCallback(AnchorCallback callback) {
-        mCallbackHandler.removeCallback(callback);
+        CcCore.getCallbackManager().removeCallback(this, callback);
     }
 
-    public void removeAnchor(AnchorCallback callback) {
-        mCallbackHandler.removeAnchor(callback);
+    public void removeAnchor(Object anchor) {
+        CcCore.getCallbackManager().removeAnchor(this, anchor);
     }
 
     public void invalidateSelf() {
-        mCallbackHandler.invalidateColor(this);
+        CcCore.getCallbackManager().invalidate(this);
     }
 
     public interface SingleCallback extends Callback {
@@ -231,6 +209,43 @@ public class CcColorStateList extends ColorStateList {
     }
 
     interface Callback {
+    }
+
+    public interface ColorGetter<T extends ColorGetter> {
+        T withAlpha(int alpha);
+
+        boolean isOpaque();
+
+        Integer getDefaultColor();
+
+        Integer getColorForState(@Nullable int[] stateSet, Integer defaultColor);
+    }
+
+    public interface ColorSetter {
+        /**
+         * @return true, if color changed; false, otherwise.
+         */
+        boolean setColor(ColorStateList color);
+
+        /**
+         * @return true, if color changed; false, otherwise.
+         */
+        boolean setStates(int[][] states, int[] colors);
+
+        /**
+         * @return true, if color changed; false, otherwise.
+         */
+        boolean setState(int[] state, int color);
+
+        /**
+         * @return true, if color changed; false, otherwise.
+         */
+        boolean removeStates(int[][] states);
+
+        /**
+         * @return true, if color changed; false, otherwise.
+         */
+        boolean removeState(int[] state);
     }
 
     public String toString() {
@@ -268,170 +283,10 @@ public class CcColorStateList extends ColorStateList {
         }
     };
 
-
-    public class SetEditor extends Editor<SetEditor> {
-        public void submit() {
-            boolean changed = CcColorStateList.this.set(this);
-            if (changed) {
-                // Invalidate color.
-                invalidateSelf();
-            }
-        }
-    }
-
-    public class AnimateEditor extends Editor<AnimateEditor> implements ValueAnimator.AnimatorUpdateListener {
-        private ValueAnimator mAnimation;
-        private float mLastInvalidateFraction;
-
-        public AnimateEditor() {
-            mAnimation = createDefaultAnimation();
-            // Listener to invalidate color.
-            mAnimation.addUpdateListener(this);
-        }
-
-        public void start() {
-            boolean changed = animate(this, mAnimation);
-            if (changed) {
-                mLastInvalidateFraction = 0;
-                mAnimation.start();
-            }
-        }
-
-        @Override
-        public void onAnimationUpdate(ValueAnimator animation) {
-            float invalidateFraction = ((int) (animation.getAnimatedFraction() * 100) / 100f);
-
-            if (invalidateFraction != mLastInvalidateFraction) {
-                mLastInvalidateFraction = invalidateFraction;
-
-                invalidateSelf();
-            }
-        }
-    }
-
     public static ValueAnimator createDefaultAnimation() {
         ValueAnimator animation = ValueAnimator.ofFloat(0, 1);
         animation.setDuration(DEFAULT_ANIMATION_DURATION_MS);
         animation.setInterpolator(DEFAULT_ANIMATION_INTERPOLATOR);
         return animation;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static class Editor<T extends Editor> {
-        private List<Edit> mEdits = new ArrayList<>();
-
-        protected List<Edit> getEdits() {
-            return mEdits;
-        }
-
-        /**
-         * Clears all edits created by this {@link Editor} so that it can be reused.
-         */
-        public T reuse() {
-            mEdits.clear();
-            return (T) this;
-        }
-
-        public T setColor(int color) {
-            return setColor(ColorStateList.valueOf(color));
-        }
-
-        public T setColor(ColorStateList color) {
-            mEdits.add(new SetColorEdit(color));
-            return (T) this;
-        }
-
-        public T setStates(int[][] states, int[] colors) {
-            mEdits.add(new SetStatesEdit(states, colors));
-            return (T) this;
-        }
-
-        public T setState(int[] state, int color) {
-            mEdits.add(new SetStateEdit(state, color));
-            return (T) this;
-        }
-
-        public T removeStates(int[][] states) {
-            mEdits.add(new RemoveStatesEdit(states));
-            return (T) this;
-        }
-
-        public T removeState(int[] state) {
-            mEdits.add(new RemoveStateEdit(state));
-            return (T) this;
-        }
-
-        public interface Edit {
-            boolean apply(ColorSetter colorSetter);
-        }
-
-        private class SetColorEdit implements Edit {
-            private ColorStateList mColor;
-
-            public SetColorEdit(ColorStateList color) {
-                mColor = color;
-            }
-
-            @Override
-            public boolean apply(ColorSetter colorSetter) {
-                return colorSetter.setColor(mColor);
-            }
-        }
-
-        private class SetStatesEdit implements Edit {
-            private int[][] mStates;
-            private int[] mColors;
-
-            public SetStatesEdit(int[][] states, int[] colors) {
-                mStates = states;
-                mColors = colors;
-            }
-
-            @Override
-            public boolean apply(ColorSetter colorSetter) {
-                return colorSetter.setStates(mStates, mColors);
-            }
-        }
-
-        private class SetStateEdit implements Edit {
-            private int[] mState;
-            private int mColor;
-
-            public SetStateEdit(int[] state, int color) {
-                mState = state;
-                mColor = color;
-            }
-
-            @Override
-            public boolean apply(ColorSetter colorSetter) {
-                return colorSetter.setState(mState, mColor);
-            }
-        }
-
-        private class RemoveStatesEdit implements Edit {
-            private int[][] mStates;
-
-            public RemoveStatesEdit(int[][] states) {
-                mStates = states;
-            }
-
-            @Override
-            public boolean apply(ColorSetter colorSetter) {
-                return colorSetter.removeStates(mStates);
-            }
-        }
-
-        private class RemoveStateEdit implements Edit {
-            private int[] mState;
-
-            public RemoveStateEdit(int[] state) {
-                mState = state;
-            }
-
-            @Override
-            public boolean apply(ColorSetter colorSetter) {
-                return colorSetter.removeState(mState);
-            }
-        }
     }
 }

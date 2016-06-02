@@ -32,7 +32,7 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
         mAnimationColorHandler = new BaseColorHandler(mColorHandler);
     }
 
-    public ColorSetter getAnimationColorSetter() {
+    public CcColorStateList.ColorSetter getAnimationColorSetter() {
         return mAnimationColorHandler;
     }
 

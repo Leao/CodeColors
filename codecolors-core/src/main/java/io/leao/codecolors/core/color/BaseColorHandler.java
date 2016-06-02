@@ -13,7 +13,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-class BaseColorHandler implements ColorGetter<BaseColorHandler>, ColorSetter, Parcelable {
+class BaseColorHandler
+        implements CcColorStateList.ColorGetter<BaseColorHandler>, CcColorStateList.ColorSetter, Parcelable {
     private static Field sStateSpecsField;
     private static Field sColorsField;
 

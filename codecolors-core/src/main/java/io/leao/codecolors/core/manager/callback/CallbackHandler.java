@@ -1,4 +1,4 @@
-package io.leao.codecolors.core.color;
+package io.leao.codecolors.core.manager.callback;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -7,8 +7,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import io.leao.codecolors.core.CcCore;
+import io.leao.codecolors.core.color.CcColorStateList;
+import io.leao.codecolors.core.util.CcTempUtils;
+
 @SuppressWarnings("unchecked")
 class CallbackHandler {
+    protected WeakReference<CcColorStateList> mColorRef;
+
     protected List<Reference<CcColorStateList.SingleCallback>> mSingleCallbackList = new ArrayList<>();
     protected Set<Reference<CcColorStateList.SingleCallback>> mSingleCallbackSet = new HashSet<>();
 
@@ -19,6 +25,10 @@ class CallbackHandler {
 
     protected Reference mTempReference = new Reference();
     protected PairReference mTempPairReference = new PairReference();
+
+    public CallbackHandler(CcColorStateList color) {
+        mColorRef = new WeakReference<>(color);
+    }
 
     public synchronized void addCallback(CcColorStateList.SingleCallback callback) {
         if (callback == null) {
@@ -82,91 +92,92 @@ class CallbackHandler {
         mAnchorSet.remove(mTempReference);
     }
 
-    public void invalidateColor(CcColorStateList color) {
-        iterateCallbacks(color, new OnIterateCallbackListener() {
-            @Override
-            public void onIterateSingleCallback(CcColorStateList.SingleCallback callback, CcColorStateList color) {
-                callback.invalidateColor(color);
-            }
+    public void invalidate(Set<Reference<CcColorStateList.SingleCallback>> invalidatedSingleCallbacks,
+                           Set<PairReference<CcColorStateList.AnchorCallback, Object>> invalidatedPairCallbacks) {
 
-            @Override
-            public void onIteratePairCallback(CcColorStateList.AnchorCallback callback, Object anchor,
-                                              CcColorStateList color) {
-                callback.invalidateColor(anchor, color);
-            }
-        });
-    }
-
-    public static void invalidateColors(final Set<CcColorStateList> colors) {
-        Set<Reference<CcColorStateList.SingleCallback>> invalidatedSingleCallbacks =
-                CallbackTempUtils.getSingleCallbackSet();
-        Set<PairReference<CcColorStateList.AnchorCallback, Object>> invalidatedPairCallbacks =
-                CallbackTempUtils.getPairCallbackSet();
-        final Set<CcColorStateList> invalidateColors = CallbackTempUtils.getColorSet();
-
-        for (CcColorStateList color : colors) {
+        final CcColorStateList callbackColor = mColorRef.get();
+        if (callbackColor != null) {
             iterateCallbacks(
-                    color,
+                    this,
                     invalidatedSingleCallbacks,
                     invalidatedPairCallbacks,
                     new OnIterateCallbackListener() {
                         @Override
-                        public void onIterateSingleCallback(CcColorStateList.SingleCallback callback,
-                                                            CcColorStateList color) {
-                            invalidateColors.clear();
-                            for (CcColorStateList invalidateColor : colors) {
-                                if (invalidateColor == color ||
-                                        invalidateColor.getCallbackHandler().containsCallback(callback)) {
-                                    invalidateColors.add(invalidateColor);
-                                }
-                            }
-                            callback.invalidateColors(invalidateColors);
+                        public void onIterateSingleCallback(CcColorStateList.SingleCallback callback) {
+                            callback.invalidateColor(callbackColor);
                         }
 
                         @Override
-                        public void onIteratePairCallback(CcColorStateList.AnchorCallback callback, Object anchor,
-                                                          CcColorStateList color) {
-                            invalidateColors.clear();
-                            for (CcColorStateList invalidateColor : colors) {
-                                if (invalidateColor == color ||
-                                        invalidateColor.getCallbackHandler().containsPairCallback(callback, anchor)) {
-                                    invalidateColors.add(invalidateColor);
-                                }
-                            }
-                            callback.invalidateColors(anchor, colors);
+                        public void onIteratePairCallback(CcColorStateList.AnchorCallback callback, Object anchor) {
+                            callback.invalidateColor(anchor, callbackColor);
                         }
                     }
             );
         }
-
-        CallbackTempUtils.recycleSingleCallbackSet(invalidatedSingleCallbacks);
-        CallbackTempUtils.recyclePairCallbackSet(invalidatedPairCallbacks);
-        CallbackTempUtils.recycleColorSet(invalidateColors);
     }
 
-    public static void iterateCallbacks(CcColorStateList color, OnIterateCallbackListener listener) {
-        iterateCallbacks(color, null, null, listener);
+    public void invalidateMultiple(
+            final Set<CcColorStateList> colors,
+            Set<Reference<CcColorStateList.SingleCallback>> invalidatedSingleCallbacks,
+            Set<PairReference<CcColorStateList.AnchorCallback, Object>> invalidatedPairCallbacks) {
+
+        final CcColorStateList callbackColor = mColorRef.get();
+        if (callbackColor != null) {
+            // Temporary set to use on each invalidateColors() call.
+            final Set<CcColorStateList> callbackColors = CcTempUtils.getColorSet();
+
+            iterateCallbacks(
+                    this,
+                    invalidatedSingleCallbacks,
+                    invalidatedPairCallbacks,
+                    new OnIterateCallbackListener() {
+                        @Override
+                        public void onIterateSingleCallback(CcColorStateList.SingleCallback callback) {
+                            callbackColors.clear();
+                            for (CcColorStateList color : colors) {
+                                if (color == callbackColor ||
+                                        CcCore.getCallbackManager().containsCallback(color, callback)) {
+                                    callbackColors.add(color);
+                                }
+                            }
+                            callback.invalidateColors(callbackColors);
+                        }
+
+                        @Override
+                        public void onIteratePairCallback(CcColorStateList.AnchorCallback callback, Object anchor) {
+                            callbackColors.clear();
+                            for (CcColorStateList color : colors) {
+                                if (color == callbackColor ||
+                                        CcCore.getCallbackManager().containsPairCallback(color, callback, anchor)) {
+                                    callbackColors.add(color);
+                                }
+                            }
+                            callback.invalidateColors(anchor, callbackColors);
+                        }
+                    }
+            );
+
+            CcTempUtils.recycleColorSet(callbackColors);
+        }
     }
 
     public static void iterateCallbacks(
-            CcColorStateList color,
+            CallbackHandler callbackHandler,
             Set<Reference<CcColorStateList.SingleCallback>> iteratedSingleCallbacks,
             Set<PairReference<CcColorStateList.AnchorCallback, Object>> iteratedPairCallbacks,
             OnIterateCallbackListener listener) {
-        CallbackHandler currentCallbackHandler = color.getCallbackHandler();
-
         /*
          * SingleCallbacks.
          */
 
         // List iterator supports add and remove while iterating.
         Iterator<Reference<CcColorStateList.SingleCallback>> singleCallbackRefIterator =
-                currentCallbackHandler.mSingleCallbackList.listIterator();
+                callbackHandler.mSingleCallbackList.listIterator();
         while (singleCallbackRefIterator.hasNext()) {
 
             // Was callback removed?
             Reference<CcColorStateList.SingleCallback> singleCallbackRef = singleCallbackRefIterator.next();
-            if (currentCallbackHandler.mSingleCallbackSet.contains(singleCallbackRef)) {
+            if (callbackHandler.mSingleCallbackSet.contains(singleCallbackRef)) {
 
                 // Was callback collected by GC?
                 CcColorStateList.SingleCallback singleCallback = singleCallbackRef.ref.get();
@@ -176,7 +187,7 @@ class CallbackHandler {
                     if (iteratedSingleCallbacks == null || iteratedSingleCallbacks.add(singleCallbackRef)) {
 
                         // Call listener.
-                        listener.onIterateSingleCallback(singleCallback, color);
+                        listener.onIterateSingleCallback(singleCallback);
                     }
                     // Continue without any removals.
                     continue;
@@ -184,7 +195,7 @@ class CallbackHandler {
 
                 // Callback was collected by GC.
                 // Remove callback from set.
-                currentCallbackHandler.mSingleCallbackSet.remove(singleCallbackRef);
+                callbackHandler.mSingleCallbackSet.remove(singleCallbackRef);
             }
 
             // Either callback was collected by GC, or was removed.
@@ -198,18 +209,18 @@ class CallbackHandler {
 
         // List iterator supports add and remove while iterating.
         Iterator<PairReference<CcColorStateList.AnchorCallback, Object>> pairCallbackRefIterator =
-                currentCallbackHandler.mPairCallbackList.listIterator();
+                callbackHandler.mPairCallbackList.listIterator();
         while (pairCallbackRefIterator.hasNext()) {
 
             // Was callback pair removed?
             PairReference<CcColorStateList.AnchorCallback, Object> pairCallbackRef = pairCallbackRefIterator.next();
-            if (currentCallbackHandler.mPairCallbackSet.contains(pairCallbackRef)) {
+            if (callbackHandler.mPairCallbackSet.contains(pairCallbackRef)) {
 
                 // Were callback or anchor removed individually?
                 Reference<CcColorStateList.AnchorCallback> anchorCallbackRef = pairCallbackRef.firstRef;
                 Reference<Object> anchorRef = pairCallbackRef.secondRef;
-                if (currentCallbackHandler.mAnchorCallbackSet.contains(anchorCallbackRef) &&
-                        currentCallbackHandler.mAnchorSet.contains(anchorRef)) {
+                if (callbackHandler.mAnchorCallbackSet.contains(anchorCallbackRef) &&
+                        callbackHandler.mAnchorSet.contains(anchorRef)) {
 
                     // Were callback or anchor collected by GC?
                     CcColorStateList.AnchorCallback anchorCallback = anchorCallbackRef.ref.get();
@@ -220,7 +231,7 @@ class CallbackHandler {
                         if (iteratedPairCallbacks == null || iteratedPairCallbacks.add(pairCallbackRef)) {
 
                             // Call listener.
-                            listener.onIteratePairCallback(anchorCallback, anchor, color);
+                            listener.onIteratePairCallback(anchorCallback, anchor);
                         }
                         // Continue without any removals.
                         continue;
@@ -229,16 +240,16 @@ class CallbackHandler {
                     // Callback or anchor were collected by GC.
                     // Remove callback or anchor null references.
                     if (anchorCallback == null) {
-                        currentCallbackHandler.mAnchorCallbackSet.remove(anchorCallbackRef);
+                        callbackHandler.mAnchorCallbackSet.remove(anchorCallbackRef);
                     }
                     if (anchor == null) {
-                        currentCallbackHandler.mAnchorSet.remove(anchorRef);
+                        callbackHandler.mAnchorSet.remove(anchorRef);
                     }
                 }
 
                 // Either the callback or anchor were collected by GC, or removed (individually).
                 // Remove callback pair from set.
-                currentCallbackHandler.mPairCallbackSet.remove(pairCallbackRef);
+                callbackHandler.mPairCallbackSet.remove(pairCallbackRef);
             }
             // Either the callback or anchor were collected by GC, removed (individually), or removed as a pair.
             // Remove callback pair from list.
@@ -247,9 +258,9 @@ class CallbackHandler {
     }
 
     private interface OnIterateCallbackListener {
-        void onIterateSingleCallback(CcColorStateList.SingleCallback callback, CcColorStateList color);
+        void onIterateSingleCallback(CcColorStateList.SingleCallback callback);
 
-        void onIteratePairCallback(CcColorStateList.AnchorCallback callback, Object anchor, CcColorStateList color);
+        void onIteratePairCallback(CcColorStateList.AnchorCallback callback, Object anchor);
     }
 
     public static class Reference<T> {

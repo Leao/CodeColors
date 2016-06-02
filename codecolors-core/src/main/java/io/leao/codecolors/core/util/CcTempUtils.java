@@ -5,10 +5,14 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
+
+import io.leao.codecolors.core.color.CcColorStateList;
 
 public class CcTempUtils {
     private static Map<Integer, List<int[]>> sIntArrays = new HashMap<>();
@@ -20,6 +24,8 @@ public class CcTempUtils {
             return rhs.size() - lhs.size();
         }
     });
+
+    private static Queue<Set<CcColorStateList>> sColorSets = new LinkedList<>();
 
     /**
      * Make sure to call {@link #recycleIntArray(int[])} when you are done with the array.
@@ -78,6 +84,24 @@ public class CcTempUtils {
         if (set != null) {
             set.clear();
             sIntegerSets.add(set);
+        }
+    }
+
+    /**
+     * Make sure to call {@link #recycleColorSet(Set)} when you are done with the set.
+     */
+    public static Set<CcColorStateList> getColorSet() {
+        if (!sColorSets.isEmpty()) {
+            return sColorSets.poll();
+        } else {
+            return new HashSet<>();
+        }
+    }
+
+    public static void recycleColorSet(Set<CcColorStateList> set) {
+        if (set != null) {
+            set.clear();
+            sColorSets.add(set);
         }
     }
 }

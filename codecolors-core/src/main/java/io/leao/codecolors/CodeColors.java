@@ -9,9 +9,11 @@ import io.leao.codecolors.core.adapter.CcAttrCallbackAdapter;
 import io.leao.codecolors.core.adapter.CcColorCallbackAdapter;
 import io.leao.codecolors.core.adapter.CcDefStyleAdapter;
 import io.leao.codecolors.core.color.CcColorStateList;
-import io.leao.codecolors.core.color.MultiAnimateEditor;
-import io.leao.codecolors.core.color.MultiSetEditor;
 import io.leao.codecolors.core.manager.CcSetupManager;
+import io.leao.codecolors.core.manager.editor.CcEditorAnimate;
+import io.leao.codecolors.core.manager.editor.CcEditorSet;
+import io.leao.codecolors.core.manager.editor.CcMultiEditorAnimate;
+import io.leao.codecolors.core.manager.editor.CcMultiEditorSet;
 
 public class CodeColors {
     public static void start(Context context) {
@@ -48,20 +50,22 @@ public class CodeColors {
         return CcCore.getColorsManager().getColor(resId);
     }
 
-    public static CcColorStateList.SetEditor set(int resId) {
-        return CcCore.getCallbackManager().set(resId);
+    public static CcEditorSet set(int resId) {
+        CcColorStateList color = getColor(resId);
+        return color != null ? color.set() : null;
     }
 
-    public static MultiSetEditor setMultiple() {
-        return CcCore.getCallbackManager().setMultiple();
+    public static CcMultiEditorSet setMultiple() {
+        return CcCore.getEditorManager().getMultiEditorSet();
     }
 
-    public static CcColorStateList.AnimateEditor animate(int resId) {
-        return CcCore.getCallbackManager().animate(resId);
+    public static CcEditorAnimate animate(int resId) {
+        CcColorStateList color = getColor(resId);
+        return color != null ? color.animate() : null;
     }
 
-    public static MultiAnimateEditor animateMultiple() {
-        return CcCore.getCallbackManager().animateMultiple();
+    public static CcMultiEditorAnimate animateMultiple() {
+        return CcCore.getEditorManager().getMultiEditorAnimate();
     }
 
     /**
@@ -70,19 +74,19 @@ public class CodeColors {
      * {@link CcColorCallbackAdapter}s added.
      */
     public static void addView(@NonNull View view) {
-        CcCore.getCallbackManager().addView(view);
+        CcCore.getAdapterManager().addView(view);
     }
 
     public static void addAttrCallbackAdapter(@NonNull CcAttrCallbackAdapter adapter) {
-        CcCore.getCallbackManager().addAttrCallbackAdapter(adapter);
+        CcCore.getAdapterManager().addAttrCallbackAdapter(adapter);
     }
 
     public static void addViewCallbackAdapter(@NonNull CcColorCallbackAdapter adapter) {
-        CcCore.getCallbackManager().addColorCallbackAdapter(adapter);
+        CcCore.getAdapterManager().addColorCallbackAdapter(adapter);
     }
 
     public static void addViewDefStyleAdapter(@NonNull CcDefStyleAdapter adapter) {
-        CcCore.getCallbackManager().addDefStyleAdapter(adapter);
+        CcCore.getAdapterManager().addDefStyleAdapter(adapter);
     }
 
     public interface Callback {

@@ -1,10 +1,12 @@
 package io.leao.codecolors.core;
 
-import io.leao.codecolors.core.manager.CcCallbackManager;
 import io.leao.codecolors.core.manager.CcColorsManager;
 import io.leao.codecolors.core.manager.CcConfigurationManager;
 import io.leao.codecolors.core.manager.CcDependenciesManager;
 import io.leao.codecolors.core.manager.CcSetupManager;
+import io.leao.codecolors.core.manager.adapter.CcAdapterManager;
+import io.leao.codecolors.core.manager.callback.CcCallbackManager;
+import io.leao.codecolors.core.manager.editor.CcEditorManager;
 
 /**
  * {@link CcCore} is a hub class that has two different implementations, depending on the library version: 'codecolors'
@@ -14,6 +16,8 @@ public class CcCore {
     private final static CcSetupManager sSetupManager;
     private final static CcDependenciesManager sDependenciesManager;
     private final static CcColorsManager sColorsManager;
+    private final static CcEditorManager sEditorManager;
+    private final static CcAdapterManager sAdapterManager;
     private final static CcCallbackManager sCallbackManager;
     private final static CcConfigurationManager sConfigurationManager;
 
@@ -21,6 +25,8 @@ public class CcCore {
         sSetupManager = new CcSetupManager();
         sDependenciesManager = new CcDependenciesManager();
         sColorsManager = new CcColorsManager();
+        sEditorManager = new CcEditorManager();
+        sAdapterManager = new CcAdapterManager();
         sCallbackManager = new CcCallbackManager();
         sConfigurationManager = new CcConfigurationManager();
     }
@@ -35,6 +41,14 @@ public class CcCore {
 
     public static CcColorsManager getColorsManager() {
         return sColorsManager;
+    }
+
+    public static CcEditorManager getEditorManager() {
+        return sEditorManager;
+    }
+
+    public static CcAdapterManager getAdapterManager() {
+        return sAdapterManager;
     }
 
     public static CcCallbackManager getCallbackManager() {

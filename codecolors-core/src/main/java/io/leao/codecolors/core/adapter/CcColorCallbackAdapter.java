@@ -6,8 +6,8 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import io.leao.codecolors.CodeColors;
-import io.leao.codecolors.core.manager.CcCallbackManager;
 import io.leao.codecolors.core.color.CcColorStateList;
+import io.leao.codecolors.core.manager.adapter.CcAdapterManager;
 
 /**
  * Adapter to get the list of {@link CcColorStateList}s and corresponding {@link CcColorStateList.AnchorCallback}s from
@@ -31,7 +31,7 @@ public interface CcColorCallbackAdapter<T> {
     boolean onInflate(AttributeSet attrs, View view, int defStyleAttr, int defStyleRes, InflateAddResult<T> outResult);
 
     /**
-     * Called when views are added manually added to {@link CcCallbackManager}. This is the easiest way to add callback
+     * Called when views are added manually added to {@link CcAdapterManager}. This is the easiest way to add callback
      * to views that were inflated on Java code.
      * <p>
      * Called for all {@link CcColorCallbackAdapter}s after a call to {@link CodeColors#addView(View)}.

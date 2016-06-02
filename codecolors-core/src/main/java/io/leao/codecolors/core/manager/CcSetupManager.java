@@ -14,9 +14,10 @@ import java.lang.reflect.Type;
 
 import io.leao.codecolors.core.CcCore;
 import io.leao.codecolors.core.adapter.CcTextColorsColorCallbackAdapter;
+import io.leao.codecolors.core.color.CcColorStateList;
 import io.leao.codecolors.core.drawable.CcColorDrawable;
 import io.leao.codecolors.core.drawable.CcDrawableCache;
-import io.leao.codecolors.core.color.CcColorStateList;
+import io.leao.codecolors.core.manager.adapter.CcAdapterManager;
 import io.leao.codecolors.core.res.CcResources;
 
 public class CcSetupManager {
@@ -104,7 +105,7 @@ public class CcSetupManager {
     protected void onCodeColorsSetupSuccess(boolean useDefaultCallbackAdapters, Callback callback) {
         // Setup default callback adapters, if desired.
         if (useDefaultCallbackAdapters) {
-            onAddDefaultCallbackAdapters(CcCore.getCallbackManager());
+            onAddDefaultCallbackAdapters(CcCore.getAdapterManager());
         }
 
         if (callback != null) {
@@ -112,8 +113,8 @@ public class CcSetupManager {
         }
     }
 
-    protected void onAddDefaultCallbackAdapters(CcCallbackManager callbackManager) {
-        callbackManager.addColorCallbackAdapter(new CcTextColorsColorCallbackAdapter());
+    protected void onAddDefaultCallbackAdapters(CcAdapterManager adapterManager) {
+        adapterManager.addColorCallbackAdapter(new CcTextColorsColorCallbackAdapter());
     }
 
     protected void onCodeColorsSetupFailure(Exception e, Callback callback) {

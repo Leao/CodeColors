@@ -1,4 +1,4 @@
-package io.leao.codecolors.core.color;
+package io.leao.codecolors.core.manager.editor;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -7,36 +7,40 @@ import android.animation.ValueAnimator;
 import java.util.Set;
 
 import io.leao.codecolors.core.CcCore;
+import io.leao.codecolors.core.color.CcColorStateList;
+import io.leao.codecolors.core.util.CcTempUtils;
 
-public class MultiAnimateEditor extends MultiEditor<MultiAnimateEditor>
+public class CcMultiEditorAnimate extends CcMultiEditor<CcMultiEditorAnimate>
         implements ValueAnimator.AnimatorUpdateListener {
-    Set<CcColorStateList> mChangedColors;
+    protected Set<CcColorStateList> mChangedColors;
 
-    private ValueAnimator mAnimation;
-    private float mLastInvalidateFraction;
+    protected ValueAnimator mAnimation;
+    protected float mLastInvalidateFraction;
 
-    public MultiAnimateEditor() {
+    public CcMultiEditorAnimate() {
         mAnimation = CcColorStateList.createDefaultAnimation();
         // Listener to invalidate color.
         mAnimation.addUpdateListener(this);
         mAnimation.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
-                CallbackTempUtils.recycleColorSet(mChangedColors);
+                CcTempUtils.recycleColorSet(mChangedColors);
                 mChangedColors = null;
             }
         });
     }
 
     public void start() {
-        Set<CcColorStateList> changedColors = CallbackTempUtils.getColorSet();
+        Set<CcColorStateList> changedColors = CcTempUtils.getColorSet();
 
         for (int colorResId : mEditors.keySet()) {
-            CcColorStateList.Editor editor = mEditors.get(colorResId);
             CcColorStateList color = CcCore.getColorsManager().getColor(colorResId);
-            boolean changed = color.animate(editor, mAnimation);
-            if (changed) {
-                changedColors.add(color);
+            if (color != null) {
+                CcEditor editor = mEditors.get(colorResId);
+                boolean changed = color.animate(editor, mAnimation);
+                if (changed) {
+                    changedColors.add(color);
+                }
             }
         }
 
