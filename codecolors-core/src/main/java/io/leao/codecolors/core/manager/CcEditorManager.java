@@ -1,9 +1,13 @@
-package io.leao.codecolors.core.manager.editor;
+package io.leao.codecolors.core.manager;
 
 import java.util.Map;
 import java.util.WeakHashMap;
 
 import io.leao.codecolors.core.color.CcColorStateList;
+import io.leao.codecolors.core.editor.CcEditorAnimate;
+import io.leao.codecolors.core.editor.CcEditorSet;
+import io.leao.codecolors.core.editor.CcMultiEditorAnimate;
+import io.leao.codecolors.core.editor.CcMultiEditorSet;
 
 public class CcEditorManager {
     private Map<CcColorStateList, CcEditorSet> mColorEditorSet = new WeakHashMap<>();

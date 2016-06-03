@@ -10,10 +10,10 @@ import io.leao.codecolors.core.adapter.CcColorCallbackAdapter;
 import io.leao.codecolors.core.adapter.CcDefStyleAdapter;
 import io.leao.codecolors.core.color.CcColorStateList;
 import io.leao.codecolors.core.manager.CcSetupManager;
-import io.leao.codecolors.core.manager.editor.CcEditorAnimate;
-import io.leao.codecolors.core.manager.editor.CcEditorSet;
-import io.leao.codecolors.core.manager.editor.CcMultiEditorAnimate;
-import io.leao.codecolors.core.manager.editor.CcMultiEditorSet;
+import io.leao.codecolors.core.editor.CcEditorAnimate;
+import io.leao.codecolors.core.editor.CcEditorSet;
+import io.leao.codecolors.core.editor.CcMultiEditorAnimate;
+import io.leao.codecolors.core.editor.CcMultiEditorSet;
 
 public class CodeColors {
     public static void start(Context context) {

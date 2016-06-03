@@ -1,4 +1,4 @@
-package io.leao.codecolors.core.manager.editor;
+package io.leao.codecolors.core.editor;
 
 import java.lang.ref.WeakReference;
 

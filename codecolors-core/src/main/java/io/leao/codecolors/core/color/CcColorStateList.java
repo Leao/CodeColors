@@ -13,9 +13,9 @@ import android.view.animation.Interpolator;
 import java.util.Set;
 
 import io.leao.codecolors.core.CcCore;
-import io.leao.codecolors.core.manager.editor.CcEditor;
-import io.leao.codecolors.core.manager.editor.CcEditorAnimate;
-import io.leao.codecolors.core.manager.editor.CcEditorSet;
+import io.leao.codecolors.core.editor.CcEditor;
+import io.leao.codecolors.core.editor.CcEditorAnimate;
+import io.leao.codecolors.core.editor.CcEditorSet;
 import io.leao.codecolors.core.res.CcConfigurationParcelable;
 import io.leao.codecolors.plugin.res.CcConfiguration;
 
