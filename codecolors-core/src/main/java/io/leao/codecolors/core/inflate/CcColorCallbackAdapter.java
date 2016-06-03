@@ -11,6 +11,8 @@ import io.leao.codecolors.core.color.CcColorStateList;
 /**
  * Adapter to get the list of {@link CcColorStateList}s and corresponding {@link CcColorStateList.AnchorCallback}s from
  * a view, when it is inflated or added manually.
+ * <p>
+ * Tip: initialize in {@link CodeColors.Callback#onCodeColorsStarted()}.
  */
 public interface CcColorCallbackAdapter<T> {
     /**

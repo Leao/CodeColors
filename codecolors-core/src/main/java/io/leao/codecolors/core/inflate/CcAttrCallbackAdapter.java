@@ -3,6 +3,7 @@ package io.leao.codecolors.core.inflate;
 import android.support.annotation.NonNull;
 import android.view.View;
 
+import io.leao.codecolors.CodeColors;
 import io.leao.codecolors.core.color.CcColorStateList;
 
 /**
@@ -11,6 +12,8 @@ import io.leao.codecolors.core.color.CcColorStateList;
  * <p>
  * For instance, if a drawable is dependent on two {@link CcColorStateList}s, a {@link CcColorStateList.AnchorCallback}
  * is set for each color.
+ * <p>
+ * Tip: initialize in {@link CodeColors.Callback#onCodeColorsStarted()}.
  */
 public interface CcAttrCallbackAdapter<T> {
     /**

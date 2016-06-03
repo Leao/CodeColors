@@ -35,8 +35,6 @@ public class CcSetupManager {
             colorsManager.init(packageName);
             // Initialize dependencies.
             CcCore.getDependenciesManager().init(packageName);
-            // Configure colors and dependencies for current configuration.
-            CcCore.getConfigurationManager().onConfigurationChanged(context.getResources());
 
             Resources resources = context.getResources();
             // The SparseArray that holds the entries of preloaded colors.
@@ -97,6 +95,9 @@ public class CcSetupManager {
         sIsActive = true;
 
         onCodeColorsSetupSuccess(useDefaultCallbackAdapters, callback);
+
+        // Configure colors and dependencies for current configuration.
+        CcCore.getConfigurationManager().onConfigurationChanged(context.getResources());
     }
 
     protected CcDrawableCache onCreateDrawableCache(Context context, LongSparseArray<Drawable.ConstantState> cache) {
