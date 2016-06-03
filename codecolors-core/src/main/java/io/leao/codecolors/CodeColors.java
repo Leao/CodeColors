@@ -5,10 +5,10 @@ import android.support.annotation.NonNull;
 import android.view.View;
 
 import io.leao.codecolors.core.CcCore;
-import io.leao.codecolors.core.adapter.CcAttrCallbackAdapter;
-import io.leao.codecolors.core.adapter.CcColorAdapter;
-import io.leao.codecolors.core.adapter.CcColorCallbackAdapter;
-import io.leao.codecolors.core.adapter.CcDefStyleAdapter;
+import io.leao.codecolors.core.inflate.CcAttrCallbackAdapter;
+import io.leao.codecolors.core.color.CcColorAdapter;
+import io.leao.codecolors.core.inflate.CcColorCallbackAdapter;
+import io.leao.codecolors.core.inflate.CcDefStyleAdapter;
 import io.leao.codecolors.core.color.CcColorStateList;
 import io.leao.codecolors.core.editor.CcEditorAnimate;
 import io.leao.codecolors.core.editor.CcEditorSet;
@@ -75,19 +75,19 @@ public class CodeColors {
      * {@link CcColorCallbackAdapter}s added.
      */
     public static void addView(@NonNull View view) {
-        CcCore.getAdapterManager().addView(view);
+        CcCore.getInflateManager().addView(view);
     }
 
     public static void addAttrCallbackAdapter(@NonNull CcAttrCallbackAdapter adapter) {
-        CcCore.getAdapterManager().addAttrCallbackAdapter(adapter);
+        CcCore.getInflateManager().addAttrCallbackAdapter(adapter);
     }
 
     public static void addViewCallbackAdapter(@NonNull CcColorCallbackAdapter adapter) {
-        CcCore.getAdapterManager().addColorCallbackAdapter(adapter);
+        CcCore.getInflateManager().addColorCallbackAdapter(adapter);
     }
 
     public static void addViewDefStyleAdapter(@NonNull CcDefStyleAdapter adapter) {
-        CcCore.getAdapterManager().addDefStyleAdapter(adapter);
+        CcCore.getInflateManager().addDefStyleAdapter(adapter);
     }
 
     public static void setBaseColorAdapter(CcColorAdapter adapter) {

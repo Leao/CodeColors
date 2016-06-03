@@ -1,4 +1,4 @@
-package io.leao.codecolors.core.adapter;
+package io.leao.codecolors.core.inflate;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -16,7 +16,7 @@ import io.leao.codecolors.core.CcCore;
 import io.leao.codecolors.core.color.CcColorStateList;
 import io.leao.codecolors.core.util.CcTempUtils;
 
-class AdapterAttrCallbackHandler {
+class AttrCallbackHandler {
     protected Map<Integer, List<CcAttrCallbackAdapter>> mAdapters = new HashMap<>();
     protected Map<Integer, List<CacheResult>> mCacheResults = new HashMap<>();
     protected int[] mAttrs;

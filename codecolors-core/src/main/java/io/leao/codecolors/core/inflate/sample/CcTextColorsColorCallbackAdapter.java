@@ -1,11 +1,11 @@
-package io.leao.codecolors.core.adapter.sample;
+package io.leao.codecolors.core.inflate.sample;
 
 import android.content.res.ColorStateList;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.TextView;
 
-import io.leao.codecolors.core.adapter.CcColorCallbackAdapter;
+import io.leao.codecolors.core.inflate.CcColorCallbackAdapter;
 import io.leao.codecolors.core.callback.sample.CcRefreshDrawableStateCallback;
 import io.leao.codecolors.core.color.CcColorStateList;
 

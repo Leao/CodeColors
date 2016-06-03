@@ -1,4 +1,4 @@
-package io.leao.codecolors.core.adapter;
+package io.leao.codecolors.core.inflate;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -30,7 +30,7 @@ public interface CcColorCallbackAdapter<T> {
     boolean onInflate(AttributeSet attrs, View view, int defStyleAttr, int defStyleRes, InflateAddResult<T> outResult);
 
     /**
-     * Called when views are added manually added to {@link CcAdapterManager}. This is the easiest way to add callback
+     * Called when views are added manually added to {@link io.leao.codecolors.core.inflate.CcInflateManager}. This is the easiest way to add callback
      * to views that were inflated on Java code.
      * <p>
      * Called for all {@link CcColorCallbackAdapter}s after a call to {@link CodeColors#addView(View)}.

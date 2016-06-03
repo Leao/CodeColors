@@ -1,31 +1,31 @@
-package io.leao.codecolors.core.adapter;
+package io.leao.codecolors.core.inflate;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.view.View;
 
-public class CcAdapterManager {
-    private AdapterColorCallbackHandler mColorCallbackHandler;
-    private AdapterAttrCallbackHandler mAttrCallbackHandler;
-    private AdapterDefStyleHandler mDefStyleHandler;
+public class CcInflateManager {
+    private ColorCallbackHandler mColorCallbackHandler;
+    private AttrCallbackHandler mAttrCallbackHandler;
+    private DefStyleHandler mDefStyleHandler;
 
-    public CcAdapterManager() {
+    public CcInflateManager() {
         mColorCallbackHandler = onCreateColorCallbackAdaptersHandler();
         mAttrCallbackHandler = onCreateAttrCallbackAdaptersHandler();
         mDefStyleHandler = onCreateDefStyleAdaptersHandler();
     }
 
-    protected AdapterColorCallbackHandler onCreateColorCallbackAdaptersHandler() {
-        return new AdapterColorCallbackHandler();
+    protected ColorCallbackHandler onCreateColorCallbackAdaptersHandler() {
+        return new ColorCallbackHandler();
     }
 
-    protected AdapterAttrCallbackHandler onCreateAttrCallbackAdaptersHandler() {
-        return new AdapterAttrCallbackHandler();
+    protected AttrCallbackHandler onCreateAttrCallbackAdaptersHandler() {
+        return new AttrCallbackHandler();
     }
 
-    protected AdapterDefStyleHandler onCreateDefStyleAdaptersHandler() {
-        return new AdapterDefStyleHandler();
+    protected DefStyleHandler onCreateDefStyleAdaptersHandler() {
+        return new DefStyleHandler();
     }
 
     public synchronized void addColorCallbackAdapter(@NonNull CcColorCallbackAdapter adapter) {
@@ -41,7 +41,7 @@ public class CcAdapterManager {
     }
 
     public synchronized void onCreateView(@NonNull Context context, @NonNull AttributeSet attrs, @NonNull View view) {
-        AdapterDefStyleHandler.InflateResult defStyle = mDefStyleHandler.onCreateView(attrs, view);
+        DefStyleHandler.InflateResult defStyle = mDefStyleHandler.onCreateView(attrs, view);
         mColorCallbackHandler.onCreateView(attrs, view, defStyle.attr, defStyle.res);
         mAttrCallbackHandler.onCreateView(context, attrs, view, defStyle.attr, defStyle.res);
     }

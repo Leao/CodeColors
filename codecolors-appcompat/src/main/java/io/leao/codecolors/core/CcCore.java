@@ -1,11 +1,11 @@
 package io.leao.codecolors.core;
 
-import io.leao.codecolors.core.adapter.CcAdapterManager;
-import io.leao.codecolors.core.adapter.CcAppCompatAdapterManager;
 import io.leao.codecolors.core.callback.CcCallbackManager;
 import io.leao.codecolors.core.color.CcColorManager;
 import io.leao.codecolors.core.editor.CcEditorManager;
-import io.leao.codecolors.core.manager.CcAppCompatSetupManager;
+import io.leao.codecolors.core.inflate.CcAppCompatInflateManager;
+import io.leao.codecolors.core.inflate.CcInflateManager;
+import io.leao.codecolors.appcompat.manager.CcAppCompatSetupManager;
 import io.leao.codecolors.core.manager.CcConfigurationManager;
 import io.leao.codecolors.core.manager.CcDependencyManager;
 import io.leao.codecolors.core.manager.CcSetupManager;
@@ -19,7 +19,7 @@ public class CcCore {
     private final static CcDependencyManager sDependencyManager;
     private final static CcColorManager sColorManager;
     private final static CcEditorManager sEditorManager;
-    private final static CcAdapterManager sAdapterManager;
+    private final static CcInflateManager sInflateManager;
     private final static CcCallbackManager sCallbackManager;
     private final static CcConfigurationManager sConfigurationManager;
 
@@ -28,7 +28,7 @@ public class CcCore {
         sDependencyManager = new CcDependencyManager();
         sColorManager = new CcColorManager();
         sEditorManager = new CcEditorManager();
-        sAdapterManager = new CcAppCompatAdapterManager();
+        sInflateManager = new CcAppCompatInflateManager();
         sCallbackManager = new CcCallbackManager();
         sConfigurationManager = new CcConfigurationManager();
     }
@@ -49,8 +49,8 @@ public class CcCore {
         return sEditorManager;
     }
 
-    public static CcAdapterManager getAdapterManager() {
-        return sAdapterManager;
+    public static CcInflateManager getInflateManager() {
+        return sInflateManager;
     }
 
     public static CcCallbackManager getCallbackManager() {

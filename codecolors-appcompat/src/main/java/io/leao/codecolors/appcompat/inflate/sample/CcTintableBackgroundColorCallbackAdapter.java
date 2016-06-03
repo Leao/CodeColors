@@ -1,4 +1,4 @@
-package io.leao.codecolors.appcompat.adapter;
+package io.leao.codecolors.appcompat.inflate.sample;
 
 import android.annotation.SuppressLint;
 import android.content.res.ColorStateList;
@@ -8,8 +8,8 @@ import android.view.View;
 
 import java.util.Set;
 
-import io.leao.codecolors.core.adapter.CcColorCallbackAdapter;
 import io.leao.codecolors.core.color.CcColorStateList;
+import io.leao.codecolors.core.inflate.CcColorCallbackAdapter;
 
 @SuppressLint("PrivateResource")
 public class CcTintableBackgroundColorCallbackAdapter implements CcColorCallbackAdapter<View> {

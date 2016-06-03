@@ -1,4 +1,4 @@
-package io.leao.codecolors.core.adapter;
+package io.leao.codecolors.core.inflate;
 
 import android.annotation.SuppressLint;
 import android.os.Build;
@@ -20,7 +20,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-class AdapterDefStyleHandler {
+class DefStyleHandler {
     protected List<CcDefStyleAdapter> mAdapters = new ArrayList<>();
 
     protected InflateResult mTempInflateResult = new InflateResult();
@@ -49,7 +49,7 @@ class AdapterDefStyleHandler {
 
     /**
      * Returns the default style attribute depending on the view class.
-     * <p>
+     * <p/>
      * Order matters: a {@link CheckBox} is also {@link Button}, so we have to be careful when returning the default
      * style attribute.
      */

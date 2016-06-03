@@ -1,11 +1,11 @@
-package io.leao.codecolors.appcompat.adapter;
+package io.leao.codecolors.appcompat.inflate.sample;
 
 import android.graphics.drawable.Drawable;
 import android.view.View;
 
 import io.leao.codecolors.R;
-import io.leao.codecolors.core.adapter.CcAttrCallbackAdapter;
-import io.leao.codecolors.core.callback.CcInvalidateDrawableCallback;
+import io.leao.codecolors.core.callback.sample.CcInvalidateDrawableCallback;
+import io.leao.codecolors.core.inflate.CcAttrCallbackAdapter;
 
 public class CcBackgroundTintAttrCallbackAdapter implements CcAttrCallbackAdapter<Drawable> {
     @Override

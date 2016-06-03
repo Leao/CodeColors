@@ -1,8 +1,6 @@
-package io.leao.codecolors.core.adapter;
+package io.leao.codecolors.core.color;
 
 import android.content.res.Configuration;
-
-import io.leao.codecolors.core.color.CcColorStateList;
 
 /**
  * Adapter to manipulate code-colors when the configuration changes.

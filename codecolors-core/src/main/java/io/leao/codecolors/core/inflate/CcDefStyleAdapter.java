@@ -1,4 +1,4 @@
-package io.leao.codecolors.core.adapter;
+package io.leao.codecolors.core.inflate;
 
 import android.util.AttributeSet;
 import android.view.View;

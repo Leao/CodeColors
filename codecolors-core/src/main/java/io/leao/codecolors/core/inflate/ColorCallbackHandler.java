@@ -1,4 +1,4 @@
-package io.leao.codecolors.core.adapter;
+package io.leao.codecolors.core.inflate;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -10,7 +10,7 @@ import java.util.List;
 
 import io.leao.codecolors.core.color.CcColorStateList;
 
-class AdapterColorCallbackHandler {
+class ColorCallbackHandler {
     protected List<CcColorCallbackAdapter> mAdapters = new ArrayList<>();
     protected List<CacheResult> mCacheResults = new ArrayList<>();
 

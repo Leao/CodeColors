@@ -55,7 +55,7 @@ public class CcLayoutInflaterFactoryWrapper implements LayoutInflater.Factory2 {
 
         if (view != null && attrs != null) {
             // Add callbacks to refresh drawable states.
-            CcCore.getAdapterManager().onCreateView(context, attrs, view);
+            CcCore.getInflateManager().onCreateView(context, attrs, view);
         }
 
         return view;
