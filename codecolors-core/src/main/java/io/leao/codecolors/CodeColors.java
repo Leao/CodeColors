@@ -6,6 +6,7 @@ import android.view.View;
 
 import io.leao.codecolors.core.CcCore;
 import io.leao.codecolors.core.adapter.CcAttrCallbackAdapter;
+import io.leao.codecolors.core.adapter.CcBaseColorAdapter;
 import io.leao.codecolors.core.adapter.CcColorCallbackAdapter;
 import io.leao.codecolors.core.adapter.CcDefStyleAdapter;
 import io.leao.codecolors.core.color.CcColorStateList;
@@ -87,6 +88,10 @@ public class CodeColors {
 
     public static void addViewDefStyleAdapter(@NonNull CcDefStyleAdapter adapter) {
         CcCore.getAdapterManager().addDefStyleAdapter(adapter);
+    }
+
+    public static void setBaseColorAdapter(CcBaseColorAdapter adapter) {
+        CcCore.getColorsManager().setBaseColorAdapter(adapter);
     }
 
     public interface Callback {

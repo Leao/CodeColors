@@ -11,25 +11,25 @@ import android.support.annotation.Nullable;
 /**
  * Varies its color depending on the state of an animation.
  */
-class AnimatedDefaultColorHandler extends DefaultColorHandler {
-    protected BaseColorHandler mAnimationColorHandler;
+class AnimatedBaseColorHandler extends BaseColorHandler {
+    protected ColorHandler mAnimationColorHandler;
 
     protected ValueAnimator mAnimation;
     protected AnimationListener mAnimationListener;
 
-    public AnimatedDefaultColorHandler() {
-        this(new BaseColorHandler(), new BaseColorHandler());
+    public AnimatedBaseColorHandler() {
+        this(new ColorHandler(), new ColorHandler());
     }
 
-    protected AnimatedDefaultColorHandler(@NonNull BaseColorHandler defaultColorHandler,
-                                          @NonNull BaseColorHandler colorHandler) {
-        super(defaultColorHandler, colorHandler);
-        mAnimationColorHandler = new BaseColorHandler(mColorHandler);
+    protected AnimatedBaseColorHandler(@NonNull ColorHandler baseColorHandler,
+                                       @NonNull ColorHandler colorHandler) {
+        super(baseColorHandler, colorHandler);
+        mAnimationColorHandler = new ColorHandler(mColorHandler);
     }
 
-    protected AnimatedDefaultColorHandler(Parcel source) {
+    protected AnimatedBaseColorHandler(Parcel source) {
         super(source);
-        mAnimationColorHandler = new BaseColorHandler(mColorHandler);
+        mAnimationColorHandler = new ColorHandler(mColorHandler);
     }
 
     public CcColorStateList.ColorSetter getAnimationColorSetter() {
@@ -74,8 +74,8 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
     }
 
     @Override
-    public AnimatedDefaultColorHandler withAlpha(int alpha) {
-        return new AnimatedDefaultColorHandler(mDefaultColorHandler.withAlpha(alpha), mColorHandler.withAlpha(alpha));
+    public AnimatedBaseColorHandler withAlpha(int alpha) {
+        return new AnimatedBaseColorHandler(mBaseColorHandler.withAlpha(alpha), mColorHandler.withAlpha(alpha));
     }
 
     @Override
@@ -93,11 +93,11 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
         if (!isAnimating() || mAnimation.getAnimatedFraction() == 0) {
             return super.getDefaultColor();
         } else if (mAnimation.getAnimatedFraction() == 1) {
-            return getDefaultColorFromHandlerOrDefaultHandler(mAnimationColorHandler);
+            return getDefaultColorFromHandlerOrBaseHandler(mAnimationColorHandler);
         } else {
             return interpolate(
                     super.getDefaultColor(),
-                    getDefaultColorFromHandlerOrDefaultHandler(mAnimationColorHandler),
+                    getDefaultColorFromHandlerOrBaseHandler(mAnimationColorHandler),
                     (float) mAnimation.getAnimatedValue());
         }
     }
@@ -107,11 +107,11 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
         if (!isAnimating() || mAnimation.getAnimatedFraction() == 0) {
             return super.getColorForState(stateSet, defaultColor);
         } else if (mAnimation.getAnimatedFraction() == 1) {
-            return getColorForStateFromHandlerOrDefaultHandler(mAnimationColorHandler, stateSet, defaultColor);
+            return getColorForStateFromHandlerOrBaseHandler(mAnimationColorHandler, stateSet, defaultColor);
         } else {
             return interpolate(
                     super.getColorForState(stateSet, defaultColor),
-                    getColorForStateFromHandlerOrDefaultHandler(mAnimationColorHandler, stateSet, defaultColor),
+                    getColorForStateFromHandlerOrBaseHandler(mAnimationColorHandler, stateSet, defaultColor),
                     (float) mAnimation.getAnimatedValue());
         }
     }
@@ -143,16 +143,16 @@ class AnimatedDefaultColorHandler extends DefaultColorHandler {
         super.writeToParcel(dest, flags);
     }
 
-    public static final Parcelable.Creator<AnimatedDefaultColorHandler> CREATOR =
-            new Parcelable.Creator<AnimatedDefaultColorHandler>() {
+    public static final Parcelable.Creator<AnimatedBaseColorHandler> CREATOR =
+            new Parcelable.Creator<AnimatedBaseColorHandler>() {
                 @Override
-                public AnimatedDefaultColorHandler[] newArray(int size) {
-                    return new AnimatedDefaultColorHandler[size];
+                public AnimatedBaseColorHandler[] newArray(int size) {
+                    return new AnimatedBaseColorHandler[size];
                 }
 
                 @Override
-                public AnimatedDefaultColorHandler createFromParcel(Parcel source) {
-                    return new AnimatedDefaultColorHandler(source);
+                public AnimatedBaseColorHandler createFromParcel(Parcel source) {
+                    return new AnimatedBaseColorHandler(source);
                 }
             };
 

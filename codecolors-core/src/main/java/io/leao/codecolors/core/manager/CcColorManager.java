@@ -11,8 +11,8 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Set;
 
+import io.leao.codecolors.core.adapter.CcBaseColorAdapter;
 import io.leao.codecolors.core.color.CcColorStateList;
-import io.leao.codecolors.core.res.CcConfigurationUtils;
 import io.leao.codecolors.plugin.CcConst;
 import io.leao.codecolors.plugin.res.CcConfiguration;
 
@@ -24,6 +24,8 @@ public class CcColorManager {
     private Map<Integer, Integer> mColorValue;
 
     private SparseArray<CcColorStateList> mColorCccsl = new SparseArray<>();
+
+    private CcBaseColorAdapter mBaseColorAdapter;
 
     @SuppressWarnings("unchecked")
     public synchronized void init(String packageName)
@@ -65,30 +67,26 @@ public class CcColorManager {
             // Cancelling the animation, instead of ending it, might prevent an unnecessary call to invalidateSelf().
             color.cancelAnimation();
 
-            // Reset default color if the configuration changed.
-            CcConfiguration currentConfiguration = color.getConfiguration();
-            CcConfiguration newConfiguration = getBestConfiguration(configuration, mColorConfigurations.get(colorResId));
-            if (!CcConfigurationUtils.equals(currentConfiguration, newConfiguration)) {
-                ColorStateList csl;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    csl = resources.getColorStateList(mColorValue.get(colorResId), null);
-                } else {
-                    csl = resources.getColorStateList(mColorValue.get(colorResId));
-                }
-                color.onConfigurationChanged(newConfiguration, csl);
+            ColorStateList baseColor;
+            // Get the default xml base color.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                baseColor = resources.getColorStateList(mColorValue.get(colorResId), null);
+            } else {
+                baseColor = resources.getColorStateList(mColorValue.get(colorResId));
             }
-        }
-    }
 
-    private synchronized CcConfiguration getBestConfiguration(Configuration contextConfiguration,
-                                                              int[] configurationIndexes) {
-        for (int configurationIndex : configurationIndexes) {
-            CcConfiguration configuration = mConfigurations[configurationIndex];
-            if (CcConfigurationUtils.areCompatible(configuration, contextConfiguration)) {
-                return configuration;
+            // Use the adapter's base color, if they are not null (the adapter and its returned color).
+            if (mBaseColorAdapter != null) {
+                ColorStateList adapterBaseColor = mBaseColorAdapter.getBaseColor(colorResId, configuration, baseColor);
+                if (adapterBaseColor != null) {
+                    baseColor = adapterBaseColor;
+                }
+            }
+
+            if (baseColor != color.getBaseColor()) {
+                color.onBaseColorChanged(baseColor);
             }
         }
-        return null;
     }
 
     public synchronized Set<Integer> getColors() {
@@ -102,5 +100,10 @@ public class CcColorManager {
             mColorCccsl.put(resId, color);
         }
         return color;
+    }
+
+
+    public synchronized void setBaseColorAdapter(CcBaseColorAdapter adapter) {
+        mBaseColorAdapter = adapter;
     }
 }

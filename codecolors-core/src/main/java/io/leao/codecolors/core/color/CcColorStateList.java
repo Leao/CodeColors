@@ -16,8 +16,6 @@ import io.leao.codecolors.core.CcCore;
 import io.leao.codecolors.core.editor.CcEditor;
 import io.leao.codecolors.core.editor.CcEditorAnimate;
 import io.leao.codecolors.core.editor.CcEditorSet;
-import io.leao.codecolors.core.res.CcConfigurationParcelable;
-import io.leao.codecolors.plugin.res.CcConfiguration;
 
 public class CcColorStateList extends ColorStateList {
     public static final int NO_ID = 0;
@@ -28,52 +26,41 @@ public class CcColorStateList extends ColorStateList {
     private static final int[][] EMPTY = new int[][]{new int[0]};
 
     private int mId;
-    private AnimatedDefaultColorHandler mColorHandler;
-    private CcConfigurationParcelable mConfiguration;
+    private AnimatedBaseColorHandler mColorHandler;
 
     public CcColorStateList() {
         this(NO_ID);
     }
 
     public CcColorStateList(int id) {
-        this(id, new AnimatedDefaultColorHandler());
+        this(id, new AnimatedBaseColorHandler());
     }
 
-    private CcColorStateList(int id, AnimatedDefaultColorHandler colorHandler) {
+    private CcColorStateList(int id, AnimatedBaseColorHandler colorHandler) {
         super(EMPTY, new int[]{DEFAULT_COLOR});
         mId = id;
         mColorHandler = colorHandler;
     }
 
     private CcColorStateList(Parcel source) {
-        this(source.readInt(), AnimatedDefaultColorHandler.CREATOR.createFromParcel(source));
-        if (source.readByte() == 1) {
-            mConfiguration = CcConfigurationParcelable.CREATOR.createFromParcel(source);
-        }
+        this(source.readInt(), AnimatedBaseColorHandler.CREATOR.createFromParcel(source));
     }
 
     public int getId() {
         return mId;
     }
 
-    AnimatedDefaultColorHandler getColorHandler() {
-        return mColorHandler;
+    public void onBaseColorChanged(ColorStateList baseColor) {
+        mColorHandler.setBaseColor(baseColor);
     }
 
-    public CcConfiguration getConfiguration() {
-        return mConfiguration;
-    }
-
-    public void onConfigurationChanged(CcConfiguration configuration, ColorStateList defaultColor) {
-        if (configuration == null) {
-            mConfiguration = null;
-        } else if (mConfiguration == null) {
-            mConfiguration = new CcConfigurationParcelable(configuration);
-        } else {
-            mConfiguration.setTo(configuration);
-        }
-
-        mColorHandler.setDefaultColor(defaultColor);
+    /**
+     * The base color for this code-color. It's this color's value before any changes occurred.
+     * <p>
+     * Do not confuse with {@link #getDefaultColor()} as its value can be changed.
+     */
+    public ColorStateList getBaseColor() {
+        return mColorHandler.getBaseColor();
     }
 
     @NonNull
@@ -262,13 +249,6 @@ public class CcColorStateList extends ColorStateList {
         dest.writeInt(mId);
 
         mColorHandler.writeToParcel(dest, flags);
-
-        if (mConfiguration != null) {
-            dest.writeByte((byte) 1);
-            mConfiguration.writeToParcel(dest, 0);
-        } else {
-            dest.writeByte((byte) 0);
-        }
     }
 
     public static final Parcelable.Creator<CcColorStateList> CREATOR = new Parcelable.Creator<CcColorStateList>() {
