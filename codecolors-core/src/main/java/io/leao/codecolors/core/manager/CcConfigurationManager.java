@@ -14,15 +14,23 @@ public class CcConfigurationManager {
 
     public synchronized void onConfigurationChanged(Resources resources) {
         Configuration configuration = resources.getConfiguration();
-        if (!configuration.equals(mConfiguration)) {
-            if (mConfiguration == null) {
-                mConfiguration = new Configuration(configuration);
-            } else {
-                mConfiguration.setTo(configuration);
-            }
 
-            CcCore.getColorsManager().onConfigurationChanged(resources);
-            CcCore.getDependenciesManager().onConfigurationChanged(configuration);
+        if (mConfiguration == null) {
+            mConfiguration = new Configuration(configuration);
+            onConfigurationCreated(resources, configuration);
+        } else if (!configuration.equals(mConfiguration)) {
+            mConfiguration.setTo(configuration);
+            onConfigurationChanged(resources, configuration);
         }
+    }
+
+    protected synchronized void onConfigurationCreated(Resources resources, Configuration configuration) {
+        CcCore.getColorsManager().onConfigurationCreated(resources, configuration);
+        CcCore.getDependenciesManager().onConfigurationCreated(configuration);
+    }
+
+    protected synchronized void onConfigurationChanged(Resources resources, Configuration configuration) {
+        CcCore.getColorsManager().onConfigurationChanged(resources, configuration);
+        CcCore.getDependenciesManager().onConfigurationChanged(configuration);
     }
 }

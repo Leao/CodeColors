@@ -6,9 +6,9 @@ import android.util.LongSparseArray;
 
 import io.leao.codecolors.appcompat.adapter.CcBackgroundTintAttrCallbackAdapter;
 import io.leao.codecolors.appcompat.adapter.CcTintableBackgroundColorCallbackAdapter;
+import io.leao.codecolors.core.adapter.CcAdapterManager;
 import io.leao.codecolors.core.drawable.CcAppCompatDrawableCache;
 import io.leao.codecolors.core.drawable.CcDrawableCache;
-import io.leao.codecolors.core.manager.adapter.CcAdapterManager;
 
 public class CcAppCompatSetupManager extends CcSetupManager {
     @Override

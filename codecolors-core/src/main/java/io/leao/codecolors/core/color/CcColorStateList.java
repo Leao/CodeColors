@@ -50,17 +50,8 @@ public class CcColorStateList extends ColorStateList {
         return mId;
     }
 
-    public void onBaseColorChanged(ColorStateList baseColor) {
+    protected void onBaseColorChanged(ColorStateList baseColor) {
         mColorHandler.setBaseColor(baseColor);
-    }
-
-    /**
-     * The base color for this code-color. It's this color's value before any changes occurred.
-     * <p>
-     * Do not confuse with {@link #getDefaultColor()} as its value can be changed.
-     */
-    public ColorStateList getBaseColor() {
-        return mColorHandler.getBaseColor();
     }
 
     @NonNull

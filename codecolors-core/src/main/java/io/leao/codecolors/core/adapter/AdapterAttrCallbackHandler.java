@@ -1,4 +1,4 @@
-package io.leao.codecolors.core.manager.adapter;
+package io.leao.codecolors.core.adapter;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Set;
 
 import io.leao.codecolors.core.CcCore;
-import io.leao.codecolors.core.adapter.CcAttrCallbackAdapter;
 import io.leao.codecolors.core.color.CcColorStateList;
 import io.leao.codecolors.core.util.CcTempUtils;
 

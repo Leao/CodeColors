@@ -54,9 +54,13 @@ public class CcDependencyManager {
         mResourceConfigurationDependencies = (Map<Object, Object[][]>) dependenciesField.get(null);
     }
 
-    public synchronized void onConfigurationChanged(Configuration configuration) {
+    public synchronized void onConfigurationCreated(Configuration configuration) {
         // Update configuration.
         mConfiguration = configuration;
+    }
+
+    public synchronized void onConfigurationChanged(Configuration configuration) {
+        onConfigurationCreated(configuration);
         // Clear dependencies cache.
         mResourceDependenciesCache.clear();
     }

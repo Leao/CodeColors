@@ -1,14 +1,14 @@
 package io.leao.codecolors.core;
 
+import io.leao.codecolors.core.adapter.CcAdapterManager;
+import io.leao.codecolors.core.adapter.CcAppCompatAdapterManager;
+import io.leao.codecolors.core.callback.CcCallbackManager;
+import io.leao.codecolors.core.color.CcColorManager;
+import io.leao.codecolors.core.editor.CcEditorManager;
 import io.leao.codecolors.core.manager.CcAppCompatSetupManager;
-import io.leao.codecolors.core.manager.CcColorManager;
 import io.leao.codecolors.core.manager.CcConfigurationManager;
 import io.leao.codecolors.core.manager.CcDependencyManager;
-import io.leao.codecolors.core.manager.CcEditorManager;
 import io.leao.codecolors.core.manager.CcSetupManager;
-import io.leao.codecolors.core.manager.adapter.CcAdapterManager;
-import io.leao.codecolors.core.manager.adapter.CcAppCompatAdapterManager;
-import io.leao.codecolors.core.manager.callback.CcCallbackManager;
 
 /**
  * {@link CcCore} is a hub class that has two different implementations, depending on the library version: 'codecolors'

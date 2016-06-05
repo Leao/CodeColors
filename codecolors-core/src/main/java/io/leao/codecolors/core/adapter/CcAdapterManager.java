@@ -1,13 +1,9 @@
-package io.leao.codecolors.core.manager.adapter;
+package io.leao.codecolors.core.adapter;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.view.View;
-
-import io.leao.codecolors.core.adapter.CcAttrCallbackAdapter;
-import io.leao.codecolors.core.adapter.CcColorCallbackAdapter;
-import io.leao.codecolors.core.adapter.CcDefStyleAdapter;
 
 public class CcAdapterManager {
     private AdapterColorCallbackHandler mColorCallbackHandler;

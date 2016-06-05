@@ -1,4 +1,4 @@
-package io.leao.codecolors.core.manager.adapter;
+package io.leao.codecolors.core.adapter;
 
 import android.annotation.SuppressLint;
 import android.os.Build;
@@ -19,8 +19,6 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import io.leao.codecolors.core.adapter.CcDefStyleAdapter;
 
 class AdapterDefStyleHandler {
     protected List<CcDefStyleAdapter> mAdapters = new ArrayList<>();

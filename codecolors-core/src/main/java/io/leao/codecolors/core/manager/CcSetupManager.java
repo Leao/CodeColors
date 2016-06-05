@@ -13,11 +13,12 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 import io.leao.codecolors.core.CcCore;
-import io.leao.codecolors.core.adapter.CcTextColorsColorCallbackAdapter;
+import io.leao.codecolors.core.adapter.CcAdapterManager;
+import io.leao.codecolors.core.adapter.sample.CcTextColorsColorCallbackAdapter;
+import io.leao.codecolors.core.color.CcColorManager;
 import io.leao.codecolors.core.color.CcColorStateList;
 import io.leao.codecolors.core.drawable.CcColorDrawable;
 import io.leao.codecolors.core.drawable.CcDrawableCache;
-import io.leao.codecolors.core.manager.adapter.CcAdapterManager;
 import io.leao.codecolors.core.res.CcResources;
 
 public class CcSetupManager {

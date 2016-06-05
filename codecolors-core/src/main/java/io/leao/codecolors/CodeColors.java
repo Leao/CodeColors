@@ -6,15 +6,15 @@ import android.view.View;
 
 import io.leao.codecolors.core.CcCore;
 import io.leao.codecolors.core.adapter.CcAttrCallbackAdapter;
-import io.leao.codecolors.core.adapter.CcBaseColorAdapter;
+import io.leao.codecolors.core.adapter.CcColorAdapter;
 import io.leao.codecolors.core.adapter.CcColorCallbackAdapter;
 import io.leao.codecolors.core.adapter.CcDefStyleAdapter;
 import io.leao.codecolors.core.color.CcColorStateList;
-import io.leao.codecolors.core.manager.CcSetupManager;
 import io.leao.codecolors.core.editor.CcEditorAnimate;
 import io.leao.codecolors.core.editor.CcEditorSet;
 import io.leao.codecolors.core.editor.CcMultiEditorAnimate;
 import io.leao.codecolors.core.editor.CcMultiEditorSet;
+import io.leao.codecolors.core.manager.CcSetupManager;
 
 public class CodeColors {
     public static void start(Context context) {
@@ -90,7 +90,7 @@ public class CodeColors {
         CcCore.getAdapterManager().addDefStyleAdapter(adapter);
     }
 
-    public static void setBaseColorAdapter(CcBaseColorAdapter adapter) {
+    public static void setBaseColorAdapter(CcColorAdapter adapter) {
         CcCore.getColorsManager().setBaseColorAdapter(adapter);
     }
 

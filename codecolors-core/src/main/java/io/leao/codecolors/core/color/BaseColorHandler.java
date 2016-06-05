@@ -9,7 +9,7 @@ import android.support.annotation.Nullable;
 /**
  * Varies its color depending on the color of a main color handler, but falls back to the color of a secondary color
  * handler, when the main one has no value for the current state.
- * <p/>
+ * <p>
  * The secondary color handler cannot be edited.
  */
 class BaseColorHandler implements CcColorStateList.ColorGetter<BaseColorHandler>, Parcelable {
@@ -42,11 +42,9 @@ class BaseColorHandler implements CcColorStateList.ColorGetter<BaseColorHandler>
     }
 
     public void setBaseColor(ColorStateList color) {
-        mBaseColorHandler.setColor(color);
-    }
-
-    public ColorStateList getBaseColor() {
-        return mBaseColorHandler.getColor();
+        if (mBaseColorHandler.getColor() != color) {
+            mBaseColorHandler.setColor(color);
+        }
     }
 
     @Override

@@ -1,4 +1,4 @@
-package io.leao.codecolors.core.manager.callback;
+package io.leao.codecolors.core.callback;
 
 import java.util.HashSet;
 import java.util.LinkedList;

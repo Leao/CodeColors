@@ -1,4 +1,4 @@
-package io.leao.codecolors.core.manager.adapter;
+package io.leao.codecolors.core.adapter;
 
 import android.annotation.SuppressLint;
 import android.os.Build;
