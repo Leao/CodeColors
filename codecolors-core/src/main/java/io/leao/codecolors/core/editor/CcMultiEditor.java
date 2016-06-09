@@ -17,11 +17,10 @@ public abstract class CcMultiEditor<T extends CcMultiEditor> {
         CcEditor editor;
         if (mEditors.containsKey(colorResId)) {
             editor = mEditors.get(colorResId);
-        } else if (CcCore.getColorsManager().getColor(colorResId) != null) {
-            editor = new CcEditor();
-            mEditors.put(colorResId, editor);
         } else {
-            editor = null;
+            CcColorStateList color = CcCore.getColorsManager().getColor(colorResId);
+            editor = color != null ? new CcEditor() : null;
+            mEditors.put(colorResId, editor);
         }
         return editor;
     }
