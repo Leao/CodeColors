@@ -1,37 +1,15 @@
-package io.leao.codecolors.core.callback;
+package io.leao.codecolors.core.color;
 
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 
-import io.leao.codecolors.core.color.CcColorStateList;
-
 class CallbackTempUtils {
-    private static Queue<Set<CallbackHandler>> sCallbackHandlers
-            = new LinkedList<>();
     private static Queue<Set<CallbackHandler.Reference<CcColorStateList.SingleCallback>>> sSingleCallbackSets
             = new LinkedList<>();
     private static Queue<Set<CallbackHandler.PairReference<CcColorStateList.AnchorCallback, Object>>> sPairCallbackSets
             = new LinkedList<>();
-
-    /**
-     * Make sure to call {@link #recycleCallbackHandlerSet(Set)} when you are done with the set.
-     */
-    public static Set<CallbackHandler> getCallbackHandlerSet() {
-        if (!sCallbackHandlers.isEmpty()) {
-            return sCallbackHandlers.poll();
-        } else {
-            return new HashSet<>();
-        }
-    }
-
-    public static void recycleCallbackHandlerSet(Set<CallbackHandler> set) {
-        if (set != null) {
-            set.clear();
-            sCallbackHandlers.add(set);
-        }
-    }
 
     /**
      * Make sure to call {@link #recycleSingleCallbackSet(Set)} when you are done with the set.

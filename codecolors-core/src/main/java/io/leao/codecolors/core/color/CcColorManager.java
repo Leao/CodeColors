@@ -1,5 +1,6 @@
 package io.leao.codecolors.core.color;
 
+import android.app.Activity;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -11,6 +12,9 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Set;
 
+import io.leao.codecolors.core.color.CallbackHandler.PairReference;
+import io.leao.codecolors.core.color.CallbackHandler.Reference;
+import io.leao.codecolors.core.util.CcTempUtils;
 import io.leao.codecolors.plugin.CcConst;
 
 public class CcColorManager {
@@ -37,6 +41,34 @@ public class CcColorManager {
         Field colorValueField = colorsClass.getDeclaredField(CcConst.COLOR_VALUE_FIELD_NAME);
         colorValueField.setAccessible(true);
         mColorValue = (Map<Integer, Integer>) colorValueField.get(null);
+    }
+
+    public synchronized void onActivityCreated(Activity activity) {
+        for (int colorResId : getColors()) {
+            CcColorStateList color = getColor(colorResId);
+            color.onActivityCreated(activity);
+        }
+    }
+
+    public synchronized void onActivityResumed(Activity activity) {
+        for (int colorResId : getColors()) {
+            CcColorStateList color = getColor(colorResId);
+            color.onActivityResumed(activity);
+        }
+    }
+
+    public synchronized void onActivityPaused(Activity activity) {
+        for (int colorResId : getColors()) {
+            CcColorStateList color = getColor(colorResId);
+            color.onActivityPaused(activity);
+        }
+    }
+
+    public synchronized void onActivityDestroyed(Activity activity) {
+        for (int colorResId : getColors()) {
+            CcColorStateList color = getColor(colorResId);
+            color.onActivityDestroyed(activity);
+        }
     }
 
     public synchronized void onConfigurationCreated(Resources resources, Configuration configuration) {
@@ -100,5 +132,34 @@ public class CcColorManager {
 
     public synchronized void setBaseColorAdapter(CcColorAdapter adapter) {
         mColorAdapter = adapter;
+    }
+
+    public synchronized void invalidate(CcColorStateList color) {
+        Set<Reference<CcColorStateList.SingleCallback>> invalidatedSingleCallbacks =
+                CallbackTempUtils.getSingleCallbackSet();
+        Set<PairReference<CcColorStateList.AnchorCallback, Object>> invalidatedPairCallbacks =
+                CallbackTempUtils.getPairCallbackSet();
+
+        color.getCallbackManager().invalidate(color, invalidatedSingleCallbacks, invalidatedPairCallbacks);
+
+        CallbackTempUtils.recycleSingleCallbackSet(invalidatedSingleCallbacks);
+        CallbackTempUtils.recyclePairCallbackSet(invalidatedPairCallbacks);
+    }
+
+    public synchronized void invalidateMultiple(Set<CcColorStateList> colors) {
+        Set<Reference<CcColorStateList.SingleCallback>> invalidatedSingleCallbacks =
+                CallbackTempUtils.getSingleCallbackSet();
+        Set<PairReference<CcColorStateList.AnchorCallback, Object>> invalidatedPairCallbacks =
+                CallbackTempUtils.getPairCallbackSet();
+        final Set<CcColorStateList> invalidateColors = CcTempUtils.getColorSet();
+
+        for (CcColorStateList color : colors) {
+            color.getCallbackManager().invalidateMultiple(
+                    color, colors, invalidatedSingleCallbacks, invalidatedPairCallbacks, invalidateColors);
+        }
+
+        CallbackTempUtils.recycleSingleCallbackSet(invalidatedSingleCallbacks);
+        CallbackTempUtils.recyclePairCallbackSet(invalidatedPairCallbacks);
+        CcTempUtils.recycleColorSet(invalidateColors);
     }
 }

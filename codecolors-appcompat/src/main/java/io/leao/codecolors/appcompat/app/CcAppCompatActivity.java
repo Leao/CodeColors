@@ -19,28 +19,28 @@ public class CcAppCompatActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        CcCore.getCallbackManager().onActivityCreated(this);
+        CcCore.getColorsManager().onActivityCreated(this);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        CcCore.getCallbackManager().onActivityResumed(this);
+        CcCore.getColorsManager().onActivityResumed(this);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
 
-        CcCore.getCallbackManager().onActivityPaused(this);
+        CcCore.getColorsManager().onActivityPaused(this);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
-        CcCore.getCallbackManager().onActivityDestroyed(this);
+        CcCore.getColorsManager().onActivityDestroyed(this);
     }
 
     @Override

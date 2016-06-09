@@ -6,7 +6,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import io.leao.codecolors.core.inflate.CcColorCallbackAdapter;
-import io.leao.codecolors.core.callback.sample.CcRefreshDrawableStateCallback;
+import io.leao.codecolors.core.callback.CcRefreshDrawableStateCallback;
 import io.leao.codecolors.core.color.CcColorStateList;
 
 public class CcTextColorsColorCallbackAdapter implements CcColorCallbackAdapter<View> {

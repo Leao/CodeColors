@@ -1,6 +1,5 @@
 package io.leao.codecolors.core;
 
-import io.leao.codecolors.core.callback.CcCallbackManager;
 import io.leao.codecolors.core.color.CcColorManager;
 import io.leao.codecolors.core.editor.CcEditorManager;
 import io.leao.codecolors.core.inflate.CcInflateManager;
@@ -18,7 +17,6 @@ public class CcCore {
     private final static CcColorManager sColorManager;
     private final static CcEditorManager sEditorManager;
     private final static CcInflateManager sInflateManager;
-    private final static CcCallbackManager sCallbackManager;
     private final static CcConfigurationManager sConfigurationManager;
 
     static {
@@ -27,7 +25,6 @@ public class CcCore {
         sColorManager = new CcColorManager();
         sEditorManager = new CcEditorManager();
         sInflateManager = new CcInflateManager();
-        sCallbackManager = new CcCallbackManager();
         sConfigurationManager = new CcConfigurationManager();
     }
 
@@ -49,10 +46,6 @@ public class CcCore {
 
     public static CcInflateManager getInflateManager() {
         return sInflateManager;
-    }
-
-    public static CcCallbackManager getCallbackManager() {
-        return sCallbackManager;
     }
 
     public static CcConfigurationManager getConfigurationManager() {

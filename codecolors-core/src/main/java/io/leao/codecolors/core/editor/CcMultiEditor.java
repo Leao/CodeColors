@@ -27,7 +27,7 @@ public abstract class CcMultiEditor<T extends CcMultiEditor> {
     }
 
     protected void invalidate(Set<CcColorStateList> colors) {
-        CcCore.getCallbackManager().invalidateMultiple(colors);
+        CcCore.getColorsManager().invalidateMultiple(colors);
     }
 
     /**

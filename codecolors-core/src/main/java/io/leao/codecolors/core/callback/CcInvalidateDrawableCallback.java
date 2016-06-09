@@ -1,4 +1,4 @@
-package io.leao.codecolors.core.callback.sample;
+package io.leao.codecolors.core.callback;
 
 import android.graphics.drawable.Drawable;
 

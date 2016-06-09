@@ -1,6 +1,7 @@
 package io.leao.codecolors.core.color;
 
 import android.animation.ValueAnimator;
+import android.app.Activity;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Parcel;
@@ -27,6 +28,8 @@ public class CcColorStateList extends ColorStateList {
 
     private int mId;
     private AnimatedBaseColorHandler mColorHandler;
+
+    private CallbackManager mCallbackManager = new CallbackManager();
 
     public CcColorStateList() {
         this(NO_ID);
@@ -133,17 +136,52 @@ public class CcColorStateList extends ColorStateList {
         mColorHandler.cancelAnimation();
     }
 
+    public static ValueAnimator createDefaultAnimation() {
+        ValueAnimator animation = ValueAnimator.ofFloat(0, 1);
+        animation.setDuration(DEFAULT_ANIMATION_DURATION_MS);
+        animation.setInterpolator(DEFAULT_ANIMATION_INTERPOLATOR);
+        return animation;
+    }
+
+    /*
+     * Callbacks.
+     */
+
+    CallbackManager getCallbackManager(){
+        return mCallbackManager;
+    }
+
+    public void onActivityCreated(Activity activity) {
+        mCallbackManager.onActivityCreated(activity);
+    }
+
+    public void onActivityResumed(Activity activity) {
+        mCallbackManager.onActivityResumed(activity);
+    }
+
+    public void onActivityPaused(Activity activity) {
+        mCallbackManager.onActivityPaused(activity);
+    }
+
+    public void onActivityDestroyed(Activity activity) {
+        mCallbackManager.onActivityDestroyed(activity);
+    }
+
     /**
      * The library will keep a weak reference to the callback.
      * <p>
      * Make sure to maintain a strong reference while it is needed.
      */
     public void addCallback(SingleCallback callback) {
-        CcCore.getCallbackManager().addCallback(this, callback);
+        mCallbackManager.addCallback(callback);
+    }
+
+    public boolean containsCallback(CcColorStateList.SingleCallback callback) {
+        return mCallbackManager.containsCallback(callback);
     }
 
     public void removeCallback(SingleCallback callback) {
-        CcCore.getCallbackManager().removeCallback(this, callback);
+        mCallbackManager.removeCallback(callback);
     }
 
     /**
@@ -155,24 +193,32 @@ public class CcColorStateList extends ColorStateList {
      * @param anchor   the anchor object to which the callback is dependent.
      */
     public void addAnchorCallback(AnchorCallback callback, Object anchor) {
-        CcCore.getCallbackManager().addPairCallback(this, callback, anchor);
+        mCallbackManager.addPairCallback(callback, anchor);
+    }
+
+    public boolean containsAnchorCallback(CcColorStateList.AnchorCallback callback, Object anchor) {
+        return mCallbackManager.containsPairCallback(callback, anchor);
     }
 
     public void removeAnchorCallback(AnchorCallback callback, Object anchor) {
-        CcCore.getCallbackManager().removePairCallback(this, callback, anchor);
+        mCallbackManager.removePairCallback(callback, anchor);
     }
 
     public void removeCallback(AnchorCallback callback) {
-        CcCore.getCallbackManager().removeCallback(this, callback);
+        mCallbackManager.removeCallback(callback);
     }
 
     public void removeAnchor(Object anchor) {
-        CcCore.getCallbackManager().removeAnchor(this, anchor);
+        mCallbackManager.removeAnchor(anchor);
     }
 
     public void invalidateSelf() {
-        CcCore.getCallbackManager().invalidate(this);
+        CcCore.getColorsManager().invalidate(this);
     }
+
+    /*
+     * Interfaces.
+     */
 
     public interface SingleCallback extends Callback {
         void invalidateColor(CcColorStateList color);
@@ -226,9 +272,9 @@ public class CcColorStateList extends ColorStateList {
         boolean removeState(int[] state);
     }
 
-    public String toString() {
-        return getClass().getName() + "@" + Integer.toHexString(hashCode());
-    }
+    /*
+     * Parcelable.
+     */
 
     @Override
     public int describeContents() {
@@ -254,10 +300,7 @@ public class CcColorStateList extends ColorStateList {
         }
     };
 
-    public static ValueAnimator createDefaultAnimation() {
-        ValueAnimator animation = ValueAnimator.ofFloat(0, 1);
-        animation.setDuration(DEFAULT_ANIMATION_DURATION_MS);
-        animation.setInterpolator(DEFAULT_ANIMATION_INTERPOLATOR);
-        return animation;
+    public String toString() {
+        return getClass().getName() + "@" + Integer.toHexString(hashCode());
     }
 }

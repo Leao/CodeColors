@@ -117,11 +117,9 @@ public class CcColorDrawable extends Drawable implements CcColorStateList.Single
 
     @Override
     public void invalidateColors(Set<CcColorStateList> colors) {
-        // If everything works well, 'colors' should never have more than one item.
+        // If everything works well this should never be called.
         for (CcColorStateList color : colors) {
-            if (updateUseColor(color, getState(), mCodeColorState.mAlpha)) {
-                invalidateSelf();
-            }
+            invalidateColor(color);
         }
     }
 
