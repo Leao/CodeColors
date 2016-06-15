@@ -59,7 +59,7 @@ public class AaptLocaleValue {
             // This is a "modified" BCP-47 language tag. Same semantics as BCP-47 tags,
             // except that the separator is "+" and not "-".
             String[] subtags = AaptUtil.splitAndLowerCase(part, "+");
-            subtags = (String[]) ArrayUtils.removeElement(subtags, 0);
+            subtags = (String[]) ArrayUtils.remove(subtags, 0);
             if (subtags.length == 1) {
                 setLanguage(subtags[0]);
             } else if (subtags.length == 2) {
