@@ -18,7 +18,7 @@ public abstract class CcMultiEditor<T extends CcMultiEditor> {
         if (mEditors.containsKey(colorResId)) {
             editor = mEditors.get(colorResId);
         } else {
-            CcColorStateList color = CcCore.getColorsManager().getColor(colorResId);
+            CcColorStateList color = CcCore.getColorManager().getColor(colorResId);
             editor = color != null ? new CcEditor() : null;
             mEditors.put(colorResId, editor);
         }
@@ -26,7 +26,7 @@ public abstract class CcMultiEditor<T extends CcMultiEditor> {
     }
 
     protected void invalidate(Set<CcColorStateList> colors) {
-        CcCore.getColorsManager().invalidateMultiple(colors);
+        CcCore.getColorManager().invalidateMultiple(colors);
     }
 
     /**

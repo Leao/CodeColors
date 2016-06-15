@@ -197,7 +197,7 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
             // Add own id, as a possible code-color.
             resolvedIds.add(id);
             // Get dependencies. Cannot resolve them right away, because the Theme is not yet available.
-            CcCore.getDependenciesManager().getDependencies(res, id, resolvedIds, unresolvedAttrs);
+            CcCore.getDependencyManager().getDependencies(res, id, resolvedIds, unresolvedAttrs);
 
             mResolvedIds = resolvedIds;
             mUnresolvedAttrs = unresolvedAttrs;
@@ -278,7 +278,7 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
                     mThemeIds.clear();
                 }
 
-                CcCore.getDependenciesManager().resolveDependencies(t, mResources, mUnresolvedAttrs, mThemeIds);
+                CcCore.getDependencyManager().resolveDependencies(t, mResources, mUnresolvedAttrs, mThemeIds);
                 for (Integer id : mThemeIds) {
                     if (addCallback(id, drawable)) {
                         mThemeIds.add(id);
@@ -294,7 +294,7 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
         }
 
         protected boolean addCallback(int id, CcDrawableWrapper drawable) {
-            CcColorStateList color = CcCore.getColorsManager().getColor(id);
+            CcColorStateList color = CcCore.getColorManager().getColor(id);
             if (color != null) {
                 color.addCallback(drawable);
                 return true;
@@ -303,7 +303,7 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
         }
 
         protected void removeCallback(int id, CcDrawableWrapper drawable) {
-            CcColorStateList color = CcCore.getColorsManager().getColor(id);
+            CcColorStateList color = CcCore.getColorManager().getColor(id);
             if (color != null) {
                 color.removeCallback(drawable);
             }

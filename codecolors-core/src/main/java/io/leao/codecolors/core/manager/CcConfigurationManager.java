@@ -25,12 +25,12 @@ public class CcConfigurationManager {
     }
 
     protected synchronized void onConfigurationCreated(Resources resources, Configuration configuration) {
-        CcCore.getColorsManager().onConfigurationCreated(resources, configuration);
-        CcCore.getDependenciesManager().onConfigurationCreated(configuration);
+        CcCore.getColorManager().onConfigurationCreated(resources, configuration);
+        CcCore.getDependencyManager().onConfigurationCreated(configuration);
     }
 
     protected synchronized void onConfigurationChanged(Resources resources, Configuration configuration) {
-        CcCore.getColorsManager().onConfigurationChanged(resources, configuration);
-        CcCore.getDependenciesManager().onConfigurationChanged(configuration);
+        CcCore.getColorManager().onConfigurationChanged(resources, configuration);
+        CcCore.getDependencyManager().onConfigurationChanged(configuration);
     }
 }

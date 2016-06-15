@@ -91,7 +91,7 @@ class AttrCallbackHandler {
                             if (resolvedIds == null) {
                                 resolvedIds = CcTempUtils.getIntegerSet();
                                 resolvedIds.add(resourceId);
-                                CcCore.getDependenciesManager().resolveDependencies(
+                                CcCore.getDependencyManager().resolveDependencies(
                                         context.getTheme(), context.getResources(), resourceId, resolvedIds);
                             }
 
@@ -99,7 +99,7 @@ class AttrCallbackHandler {
                             // If there are dependencies, resourceId is included in the set.
                             // Otherwise, the set is empty.
                             for (Integer dependency : resolvedIds) {
-                                CcColorStateList codeColor = CcCore.getColorsManager().getColor(dependency);
+                                CcColorStateList codeColor = CcCore.getColorManager().getColor(dependency);
                                 if (codeColor != null) {
                                     codeColor.addAnchorCallback(cacheResult.callback, inflateResult.anchor);
                                 }

@@ -31,10 +31,10 @@ public class CcSetupManager {
         try {
             String packageName = context.getPackageName();
             // Initialize colors.
-            CcColorManager colorsManager = CcCore.getColorsManager();
+            CcColorManager colorsManager = CcCore.getColorManager();
             colorsManager.init(packageName);
             // Initialize dependencies.
-            CcCore.getDependenciesManager().init(packageName);
+            CcCore.getDependencyManager().init(packageName);
 
             Resources resources = context.getResources();
             // The SparseArray that holds the entries of preloaded colors.

@@ -48,7 +48,7 @@ public class CodeColors {
     }
 
     public static CcColorStateList getColor(int resId) {
-        return CcCore.getColorsManager().getColor(resId);
+        return CcCore.getColorManager().getColor(resId);
     }
 
     public static CcEditorSet set(int resId) {
@@ -91,7 +91,7 @@ public class CodeColors {
     }
 
     public static void setBaseColorAdapter(CcColorAdapter adapter) {
-        CcCore.getColorsManager().setBaseColorAdapter(adapter);
+        CcCore.getColorManager().setBaseColorAdapter(adapter);
     }
 
     public interface Callback {

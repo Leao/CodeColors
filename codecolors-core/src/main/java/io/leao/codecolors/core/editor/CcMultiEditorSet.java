@@ -11,7 +11,7 @@ public class CcMultiEditorSet extends CcMultiEditor<CcMultiEditorSet> {
         Set<CcColorStateList> changedColors = CcTempUtils.getColorSet();
 
         for (int colorResId : mEditors.keySet()) {
-            CcColorStateList color = CcCore.getColorsManager().getColor(colorResId);
+            CcColorStateList color = CcCore.getColorManager().getColor(colorResId);
             if (color != null) {
                 CcEditor editor = mEditors.get(colorResId);
                 boolean changed = color.set(editor);

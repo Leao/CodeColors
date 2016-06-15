@@ -213,7 +213,7 @@ public class CcColorStateList extends ColorStateList {
     }
 
     public void invalidateSelf() {
-        CcCore.getColorsManager().invalidate(this);
+        CcCore.getColorManager().invalidate(this);
     }
 
     /*

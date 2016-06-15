@@ -90,7 +90,7 @@ public class CcDrawableCache extends LongSparseArray<Drawable.ConstantState> {
 
     protected CcDrawableWrapper.CcConstantState onCreateDrawableWrapperConstantState(int id,
                                                                                      Drawable.ConstantState baseCs) {
-        if (CcCore.getDependenciesManager().hasDependencies(mResources, id)) {
+        if (CcCore.getDependencyManager().hasDependencies(mResources, id)) {
             return baseCs != null ?
                     new CcDrawableWrapper.CcConstantState(mResources, id, baseCs) :
                     new CcDrawableWrapper.CcConstantState(mResources, id);

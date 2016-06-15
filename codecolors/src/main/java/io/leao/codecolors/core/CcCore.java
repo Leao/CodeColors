@@ -32,11 +32,11 @@ public class CcCore {
         return sSetupManager;
     }
 
-    public static CcDependencyManager getDependenciesManager() {
+    public static CcDependencyManager getDependencyManager() {
         return sDependencyManager;
     }
 
-    public static CcColorManager getColorsManager() {
+    public static CcColorManager getColorManager() {
         return sColorManager;
     }
 
