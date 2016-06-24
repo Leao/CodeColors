@@ -1,16 +1,21 @@
 package io.leao.codecolors.core.drawable;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
+import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.InsetDrawable;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.util.TypedValue;
 
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.Set;
 
 import io.leao.codecolors.core.CcCore;
@@ -18,9 +23,33 @@ import io.leao.codecolors.core.color.CcColorStateList;
 import io.leao.codecolors.core.res.CcResources;
 
 import static io.leao.codecolors.core.drawable.CcDrawableUtils.forceStateChange;
+import static io.leao.codecolors.core.drawable.CcDrawableUtils.getActivity;
+import static io.leao.codecolors.core.drawable.CcDrawableUtils.getContext;
+import static io.leao.codecolors.core.drawable.CcDrawableUtils.getRootDrawable;
+import static io.leao.codecolors.core.drawable.CcDrawableUtils.getView;
 
 public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList.SingleCallback {
+    private boolean mFirstDraw = true;
+
     protected CcConstantState mState;
+    /**
+     * We store an Activity reference to be able to divide the {@link CcColorStateList.SingleCallback}s by different
+     * activities. However, sometimes is not easy to guess the Activity to which this drawable belongs to.
+     * <p>
+     * When the drawable is first created, we store a reference to the last resumed Activity. This is our first guess.
+     * However, some drawables are only created in the drawing pass, and sometimes their Activity was already paused and
+     * a different Activity resumed.
+     * <p>
+     * On our first drawing pass, we will try to get an Activity based on our {@link Drawable.Callback}'s Context. If we
+     * are able to get a valid Activity, we will override our first guess reference with the newly found Activity
+     * reference. Otherwise, we will fallback to our first guess to add the {@link CcColorStateList.SingleCallback}s.
+     * <p>
+     * If, for some reason, our first guess had a null Activity referenced, and we couldn't get a valid Activity based
+     * on our {@link Drawable.Callback}, we will make use of the last resumed Activity on the first drawing pass, to add
+     * the {@link CcColorStateList.SingleCallback}s. That is what happens when we pass null to
+     * {@link CcColorStateList#addCallback(Activity, CcColorStateList.SingleCallback)}.
+     */
+    protected WeakReference<Activity> mActivityRef;
     protected Drawable mDrawable;
 
     private Set<Drawable> mPreparedDrawables;
@@ -29,7 +58,35 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
     public CcDrawableWrapper(CcConstantState state, Drawable drawable) {
         super(drawable, 0);
         mState = state;
+        mActivityRef = CcCore.getActivityManager().getLastResumedActivityReference();
         mDrawable = drawable;
+    }
+
+    @Override
+    public void draw(@NonNull Canvas canvas) {
+        if (mFirstDraw) {
+            mFirstDraw = false;
+            onFirstDraw();
+        }
+        super.draw(canvas);
+    }
+
+    protected void onFirstDraw() {
+        Context context = getContext(getView(getRootDrawable(this)));
+
+        // Backwards compatibility for Themes to resolve attributes.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            if (context != null) {
+                applyThemeInternal(context.getTheme());
+            }
+        }
+
+        // Get the Activity to which this drawable belongs, based on its Drawable.Callback.
+        Activity activity = getActivity(context);
+        if (activity != null) {
+            mActivityRef = CcCore.getActivityManager().getActivityReference(activity);
+        }
+        mState.onAddCallbacks(mActivityRef.get(), this);
     }
 
     /**
@@ -65,8 +122,11 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             super.applyTheme(t);
         }
+        applyThemeInternal(t);
+    }
 
-        mState.applyTheme(t, this);
+    protected void applyThemeInternal(Resources.Theme theme) {
+        mState.resolveAttributes(theme);
     }
 
     @Override
@@ -251,12 +311,7 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
                 state = createState(baseConstantState);
             }
 
-            CcDrawableWrapper drawable = state.createDrawable(baseDrawable);
-
-            addCallbacks(mResolvedIds, drawable);
-            addCallbacks(mThemeIds, drawable);
-
-            return drawable;
+            return state.createDrawable(baseDrawable);
         }
 
         protected CcConstantState createState(ConstantState baseConstantState) {
@@ -267,45 +322,33 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
             return new CcDrawableWrapper(this, drawable);
         }
 
-        protected void applyTheme(Resources.Theme t, CcDrawableWrapper drawable) {
+        public void resolveAttributes(Resources.Theme theme) {
+            // Theme dependent resources.
             if (mUnresolvedAttrs.size() > 0) {
                 if (mThemeIds.size() > 0) {
-                    // Remove callbacks from old theme dependencies.
-                    for (Integer id : mThemeIds) {
-                        removeCallback(id, drawable);
-                    }
                     // Clear old theme ids.
                     mThemeIds.clear();
                 }
 
-                CcCore.getDependencyManager().resolveDependencies(t, mResources, mUnresolvedAttrs, mThemeIds);
-                for (Integer id : mThemeIds) {
-                    if (addCallback(id, drawable)) {
-                        mThemeIds.add(id);
-                    }
+                CcCore.getDependencyManager().resolveDependencies(theme, mResources, mUnresolvedAttrs, mThemeIds);
+            }
+        }
+
+        protected void onAddCallbacks(Activity activity, CcDrawableWrapper drawable) {
+            addCallbacks(mResolvedIds, activity, drawable);
+            addCallbacks(mThemeIds, activity, drawable);
+        }
+
+        protected void addCallbacks(Set<Integer> dependencies, Activity activity, CcDrawableWrapper drawable) {
+            Iterator<Integer> iterator = dependencies.iterator();
+            while (iterator.hasNext()) {
+                int dependencyId = iterator.next();
+                CcColorStateList color = CcCore.getColorManager().getColor(dependencyId);
+                if (color != null) {
+                    color.addCallback(activity, drawable);
+                } else {
+                    iterator.remove();
                 }
-            }
-        }
-
-        protected void addCallbacks(Set<Integer> dependencies, CcDrawableWrapper drawable) {
-            for (int dependencyId : dependencies) {
-                addCallback(dependencyId, drawable);
-            }
-        }
-
-        protected boolean addCallback(int id, CcDrawableWrapper drawable) {
-            CcColorStateList color = CcCore.getColorManager().getColor(id);
-            if (color != null) {
-                color.addCallback(drawable);
-                return true;
-            }
-            return false;
-        }
-
-        protected void removeCallback(int id, CcDrawableWrapper drawable) {
-            CcColorStateList color = CcCore.getColorManager().getColor(id);
-            if (color != null) {
-                color.removeCallback(drawable);
             }
         }
 

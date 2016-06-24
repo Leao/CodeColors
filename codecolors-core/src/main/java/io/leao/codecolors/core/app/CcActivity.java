@@ -15,37 +15,37 @@ public class CcActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+        CcCore.getActivityManager().onActivityCreated(this);
 
-        CcCore.getColorManager().onActivityCreated(this);
+        super.onCreate(savedInstanceState);
     }
 
     @Override
     protected void onResume() {
-        super.onResume();
+        CcCore.getActivityManager().onActivityResumed(this);
 
-        CcCore.getColorManager().onActivityResumed(this);
+        super.onResume();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
 
-        CcCore.getColorManager().onActivityPaused(this);
+        CcCore.getActivityManager().onActivityPaused(this);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
-        CcCore.getColorManager().onActivityDestroyed(this);
+        CcCore.getActivityManager().onActivityDestroyed(this);
     }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
+        CcCore.getActivityManager().onConfigurationChanged(newConfig, getResources());
 
-        CcCore.getConfigurationManager().onConfigurationChanged(getResources());
+        super.onConfigurationChanged(newConfig);
     }
 
     @Override

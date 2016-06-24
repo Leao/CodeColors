@@ -101,7 +101,7 @@ class AttrCallbackHandler {
                             for (Integer dependency : resolvedIds) {
                                 CcColorStateList codeColor = CcCore.getColorManager().getColor(dependency);
                                 if (codeColor != null) {
-                                    codeColor.addAnchorCallback(cacheResult.callback, inflateResult.anchor);
+                                    codeColor.addAnchorCallback(null, cacheResult.callback, inflateResult.anchor);
                                 }
                             }
                         }

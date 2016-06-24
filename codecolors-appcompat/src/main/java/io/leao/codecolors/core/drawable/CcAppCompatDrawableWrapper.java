@@ -1,15 +1,14 @@
 package io.leao.codecolors.core.drawable;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
-import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.support.annotation.NonNull;
 import android.support.v4.view.TintableBackgroundView;
 import android.support.v7.widget.AppCompatDrawableManager;
 import android.view.View;
@@ -18,44 +17,20 @@ import java.util.HashSet;
 import java.util.Set;
 
 import io.leao.codecolors.appcompat.tint.CcTintManager;
+import io.leao.codecolors.core.CcCore;
 import io.leao.codecolors.core.color.CcColorStateList;
 
-import static io.leao.codecolors.core.drawable.CcAppCompatDrawableUtils.getContext;
-import static io.leao.codecolors.core.drawable.CcAppCompatDrawableUtils.getRootDrawable;
-import static io.leao.codecolors.core.drawable.CcAppCompatDrawableUtils.getView;
+import static io.leao.codecolors.core.drawable.CcDrawableUtils.getContext;
+import static io.leao.codecolors.core.drawable.CcDrawableUtils.getRootDrawable;
+import static io.leao.codecolors.core.drawable.CcDrawableUtils.getView;
 
 public class CcAppCompatDrawableWrapper extends CcDrawableWrapper {
-    private boolean mCheckTheme = true;
-
     private boolean mUpdateTintList;
     private ColorStateList mTintList;
 
     public CcAppCompatDrawableWrapper(CcAppCompatDrawableWrapper.CcConstantState state, Drawable drawable) {
         super(state, drawable);
         mUpdateTintList = true;
-    }
-
-    @Override
-    public void draw(@NonNull Canvas canvas) {
-        checkTheme();
-        super.draw(canvas);
-    }
-
-    private void checkTheme() {
-        if (mCheckTheme) {
-            mCheckTheme = false;
-
-            Context context = getContext(getView(getRootDrawable(this)));
-            if (context != null) {
-                applyTheme(context.getTheme());
-            }
-        }
-    }
-
-    @Override
-    public void applyTheme(@NonNull Resources.Theme t) {
-        mCheckTheme = false;
-        super.applyTheme(t);
     }
 
     @Override
@@ -219,31 +194,35 @@ public class CcAppCompatDrawableWrapper extends CcDrawableWrapper {
         }
 
         @Override
-        protected void applyTheme(Resources.Theme t, CcDrawableWrapper drawable) {
+        public void resolveAttributes(Resources.Theme theme) {
+            super.resolveAttributes(theme);
+
             if (mTintIds.size() > 0) {
-                // Remove callbacks from old tint dependencies.
-                for (Integer id : mTintIds) {
-                    removeCallback(id, drawable);
-                }
                 // Clear old tint ids.
                 mTintIds.clear();
             }
 
-            TypedArray ta = t.obtainStyledAttributes(mAttrs);
+            TypedArray ta = theme.obtainStyledAttributes(mAttrs);
             try {
                 int N = ta.getIndexCount();
                 for (int i = 0; i < N; i++) {
                     int index = ta.getIndex(i);
                     int id = ta.getResourceId(index, 0);
-                    if (addCallback(id, drawable)) {
+                    // If the color exists, adds this as callback, and the id as a valid tint id.
+                    CcColorStateList color = CcCore.getColorManager().getColor(id);
+                    if (color != null) {
                         mTintIds.add(id);
                     }
                 }
             } finally {
                 ta.recycle();
             }
+        }
 
-            super.applyTheme(t, drawable);
+        @Override
+        protected void onAddCallbacks(Activity activity, CcDrawableWrapper drawable) {
+            super.onAddCallbacks(activity, drawable);
+            addCallbacks(mTintIds, activity, drawable);
         }
     }
 }

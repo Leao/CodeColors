@@ -29,7 +29,7 @@ public class CcColorStateList extends ColorStateList {
     private int mId;
     private AnimatedBaseColorHandler mColorHandler;
 
-    private CallbackManager mCallbackManager = new CallbackManager();
+    private CallbackHandlerManager mCallbackHandlerManager;
 
     public CcColorStateList() {
         this(NO_ID);
@@ -43,6 +43,7 @@ public class CcColorStateList extends ColorStateList {
         super(EMPTY, new int[]{DEFAULT_COLOR});
         mId = id;
         mColorHandler = colorHandler;
+        mCallbackHandlerManager = new CallbackHandlerManager(this);
     }
 
     private CcColorStateList(Parcel source) {
@@ -147,69 +148,91 @@ public class CcColorStateList extends ColorStateList {
      * Callbacks.
      */
 
-    CallbackManager getCallbackManager(){
-        return mCallbackManager;
+    CallbackHandlerManager getCallbackHandlerManager() {
+        return mCallbackHandlerManager;
     }
 
-    public void onActivityCreated(Activity activity) {
-        mCallbackManager.onActivityCreated(activity);
+    void onActivityCreated(Activity activity) {
+        mCallbackHandlerManager.onActivityCreated(activity);
     }
 
-    public void onActivityResumed(Activity activity) {
-        mCallbackManager.onActivityResumed(activity);
+    void onActivityResumed(Activity activity) {
+        mCallbackHandlerManager.onActivityResumed(activity);
     }
 
-    public void onActivityPaused(Activity activity) {
-        mCallbackManager.onActivityPaused(activity);
+    void onActivityPaused(Activity activity) {
+        mCallbackHandlerManager.onActivityPaused(activity);
     }
 
-    public void onActivityDestroyed(Activity activity) {
-        mCallbackManager.onActivityDestroyed(activity);
+    void onActivityDestroyed(Activity activity) {
+        mCallbackHandlerManager.onActivityDestroyed(activity);
     }
 
     /**
      * The library will keep a weak reference to the callback.
-     * <p>
+     * <p/>
      * Make sure to maintain a strong reference while it is needed.
+     *
+     * @param activity if null, the library will use the most recently created or resumed activity.
      */
-    public void addCallback(SingleCallback callback) {
-        mCallbackManager.addCallback(callback);
+    public void addCallback(@Nullable Activity activity, SingleCallback callback) {
+        mCallbackHandlerManager.addCallback(activity, callback);
     }
 
-    public boolean containsCallback(CcColorStateList.SingleCallback callback) {
-        return mCallbackManager.containsCallback(callback);
+    /**
+     * @param activity if null, the library will use the most recently created or resumed activity.
+     */
+    public boolean containsCallback(@Nullable Activity activity, CcColorStateList.SingleCallback callback) {
+        return mCallbackHandlerManager.containsCallback(activity, callback);
     }
 
-    public void removeCallback(SingleCallback callback) {
-        mCallbackManager.removeCallback(callback);
+    /**
+     * @param activity if null, the library will use the most recently created or resumed activity.
+     */
+    public void removeCallback(@Nullable Activity activity, SingleCallback callback) {
+        mCallbackHandlerManager.removeCallback(activity, callback);
     }
 
     /**
      * The library will keep a weak reference to both callback and anchor.
-     * <p>
+     * <p/>
      * Make sure to maintain a strong reference while they are needed.
      *
+     * @param activity if null, the library will use the most recently created or resumed activity.
      * @param callback the callback.
      * @param anchor   the anchor object to which the callback is dependent.
      */
-    public void addAnchorCallback(AnchorCallback callback, Object anchor) {
-        mCallbackManager.addPairCallback(callback, anchor);
+    public void addAnchorCallback(@Nullable Activity activity, AnchorCallback callback, Object anchor) {
+        mCallbackHandlerManager.addPairCallback(activity, callback, anchor);
     }
 
-    public boolean containsAnchorCallback(CcColorStateList.AnchorCallback callback, Object anchor) {
-        return mCallbackManager.containsPairCallback(callback, anchor);
+    /**
+     * @param activity if null, the library will use the most recently created or resumed activity.
+     */
+    public boolean containsAnchorCallback(@Nullable Activity activity, CcColorStateList.AnchorCallback callback,
+                                          Object anchor) {
+        return mCallbackHandlerManager.containsPairCallback(activity, callback, anchor);
     }
 
-    public void removeAnchorCallback(AnchorCallback callback, Object anchor) {
-        mCallbackManager.removePairCallback(callback, anchor);
+    /**
+     * @param activity if null, the library will use the most recently created or resumed activity.
+     */
+    public void removeAnchorCallback(@Nullable Activity activity, AnchorCallback callback, Object anchor) {
+        mCallbackHandlerManager.removePairCallback(activity, callback, anchor);
     }
 
-    public void removeCallback(AnchorCallback callback) {
-        mCallbackManager.removeCallback(callback);
+    /**
+     * @param activity if null, the library will use the most recently created or resumed activity.
+     */
+    public void removeCallback(@Nullable Activity activity, AnchorCallback callback) {
+        mCallbackHandlerManager.removeCallback(activity, callback);
     }
 
-    public void removeAnchor(Object anchor) {
-        mCallbackManager.removeAnchor(anchor);
+    /**
+     * @param activity if null, the library will use the most recently created or resumed activity.
+     */
+    public void removeAnchor(@Nullable Activity activity, Object anchor) {
+        mCallbackHandlerManager.removeAnchor(activity, anchor);
     }
 
     public void invalidateSelf() {

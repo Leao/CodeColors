@@ -140,7 +140,7 @@ public class CcColorManager {
         Set<PairReference<CcColorStateList.AnchorCallback, Object>> invalidatedPairCallbacks =
                 CallbackTempUtils.getPairCallbackSet();
 
-        color.getCallbackManager().invalidate(color, invalidatedSingleCallbacks, invalidatedPairCallbacks);
+        color.getCallbackHandlerManager().invalidate(invalidatedSingleCallbacks, invalidatedPairCallbacks);
 
         CallbackTempUtils.recycleSingleCallbackSet(invalidatedSingleCallbacks);
         CallbackTempUtils.recyclePairCallbackSet(invalidatedPairCallbacks);
@@ -154,8 +154,8 @@ public class CcColorManager {
         final Set<CcColorStateList> invalidateColors = CcTempUtils.getColorSet();
 
         for (CcColorStateList color : colors) {
-            color.getCallbackManager().invalidateMultiple(
-                    color, colors, invalidatedSingleCallbacks, invalidatedPairCallbacks, invalidateColors);
+            color.getCallbackHandlerManager()
+                    .invalidateMultiple(colors, invalidatedSingleCallbacks, invalidatedPairCallbacks, invalidateColors);
         }
 
         CallbackTempUtils.recycleSingleCallbackSet(invalidatedSingleCallbacks);

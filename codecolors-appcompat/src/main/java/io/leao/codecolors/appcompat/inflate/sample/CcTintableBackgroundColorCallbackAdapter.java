@@ -1,13 +1,16 @@
 package io.leao.codecolors.appcompat.inflate.sample;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.res.ColorStateList;
 import android.support.v4.view.TintableBackgroundView;
 import android.util.AttributeSet;
 import android.view.View;
 
+import java.lang.ref.WeakReference;
 import java.util.Set;
 
+import io.leao.codecolors.core.CcCore;
 import io.leao.codecolors.core.color.CcColorStateList;
 import io.leao.codecolors.core.inflate.CcColorCallbackAdapter;
 
@@ -41,15 +44,17 @@ public class CcTintableBackgroundColorCallbackAdapter implements CcColorCallback
 
     private static class TintableBackgroundCallback implements CcColorStateList.AnchorCallback<View> {
         private ColorStateList mBackgroundTintList;
+        private WeakReference<Activity> mActivityRef;
 
         public TintableBackgroundCallback(ColorStateList backgroundTintList) {
             mBackgroundTintList = backgroundTintList;
+            mActivityRef = CcCore.getActivityManager().getLastResumedActivityReference();
         }
 
         @Override
         public void invalidateColor(View view, CcColorStateList color) {
             if (!refreshDrawableState(view)) {
-                color.removeCallback(this);
+                color.removeCallback(mActivityRef.get(), this);
             }
         }
 
@@ -57,7 +62,7 @@ public class CcTintableBackgroundColorCallbackAdapter implements CcColorCallback
         public void invalidateColors(View view, Set<CcColorStateList> colors) {
             if (!refreshDrawableState(view)) {
                 for (CcColorStateList color : colors) {
-                    color.removeCallback(this);
+                    color.removeCallback(mActivityRef.get(), this);
                 }
             }
         }

@@ -69,7 +69,7 @@ class ColorCallbackHandler {
             }
             // Set callback, if valid.
             if (callback != null) {
-                color.addAnchorCallback(callback, result.anchor);
+                color.addAnchorCallback(null, callback, result.anchor);
             }
         }
     }

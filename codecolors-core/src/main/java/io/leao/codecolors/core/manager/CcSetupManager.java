@@ -97,7 +97,8 @@ public class CcSetupManager {
         onCodeColorsSetupSuccess(useDefaultCallbackAdapters, callback);
 
         // Configure colors and dependencies for current configuration.
-        CcCore.getConfigurationManager().onConfigurationChanged(context.getResources());
+        Resources resources = context.getResources();
+        CcCore.getActivityManager().onConfigurationChanged(resources.getConfiguration(), resources);
     }
 
     protected CcDrawableCache onCreateDrawableCache(Context context, LongSparseArray<Drawable.ConstantState> cache) {

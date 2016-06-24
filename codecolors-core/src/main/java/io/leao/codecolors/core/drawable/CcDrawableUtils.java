@@ -1,12 +1,44 @@
 package io.leao.codecolors.core.drawable;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.DrawableContainer;
 import android.os.Build;
 import android.util.StateSet;
+import android.view.View;
 
 public class CcDrawableUtils {
+    public static Activity getActivity(Context context) {
+        if (context instanceof Activity) {
+            return (Activity) context;
+        } else if (context instanceof ContextWrapper) {
+            return getActivity(((ContextWrapper) context).getBaseContext());
+        } else {
+            return null;
+        }
+    }
+
+    public static Context getContext(View view) {
+        return view != null ? view.getContext() : null;
+    }
+
+    public static View getView(Drawable rootDrawable) {
+        Drawable.Callback callback = rootDrawable.getCallback();
+        return callback instanceof View ? (View) callback : null;
+    }
+
+    public static Drawable getRootDrawable(Drawable drawable) {
+        Drawable.Callback callback = drawable.getCallback();
+        if (callback instanceof Drawable) {
+            return getRootDrawable((Drawable) callback);
+        } else {
+            return drawable;
+        }
+    }
+
     public static void forceStateChange(Drawable drawable) {
         forceStateChange(drawable, true);
     }
@@ -55,7 +87,7 @@ public class CcDrawableUtils {
     /**
      * Returns a new state that will seem to have changed in {@link Drawable#setState(int[])}, allowing
      * {@link Drawable#onStateChange(int[])} to be called.
-     * <p>
+     * <p/>
      * However, the returned state is the same state with 0 (nothing) as the last item, or the reverse of that.
      */
     public static int[] getForceState(int[] state) {

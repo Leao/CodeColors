@@ -1,7 +1,7 @@
 package io.leao.codecolors.core.drawable;
 
+import android.app.Activity;
 import android.content.res.ColorStateList;
-import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
@@ -14,9 +14,16 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.NonNull;
 
+import java.lang.ref.WeakReference;
 import java.util.Set;
 
+import io.leao.codecolors.core.CcCore;
 import io.leao.codecolors.core.color.CcColorStateList;
+
+import static io.leao.codecolors.core.drawable.CcDrawableUtils.getActivity;
+import static io.leao.codecolors.core.drawable.CcDrawableUtils.getContext;
+import static io.leao.codecolors.core.drawable.CcDrawableUtils.getRootDrawable;
+import static io.leao.codecolors.core.drawable.CcDrawableUtils.getView;
 
 /**
  * Inspired in {@link android.graphics.drawable.ColorDrawable}, but instead of making use of a {@code int} color, it
@@ -28,12 +35,31 @@ public class CcColorDrawable extends Drawable implements CcColorStateList.Single
 
     private static final PorterDuff.Mode DEFAULT_TINT_MODE = PorterDuff.Mode.SRC_IN;
 
-    private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    protected final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private boolean mFirstDraw = true;
 
-    private CodeColorState mCodeColorState;
-    private CodePorterDuffColorFilter mTintFilter;
+    protected CodeColorState mCodeColorState;
+    /**
+     * We store an Activity reference to be able to divide the {@link CcColorStateList.SingleCallback}s by different
+     * activities. However, sometimes is not easy to guess the Activity to which this drawable belongs to.
+     * <p>
+     * When the drawable is first created, we store a reference to the last resumed Activity. This is our first guess.
+     * However, some drawables are only created in the drawing pass, and sometimes their Activity was already paused and
+     * a different Activity resumed.
+     * <p>
+     * On our first drawing pass, we will try to get an Activity based on our {@link Drawable.Callback}'s Context. If we
+     * are able to get a valid Activity, we will override our first guess reference with the newly found Activity
+     * reference. Otherwise, we will fallback to our first guess to add the {@link CcColorStateList.SingleCallback}s.
+     * <p>
+     * If, for some reason, our first guess had a null Activity referenced, and we couldn't get a valid Activity based
+     * on our {@link Drawable.Callback}, we will make use of the last resumed Activity on the first drawing pass, to add
+     * the {@link CcColorStateList.SingleCallback}s. That is what happens when we pass null to
+     * {@link CcColorStateList#addCallback(Activity, CcColorStateList.SingleCallback)}.
+     */
+    protected WeakReference<Activity> mActivityRef;
 
-    private int mUseColor;
+    protected int mUseColor;
+    protected CodePorterDuffColorFilter mTintFilter;
 
     private boolean mMutated;
 
@@ -43,8 +69,106 @@ public class CcColorDrawable extends Drawable implements CcColorStateList.Single
      * @param color The color to draw.
      */
     public CcColorDrawable(CcColorStateList color) {
-        mCodeColorState = new CodeColorState(color);
+        this(new CodeColorState(color));
+    }
+
+    private CcColorDrawable(CodeColorState state) {
+        mCodeColorState = state;
+        mActivityRef = CcCore.getActivityManager().getLastResumedActivityReference();
         updateLocalState();
+    }
+
+    /**
+     * Initializes local dynamic properties from state. This should be called
+     * after significant state changes, e.g. from the One True Constructor and
+     * after inflating or applying a theme.
+     */
+    protected void updateLocalState() {
+        updateUseColor(mCodeColorState.mColor, getState(), mCodeColorState.mAlpha);
+        updateTintFilter(mCodeColorState.mTint, mCodeColorState.mTintMode);
+    }
+
+    /**
+     * Ensures the use color is consistent with the current color state and alpha.
+     *
+     * @return {@code true} if use color changed; false, otherwise.
+     */
+    protected boolean updateUseColor(CcColorStateList color, int[] stateSet, int alpha) {
+        // Color.
+        int baseColor = color != null ?
+                color.getColorForState(stateSet, color.getDefaultColor()) :
+                COLOR_DEFAULT;
+        // Alpha.
+        alpha += alpha >> 7;   // make it 0..256
+        int baseAlpha = baseColor >>> 24;
+        int useAlpha = baseAlpha * alpha >> 8;
+        int useColor = (baseColor << 8 >>> 8) | (useAlpha << 24);
+
+        if (mUseColor != useColor) {
+            mUseColor = useColor;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Ensures the tint filter is consistent with the current tint color and mode.
+     *
+     * @return {@code true} if tint filter changed; false, otherwise.
+     */
+    protected boolean updateTintFilter(ColorStateList tint, PorterDuff.Mode tintMode) {
+        CodePorterDuffColorFilter tintFilter;
+        if (tint == null || tintMode == null) {
+            tintFilter = null;
+        } else {
+            final int color = tint.getColorForState(getState(), Color.TRANSPARENT);
+            if (mTintFilter == null || mTintFilter.getColor() != color || mTintFilter.getMode() != tintMode) {
+                tintFilter = new CodePorterDuffColorFilter(color, tintMode);
+            } else {
+                tintFilter = mTintFilter;
+            }
+        }
+
+        if (mTintFilter != tintFilter) {
+            mTintFilter = tintFilter;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public void draw(Canvas canvas) {
+        if (mFirstDraw) {
+            mFirstDraw = false;
+            onFirstDraw();
+        }
+
+        final ColorFilter colorFilter = mPaint.getColorFilter();
+        if ((mUseColor >>> 24) != 0 || colorFilter != null || mTintFilter != null) {
+            if (colorFilter == null) {
+                mPaint.setColorFilter(mTintFilter);
+            }
+
+            mPaint.setColor(mUseColor);
+            canvas.drawRect(getBounds(), mPaint);
+
+            // Restore original color filter.
+            mPaint.setColorFilter(colorFilter);
+        }
+    }
+
+    protected void onFirstDraw() {
+        // If we have a valid color, add this drawable as its callback.
+        if (mCodeColorState.mColor != null) {
+            // Get the Activity to which this drawable belongs, based on its Drawable.Callback.
+            Activity activity = getActivity(getContext(getView(getRootDrawable(this))));
+            if (activity != null) {
+                mActivityRef = CcCore.getActivityManager().getActivityReference(activity);
+            }
+            mCodeColorState.mColor.addCallback(mActivityRef.get(), this);
+        }
     }
 
     @Override
@@ -59,22 +183,6 @@ public class CcColorDrawable extends Drawable implements CcColorStateList.Single
             mMutated = true;
         }
         return this;
-    }
-
-    @Override
-    public void draw(Canvas canvas) {
-        final ColorFilter colorFilter = mPaint.getColorFilter();
-        if ((mUseColor >>> 24) != 0 || colorFilter != null || mTintFilter != null) {
-            if (colorFilter == null) {
-                mPaint.setColorFilter(mTintFilter);
-            }
-
-            mPaint.setColor(mUseColor);
-            canvas.drawRect(getBounds(), mPaint);
-
-            // Restore original color filter.
-            mPaint.setColorFilter(colorFilter);
-        }
     }
 
     /**
@@ -96,11 +204,11 @@ public class CcColorDrawable extends Drawable implements CcColorStateList.Single
     public void setColor(CcColorStateList color) {
         if (mCodeColorState.mColor != color) {
             if (mCodeColorState.mColor != null) {
-                mCodeColorState.mColor.removeCallback(this);
+                mCodeColorState.mColor.removeCallback(mActivityRef.get(), this);
             }
             mCodeColorState.mColor = color;
             if (mCodeColorState.mColor != null) {
-                mCodeColorState.mColor.addCallback(this);
+                mCodeColorState.mColor.addCallback(mActivityRef.get(), this);
             }
             if (updateUseColor(mCodeColorState.mColor, getState(), mCodeColorState.mAlpha)) {
                 invalidateSelf();
@@ -256,86 +364,12 @@ public class CcColorDrawable extends Drawable implements CcColorStateList.Single
         @NonNull
         @Override
         public Drawable newDrawable() {
-            return new CcColorDrawable(this, null);
-        }
-
-        @NonNull
-        @Override
-        public Drawable newDrawable(Resources res) {
-            return new CcColorDrawable(this, res);
+            return new CcColorDrawable(this);
         }
 
         @Override
         public int getChangingConfigurations() {
             return mChangingConfigurations;
-        }
-    }
-
-    private CcColorDrawable(CodeColorState state, Resources res) {
-        mCodeColorState = state;
-        updateLocalState();
-    }
-
-    /**
-     * Initializes local dynamic properties from state. This should be called
-     * after significant state changes, e.g. from the One True Constructor and
-     * after inflating or applying a theme.
-     */
-    protected void updateLocalState() {
-        if (mCodeColorState.mColor != null) {
-            mCodeColorState.mColor.addCallback(this);
-        }
-        updateUseColor(mCodeColorState.mColor, getState(), mCodeColorState.mAlpha);
-        updateTintFilter(mCodeColorState.mTint, mCodeColorState.mTintMode);
-    }
-
-    /**
-     * Ensures the use color is consistent with the current color state and alpha.
-     *
-     * @return {@code true} if use color changed; false, otherwise.
-     */
-    protected boolean updateUseColor(CcColorStateList color, int[] stateSet, int alpha) {
-        // Color.
-        int baseColor = color != null ?
-                color.getColorForState(stateSet, color.getDefaultColor()) :
-                COLOR_DEFAULT;
-        // Alpha.
-        alpha += alpha >> 7;   // make it 0..256
-        int baseAlpha = baseColor >>> 24;
-        int useAlpha = baseAlpha * alpha >> 8;
-        int useColor = (baseColor << 8 >>> 8) | (useAlpha << 24);
-
-        if (mUseColor != useColor) {
-            mUseColor = useColor;
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * Ensures the tint filter is consistent with the current tint color and mode.
-     *
-     * @return {@code true} if tint filter changed; false, otherwise.
-     */
-    protected boolean updateTintFilter(ColorStateList tint, PorterDuff.Mode tintMode) {
-        CodePorterDuffColorFilter tintFilter;
-        if (tint == null || tintMode == null) {
-            tintFilter = null;
-        } else {
-            final int color = tint.getColorForState(getState(), Color.TRANSPARENT);
-            if (mTintFilter == null || mTintFilter.getColor() != color || mTintFilter.getMode() != tintMode) {
-                tintFilter = new CodePorterDuffColorFilter(color, tintMode);
-            } else {
-                tintFilter = mTintFilter;
-            }
-        }
-
-        if (mTintFilter != tintFilter) {
-            mTintFilter = tintFilter;
-            return true;
-        } else {
-            return false;
         }
     }
 

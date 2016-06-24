@@ -5,7 +5,7 @@ import io.leao.codecolors.core.color.CcColorManager;
 import io.leao.codecolors.core.editor.CcEditorManager;
 import io.leao.codecolors.core.inflate.CcAppCompatInflateManager;
 import io.leao.codecolors.core.inflate.CcInflateManager;
-import io.leao.codecolors.core.manager.CcConfigurationManager;
+import io.leao.codecolors.core.manager.CcActivityManager;
 import io.leao.codecolors.core.manager.CcDependencyManager;
 import io.leao.codecolors.core.manager.CcSetupManager;
 
@@ -19,7 +19,7 @@ public class CcCore {
     private final static CcColorManager sColorManager;
     private final static CcEditorManager sEditorManager;
     private final static CcInflateManager sInflateManager;
-    private final static CcConfigurationManager sConfigurationManager;
+    private final static CcActivityManager sActivityManager;
 
     static {
         sSetupManager = new CcAppCompatSetupManager();
@@ -27,7 +27,7 @@ public class CcCore {
         sColorManager = new CcColorManager();
         sEditorManager = new CcEditorManager();
         sInflateManager = new CcAppCompatInflateManager();
-        sConfigurationManager = new CcConfigurationManager();
+        sActivityManager = new CcActivityManager();
     }
 
     public static CcSetupManager getSetupManager() {
@@ -50,7 +50,7 @@ public class CcCore {
         return sInflateManager;
     }
 
-    public static CcConfigurationManager getConfigurationManager() {
-        return sConfigurationManager;
+    public static CcActivityManager getActivityManager() {
+        return sActivityManager;
     }
 }

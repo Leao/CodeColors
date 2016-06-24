@@ -1,6 +1,7 @@
 package io.leao.codecolors.core.view;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -45,7 +46,8 @@ public class CcLayoutInflater extends LayoutInflater {
             mConstructorArgs = new Object[2];
         }
 
-        CcCore.getConfigurationManager().onConfigurationChanged(context.getResources());
+        Resources resources = context.getResources();
+        CcCore.getActivityManager().onConfigurationChanged(resources.getConfiguration(), resources);
     }
 
     @Override
