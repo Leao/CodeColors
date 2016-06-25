@@ -12,7 +12,7 @@ import android.util.TypedValue;
  * Copy of {@link android.support.v7.widget.ThemeUtils} minus unused code.
  */
 @SuppressLint("PrivateResource")
-class CcThemeUtils {
+class ThemeUtils {
 
     private static final ThreadLocal<TypedValue> TL_TYPED_VALUE = new ThreadLocal<>();
 

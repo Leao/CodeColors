@@ -15,16 +15,18 @@ import android.support.v7.widget.DrawableUtils;
 
 import io.leao.codecolors.R;
 
-import static io.leao.codecolors.appcompat.tint.CcThemeUtils.getThemeAttrColor;
+import static io.leao.codecolors.appcompat.tint.ThemeUtils.getThemeAttrColor;
 
 /**
  * Copy of constants and methods from {@link android.support.v7.widget.AppCompatDrawableManager} and
  * {@link android.support.v7.widget.ThemeUtils}, to replicate their behavior.
  * <p>
+ * Make sure to update when the appcompat-library is updated.
+ * <p>
  * Used by {@link CcTintManager}.
  */
 @SuppressLint("PrivateResource")
-class CcTintManagerUtils {
+class TintManagerUtils {
     /*
      * TintManager.
      */
@@ -164,6 +166,10 @@ class CcTintManagerUtils {
     }
 
     public static void setPorterDuffColorFilter(Drawable d, int color, PorterDuff.Mode mode) {
+        // Not needed for our use cases.
+        //if (DrawableUtils.canSafelyMutateDrawable(d)) {
+        //    d = d.mutate();
+        //}
         d.setColorFilter(getPorterDuffColorFilter(color, mode == null ? DEFAULT_MODE : mode));
     }
 

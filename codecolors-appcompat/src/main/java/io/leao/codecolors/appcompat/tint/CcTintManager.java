@@ -6,6 +6,7 @@ import android.content.res.ColorStateList;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.support.v4.graphics.drawable.DrawableWrapper;
+import android.support.v4.graphics.drawable.TintAwareDrawable;
 import android.util.AttributeSet;
 
 import java.util.HashMap;
@@ -13,19 +14,19 @@ import java.util.Map;
 
 import io.leao.codecolors.R;
 
-import static io.leao.codecolors.appcompat.tint.CcThemeUtils.getDisabledThemeAttrColor;
-import static io.leao.codecolors.appcompat.tint.CcThemeUtils.getThemeAttrColor;
-import static io.leao.codecolors.appcompat.tint.CcTintManagerUtils.COLORFILTER_COLOR_BACKGROUND_MULTIPLY;
-import static io.leao.codecolors.appcompat.tint.CcTintManagerUtils.COLORFILTER_COLOR_CONTROL_ACTIVATED;
-import static io.leao.codecolors.appcompat.tint.CcTintManagerUtils.COLORFILTER_TINT_COLOR_CONTROL_NORMAL;
-import static io.leao.codecolors.appcompat.tint.CcTintManagerUtils.DEFAULT_MODE;
-import static io.leao.codecolors.appcompat.tint.CcTintManagerUtils.TINT_CHECKABLE_BUTTON_LIST;
-import static io.leao.codecolors.appcompat.tint.CcTintManagerUtils.TINT_COLOR_CONTROL_NORMAL;
-import static io.leao.codecolors.appcompat.tint.CcTintManagerUtils.TINT_COLOR_CONTROL_STATE_LIST;
-import static io.leao.codecolors.appcompat.tint.CcTintManagerUtils.arrayContains;
-import static io.leao.codecolors.appcompat.tint.CcTintManagerUtils.createTintFilter;
-import static io.leao.codecolors.appcompat.tint.CcTintManagerUtils.setPorterDuffColorFilter;
-import static io.leao.codecolors.appcompat.tint.CcTintManagerUtils.tintDrawableUsingColorFilter;
+import static io.leao.codecolors.appcompat.tint.ThemeUtils.getDisabledThemeAttrColor;
+import static io.leao.codecolors.appcompat.tint.ThemeUtils.getThemeAttrColor;
+import static io.leao.codecolors.appcompat.tint.TintManagerUtils.COLORFILTER_COLOR_BACKGROUND_MULTIPLY;
+import static io.leao.codecolors.appcompat.tint.TintManagerUtils.COLORFILTER_COLOR_CONTROL_ACTIVATED;
+import static io.leao.codecolors.appcompat.tint.TintManagerUtils.COLORFILTER_TINT_COLOR_CONTROL_NORMAL;
+import static io.leao.codecolors.appcompat.tint.TintManagerUtils.DEFAULT_MODE;
+import static io.leao.codecolors.appcompat.tint.TintManagerUtils.TINT_CHECKABLE_BUTTON_LIST;
+import static io.leao.codecolors.appcompat.tint.TintManagerUtils.TINT_COLOR_CONTROL_NORMAL;
+import static io.leao.codecolors.appcompat.tint.TintManagerUtils.TINT_COLOR_CONTROL_STATE_LIST;
+import static io.leao.codecolors.appcompat.tint.TintManagerUtils.arrayContains;
+import static io.leao.codecolors.appcompat.tint.TintManagerUtils.createTintFilter;
+import static io.leao.codecolors.appcompat.tint.TintManagerUtils.setPorterDuffColorFilter;
+import static io.leao.codecolors.appcompat.tint.TintManagerUtils.tintDrawableUsingColorFilter;
 
 @SuppressLint("PrivateResource")
 public class CcTintManager {
@@ -39,10 +40,10 @@ public class CcTintManager {
     public static void tintDrawable(Context context, ColorStateList tintList, Drawable drawable, int resId) {
         if (tintList != null) {
             DrawableWrapper drawableWrapper = getDrawableWrapper(drawable);
-            if (drawableWrapper != null) {
-                drawableWrapper.setCompatTintList(tintList);
+            if (drawableWrapper instanceof TintAwareDrawable) {
+                ((TintAwareDrawable) drawableWrapper).setTintList(tintList);
             } else {
-                // For drawables loaded by loadFromAttributes().
+                // For drawables loaded by AppCompatBackgroundHelper#loadFromAttributes().
                 drawable.setColorFilter(createTintFilter(tintList, DEFAULT_MODE, drawable.getState()));
             }
         } else if (resId == R.drawable.abc_seekbar_track_material) {
@@ -145,7 +146,7 @@ public class CcTintManager {
     /**
      * The attributes used on
      * {@link android.support.v7.widget.AppCompatDrawableManager#tintDrawableUsingColorFilter(Context, int, Drawable)}
-     * and subsequently on {@link CcTintManagerUtils#tintDrawableUsingColorFilter(Context, int, Drawable)}.
+     * and subsequently on {@link TintManagerUtils#tintDrawableUsingColorFilter(Context, int, Drawable)}.
      */
     private static int[] getColorFilterAttrs(int resId) {
         if (arrayContains(COLORFILTER_TINT_COLOR_CONTROL_NORMAL, resId)) {
