@@ -10,6 +10,8 @@ import java.util.WeakHashMap;
 import io.leao.codecolors.core.CcCore;
 import io.leao.codecolors.core.color.CallbackHandler.PairReference;
 import io.leao.codecolors.core.color.CallbackHandler.Reference;
+import io.leao.codecolors.core.color.CcColorStateList.AnchorCallback;
+import io.leao.codecolors.core.color.CcColorStateList.SingleCallback;
 
 class CallbackHandlerManager {
     protected CcColorStateList mColor;
@@ -85,10 +87,8 @@ class CallbackHandlerManager {
         return callbackHandler;
     }
 
-    public synchronized void invalidate(
-            Set<Reference<CcColorStateList.SingleCallback>> invalidatedSingleCallbacks,
-            Set<PairReference<CcColorStateList.AnchorCallback, Object>> invalidatedPairCallbacks) {
-
+    public synchronized void invalidate(Set<Reference<SingleCallback>> invalidatedSingleCallbacks,
+                                        Set<PairReference<AnchorCallback, Object>> invalidatedPairCallbacks) {
         // Clear invalidated CallbackHandlers.
         mInvalidatedCallbackHandlers.clear();
 
@@ -101,11 +101,9 @@ class CallbackHandlerManager {
         }
     }
 
-    private synchronized void invalidate(
-            CallbackHandler callbackHandler,
-            Set<Reference<CcColorStateList.SingleCallback>> invalidatedSingleCallbacks,
-            Set<PairReference<CcColorStateList.AnchorCallback, Object>> invalidatedPairCallbacks) {
-
+    private synchronized void invalidate(CallbackHandler callbackHandler,
+                                         Set<Reference<SingleCallback>> invalidatedSingleCallbacks,
+                                         Set<PairReference<AnchorCallback, Object>> invalidatedPairCallbacks) {
         // Add CallbackHandler as invalidated.
         mInvalidatedCallbackHandlers.add(callbackHandler);
 
@@ -114,28 +112,24 @@ class CallbackHandlerManager {
                 invalidatedPairCallbacks,
                 new CallbackHandler.OnIterateCallbackListener() {
                     @Override
-                    public void onIterateSingleCallback(Reference<CcColorStateList.SingleCallback> callbackReference,
-                                                        CcColorStateList.SingleCallback callback) {
+                    public void onIterateSingleCallback(Reference<SingleCallback> callbackReference,
+                                                        SingleCallback callback) {
                         callback.invalidateColor(mColor);
                     }
 
                     @Override
-                    public void onIteratePairCallback(
-                            PairReference<CcColorStateList.AnchorCallback, Object> pairReference,
-                            CcColorStateList.AnchorCallback callback, Object anchor) {
-
+                    public void onIteratePairCallback(PairReference<AnchorCallback, Object> pairReference,
+                                                      AnchorCallback callback, Object anchor) {
                         callback.invalidateColor(anchor, mColor);
                     }
                 }
         );
     }
 
-    public synchronized void invalidateMultiple(
-            final Set<CcColorStateList> colors,
-            Set<Reference<CcColorStateList.SingleCallback>> invalidatedSingleCallbacks,
-            Set<PairReference<CcColorStateList.AnchorCallback, Object>> invalidatedPairCallbacks,
-            final Set<CcColorStateList> invalidateColors) {
-
+    public synchronized void invalidateMultiple(final Set<CcColorStateList> colors,
+                                                Set<Reference<SingleCallback>> invalidatedSingleCallbacks,
+                                                Set<PairReference<AnchorCallback, Object>> invalidatedPairCallbacks,
+                                                final Set<CcColorStateList> invalidateColors) {
         // Clear invalidated CallbackHandlers.
         mInvalidatedCallbackHandlers.clear();
 
@@ -158,13 +152,11 @@ class CallbackHandlerManager {
         }
     }
 
-    private synchronized void invalidateMultiple(
-            CallbackHandler callbackHandler,
-            final Set<CcColorStateList> colors,
-            Set<Reference<CcColorStateList.SingleCallback>> invalidatedSingleCallbacks,
-            Set<PairReference<CcColorStateList.AnchorCallback, Object>> invalidatedPairCallbacks,
-            final Set<CcColorStateList> invalidateColors) {
-
+    private synchronized void invalidateMultiple(CallbackHandler callbackHandler,
+                                                 final Set<CcColorStateList> colors,
+                                                 Set<Reference<SingleCallback>> invalidatedSingleCallbacks,
+                                                 Set<PairReference<AnchorCallback, Object>> invalidatedPairCallbacks,
+                                                 final Set<CcColorStateList> invalidateColors) {
         // Add CallbackHandler as invalidated.
         mInvalidatedCallbackHandlers.add(callbackHandler);
 
@@ -173,8 +165,8 @@ class CallbackHandlerManager {
                 invalidatedPairCallbacks,
                 new CallbackHandler.OnIterateCallbackListener() {
                     @Override
-                    public void onIterateSingleCallback(Reference<CcColorStateList.SingleCallback> callbackReference,
-                                                        CcColorStateList.SingleCallback callback) {
+                    public void onIterateSingleCallback(Reference<SingleCallback> callbackReference,
+                                                        SingleCallback callback) {
                         CcColorStateList lastInvalidateColor = null;
 
                         invalidateColors.clear();
@@ -193,10 +185,8 @@ class CallbackHandlerManager {
                     }
 
                     @Override
-                    public void onIteratePairCallback(
-                            PairReference<CcColorStateList.AnchorCallback, Object> pairReference,
-                            CcColorStateList.AnchorCallback callback, Object anchor) {
-
+                    public void onIteratePairCallback(PairReference<AnchorCallback, Object> pairReference,
+                                                      AnchorCallback callback, Object anchor) {
                         CcColorStateList lastInvalidateColor = null;
 
                         invalidateColors.clear();
@@ -217,7 +207,7 @@ class CallbackHandlerManager {
         );
     }
 
-    public synchronized void addCallback(Activity activity, CcColorStateList.SingleCallback callback) {
+    public synchronized void addCallback(Activity activity, SingleCallback callback) {
         if (activity == null) {
             activity = CcCore.getActivityManager().getLastResumedActivity();
         }
@@ -226,14 +216,14 @@ class CallbackHandlerManager {
         }
     }
 
-    public synchronized boolean containsCallback(Activity activity, CcColorStateList.SingleCallback callback) {
+    public synchronized boolean containsCallback(Activity activity, SingleCallback callback) {
         if (activity == null) {
             activity = CcCore.getActivityManager().getLastResumedActivity();
         }
         return activity != null && getCallbackHandler(activity).containsCallback(callback);
     }
 
-    synchronized boolean containsCallback(Reference<CcColorStateList.SingleCallback> callbackReference) {
+    synchronized boolean containsCallback(Reference<SingleCallback> callbackReference) {
         if (mCallbackHandler != null) {
             return mCallbackHandler.containsCallback(callbackReference);
         } else if (mCallbackHandlers.size() > 0) {
@@ -246,7 +236,7 @@ class CallbackHandlerManager {
         return false;
     }
 
-    public synchronized void removeCallback(Activity activity, CcColorStateList.SingleCallback callback) {
+    public synchronized void removeCallback(Activity activity, SingleCallback callback) {
         if (activity == null) {
             activity = CcCore.getActivityManager().getLastResumedActivity();
         }
@@ -255,8 +245,7 @@ class CallbackHandlerManager {
         }
     }
 
-    public synchronized void addPairCallback(Activity activity, CcColorStateList.AnchorCallback callback,
-                                             Object anchor) {
+    public synchronized void addPairCallback(Activity activity, AnchorCallback callback, Object anchor) {
         if (activity == null) {
             activity = CcCore.getActivityManager().getLastResumedActivity();
         }
@@ -265,15 +254,14 @@ class CallbackHandlerManager {
         }
     }
 
-    public synchronized boolean containsPairCallback(Activity activity, CcColorStateList.AnchorCallback callback,
-                                                     Object anchor) {
+    public synchronized boolean containsPairCallback(Activity activity, AnchorCallback callback, Object anchor) {
         if (activity == null) {
             activity = CcCore.getActivityManager().getLastResumedActivity();
         }
         return activity != null && getCallbackHandler(activity).containsPairCallback(callback, anchor);
     }
 
-    synchronized boolean containsPairCallback(PairReference<CcColorStateList.AnchorCallback, Object> pairReference) {
+    synchronized boolean containsPairCallback(PairReference<AnchorCallback, Object> pairReference) {
         if (mCallbackHandler != null) {
             return mCallbackHandler.containsPairCallback(pairReference);
         } else if (mCallbackHandlers.size() > 0) {
@@ -286,8 +274,7 @@ class CallbackHandlerManager {
         return false;
     }
 
-    public synchronized void removePairCallback(Activity activity, CcColorStateList.AnchorCallback callback,
-                                                Object anchor) {
+    public synchronized void removePairCallback(Activity activity, AnchorCallback callback, Object anchor) {
         if (activity == null) {
             activity = CcCore.getActivityManager().getLastResumedActivity();
         }
@@ -296,7 +283,7 @@ class CallbackHandlerManager {
         }
     }
 
-    public synchronized void removeCallback(Activity activity, CcColorStateList.AnchorCallback callback) {
+    public synchronized void removeCallback(Activity activity, AnchorCallback callback) {
         if (activity == null) {
             activity = CcCore.getActivityManager().getLastResumedActivity();
         }

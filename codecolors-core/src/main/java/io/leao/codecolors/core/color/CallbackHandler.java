@@ -7,85 +7,104 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import io.leao.codecolors.core.color.CcColorStateList.AnchorCallback;
+import io.leao.codecolors.core.color.CcColorStateList.SingleCallback;
+
 @SuppressWarnings("unchecked")
 class CallbackHandler {
-    protected List<Reference<CcColorStateList.SingleCallback>> mSingleCallbackList = new ArrayList<>();
-    protected Set<Reference<CcColorStateList.SingleCallback>> mSingleCallbackSet = new HashSet<>();
+    protected List<Reference<SingleCallback>> mSingleCallbackList = new ArrayList<>();
+    protected Set<Reference<SingleCallback>> mSingleCallbackSet = new HashSet<>();
 
-    protected List<PairReference<CcColorStateList.AnchorCallback, Object>> mPairCallbackList = new ArrayList<>();
-    protected Set<PairReference<CcColorStateList.AnchorCallback, Object>> mPairCallbackSet = new HashSet<>();
-    protected Set<Reference<CcColorStateList.AnchorCallback>> mAnchorCallbackSet = new HashSet<>();
+    /*
+     * AnchorCallbacks are stored in strong references.
+     */
+    protected List<PairReference<AnchorCallback, Object>> mPairCallbackList = new ArrayList<>();
+    protected Set<PairReference<AnchorCallback, Object>> mPairCallbackSet = new HashSet<>();
+    protected Set<Reference<AnchorCallback>> mAnchorCallbackSet = new HashSet<>();
     protected Set<Reference<Object>> mAnchorSet = new HashSet<>();
 
     protected Reference mTempReference = new Reference();
-    protected PairReference mTempPairReference = new PairReference();
+    protected PairReference<AnchorCallback, Object> mTempMultiReference = new PairReference();
 
-    public synchronized void addCallback(CcColorStateList.SingleCallback callback) {
+    public synchronized void addCallback(SingleCallback callback) {
         if (callback == null) {
             return;
         }
 
         if (!containsCallback(callback)) {
-            Reference<CcColorStateList.SingleCallback> singleCallbackRef = new Reference<>(callback);
+            Reference<SingleCallback> singleCallbackRef = new Reference<>();
+            singleCallbackRef.setWeak(callback);
+
             mSingleCallbackList.add(singleCallbackRef);
             mSingleCallbackSet.add(singleCallbackRef);
         }
     }
 
-    public synchronized boolean containsCallback(CcColorStateList.SingleCallback callback) {
+    public synchronized boolean containsCallback(SingleCallback callback) {
         mTempReference.set(callback);
         boolean contains = containsCallback(mTempReference);
         mTempReference.set(null);
         return contains;
     }
 
-    synchronized boolean containsCallback(Reference<CcColorStateList.SingleCallback> callbackReference) {
+    synchronized boolean containsCallback(Reference<SingleCallback> callbackReference) {
         return mSingleCallbackSet.contains(callbackReference);
     }
 
-    public synchronized void removeCallback(CcColorStateList.SingleCallback callback) {
+    public synchronized void removeCallback(SingleCallback callback) {
         mTempReference.set(callback);
         mSingleCallbackSet.remove(mTempReference);
         mTempReference.set(null);
     }
 
-    public synchronized void addPairCallback(CcColorStateList.AnchorCallback callback, Object anchor) {
+    public synchronized void addPairCallback(AnchorCallback callback, Object anchor) {
         if (callback == null || anchor == null) {
             return;
         }
 
         if (!containsPairCallback(callback, anchor)) {
-            PairReference<CcColorStateList.AnchorCallback, Object> pairReference =
-                    new PairReference<>(callback, anchor);
+            // Create a pair reference for callback and anchor.
+            // Note: that the callback reference is strong, while the anchor reference is weak.
+            // That happens because the AnchorCallback is dependent on its anchor.
+            PairReference<AnchorCallback, Object> pairReference = new PairReference<>();
+            pairReference.getFirst().set(callback); // Not weak!
+            pairReference.getSecond().setWeak(anchor);
 
             mPairCallbackList.add(pairReference);
             mPairCallbackSet.add(pairReference);
-            mAnchorCallbackSet.add(pairReference.getFirst());
+            // Add callback to set, but as a weak reference.
+            Reference<AnchorCallback> callbackWeakRef = new Reference<>();
+            callbackWeakRef.setWeak(callback);
+            mAnchorCallbackSet.add(callbackWeakRef);
+            // Add anchor weak reference to set.
             mAnchorSet.add(pairReference.getSecond());
         }
     }
 
-    public synchronized boolean containsPairCallback(CcColorStateList.AnchorCallback callback, Object anchor) {
-        mTempPairReference.set(callback, anchor);
-        boolean contains = containsPairCallback(mTempPairReference);
-        mTempPairReference.set(null, null);
+    public synchronized boolean containsPairCallback(AnchorCallback callback, Object anchor) {
+        mTempMultiReference.getFirst().set(callback);
+        mTempMultiReference.getSecond().set(anchor);
+        boolean contains = containsPairCallback(mTempMultiReference);
+        mTempMultiReference.getFirst().set(null);
+        mTempMultiReference.getSecond().set(null);
         return contains;
     }
 
-    synchronized boolean containsPairCallback(
-            PairReference<CcColorStateList.AnchorCallback, Object> pairReference) {
-        return mPairCallbackList.contains(pairReference);
+    synchronized boolean containsPairCallback(PairReference<AnchorCallback, Object> pairReference) {
+        return mPairCallbackSet.contains(pairReference);
     }
 
-    public synchronized void removePairCallback(CcColorStateList.AnchorCallback callback, Object anchor) {
-        mTempPairReference.set(callback, anchor);
-        mPairCallbackSet.remove(mTempPairReference);
-        mTempPairReference.set(null, null);
+    public synchronized void removePairCallback(AnchorCallback callback, Object anchor) {
+        mTempMultiReference.getFirst().set(callback);
+        mTempMultiReference.getSecond().set(anchor);
+        mPairCallbackSet.remove(mTempMultiReference);
+        mTempMultiReference.getFirst().set(null);
+        mTempMultiReference.getSecond().set(null);
     }
 
-    public synchronized void removeCallback(CcColorStateList.AnchorCallback callback) {
+    public synchronized void removeCallback(AnchorCallback callback) {
         mTempReference.set(callback);
-        mAnchorSet.remove(mTempReference);
+        mAnchorCallbackSet.remove(mTempReference);
         mTempReference.set(null);
     }
 
@@ -95,25 +114,23 @@ class CallbackHandler {
         mTempReference.set(null);
     }
 
-    public void iterateCallbacks(
-            Set<Reference<CcColorStateList.SingleCallback>> iteratedSingleCallbacks,
-            Set<PairReference<CcColorStateList.AnchorCallback, Object>> iteratedPairCallbacks,
-            OnIterateCallbackListener listener) {
+    public void iterateCallbacks(Set<Reference<SingleCallback>> iteratedSingleCallbacks,
+                                 Set<PairReference<AnchorCallback, Object>> iteratedPairCallbacks,
+                                 OnIterateCallbackListener listener) {
         /*
          * SingleCallbacks.
          */
 
         // List iterator supports add and remove while iterating.
-        Iterator<Reference<CcColorStateList.SingleCallback>> singleCallbackRefIterator =
-                mSingleCallbackList.listIterator();
+        Iterator<Reference<SingleCallback>> singleCallbackRefIterator = mSingleCallbackList.listIterator();
         while (singleCallbackRefIterator.hasNext()) {
 
             // Was callback removed?
-            Reference<CcColorStateList.SingleCallback> singleCallbackRef = singleCallbackRefIterator.next();
+            Reference<SingleCallback> singleCallbackRef = singleCallbackRefIterator.next();
             if (containsCallback(singleCallbackRef)) {
 
                 // Was callback collected by GC?
-                CcColorStateList.SingleCallback singleCallback = singleCallbackRef.get();
+                SingleCallback singleCallback = singleCallbackRef.get();
                 if (singleCallback != null) {
 
                     // Are we tracking iterations? Was callback iterated previously?
@@ -141,60 +158,54 @@ class CallbackHandler {
          */
 
         // List iterator supports add and remove while iterating.
-        Iterator<PairReference<CcColorStateList.AnchorCallback, Object>> pairReferenceIterator =
-                mPairCallbackList.listIterator();
+        Iterator<PairReference<AnchorCallback, Object>> pairReferenceIterator = mPairCallbackList.listIterator();
         while (pairReferenceIterator.hasNext()) {
 
             // Was callback pair removed?
-            PairReference<CcColorStateList.AnchorCallback, Object> pairReference = pairReferenceIterator.next();
+            PairReference<AnchorCallback, Object> pairReference = pairReferenceIterator.next();
             if (containsPairCallback(pairReference)) {
 
                 // Were callback or anchor removed individually?
-                Reference<CcColorStateList.AnchorCallback> anchorCallbackRef = pairReference.getFirst();
+                Reference<AnchorCallback> anchorCallbackRef = pairReference.getFirst();
                 Reference<Object> anchorRef = pairReference.getSecond();
                 if (mAnchorCallbackSet.contains(anchorCallbackRef) && mAnchorSet.contains(anchorRef)) {
 
-                    // Were callback or anchor collected by GC?
-                    CcColorStateList.AnchorCallback anchorCallback = anchorCallbackRef.get();
+                    // Was the anchor collected by GC?
+                    // Note: the AnchorCallback can't be collected by GC, because it is stored by strong reference.
                     Object anchor = anchorRef.get();
-                    if (anchorCallback != null && anchor != null) {
+                    if (anchor != null) {
 
                         // Are we tracking iterations? Was callback pair iterated previously?
                         if (iteratedPairCallbacks == null || iteratedPairCallbacks.add(pairReference)) {
 
                             // Call listener.
-                            listener.onIteratePairCallback(pairReference, anchorCallback, anchor);
+                            listener.onIteratePairCallback(pairReference, anchorCallbackRef.get(), anchor);
                         }
                         // Continue without any removals.
                         continue;
                     }
 
-                    // Callback or anchor were collected by GC.
-                    // Remove callback or anchor null references.
-                    if (anchorCallback == null) {
-                        mAnchorCallbackSet.remove(anchorCallbackRef);
-                    }
-                    if (anchor == null) {
-                        mAnchorSet.remove(anchorRef);
-                    }
+                    // Anchor was collected by GC. Remove its null reference.
+                    mAnchorSet.remove(anchorRef);
                 }
 
-                // Either the callback or anchor were collected by GC, or removed (individually).
+                // Either the callback or anchor were removed (individually), or the anchor was collected by GC.
                 // Remove callback pair from set.
                 mPairCallbackSet.remove(pairReference);
             }
-            // Either the callback or anchor were collected by GC, removed (individually), or removed as a pair.
+
+            // Either the callback or anchor were removed (individually), or the anchor was collected by GC,
+            // or removed as a pair.
             // Remove callback pair from list.
             pairReferenceIterator.remove();
         }
     }
 
     public interface OnIterateCallbackListener {
-        void onIterateSingleCallback(Reference<CcColorStateList.SingleCallback> callbackReference,
-                                     CcColorStateList.SingleCallback callback);
+        void onIterateSingleCallback(Reference<SingleCallback> callbackReference, SingleCallback callback);
 
-        void onIteratePairCallback(PairReference<CcColorStateList.AnchorCallback, Object> pairReference,
-                                   CcColorStateList.AnchorCallback callback, Object anchor);
+        void onIteratePairCallback(PairReference<AnchorCallback, Object> pairReference,
+                                   AnchorCallback callback, Object anchor);
     }
 
     public static class Reference<T> {
@@ -206,11 +217,12 @@ class CallbackHandler {
         private Integer hashCode;
         private T object;
 
-        public Reference() {
-        }
-
-        public Reference(T object) {
-            setWeak(object);
+        public T get() {
+            if (objectRef != null) {
+                return objectRef.get();
+            } else {
+                return object;
+            }
         }
 
         public void setWeak(T object) {
@@ -223,14 +235,6 @@ class CallbackHandler {
             objectRef = null;
             hashCode = null;
             this.object = object;
-        }
-
-        public T get() {
-            if (objectRef != null) {
-                return objectRef.get();
-            } else {
-                return object;
-            }
         }
 
         @Override
@@ -257,23 +261,8 @@ class CallbackHandler {
         private Reference<V> secondRef;
 
         public PairReference() {
-            firstRef = new Reference<>();
-            secondRef = new Reference<>();
-        }
-
-        public PairReference(U first, V second) {
-            this();
-            setWeak(first, second);
-        }
-
-        public void setWeak(U first, V second) {
-            firstRef.setWeak(first);
-            secondRef.setWeak(second);
-        }
-
-        public void set(U first, V second) {
-            firstRef.set(first);
-            secondRef.set(second);
+            this.firstRef = new Reference<>();
+            this.secondRef = new Reference<>();
         }
 
         public Reference<U> getFirst() {
@@ -294,7 +283,6 @@ class CallbackHandler {
 
             if (!firstRef.equals(that.firstRef)) return false;
             return secondRef.equals(that.secondRef);
-
         }
 
         @Override
