@@ -90,8 +90,8 @@ public class CodeColors {
         CcCore.getInflateManager().addDefStyleAdapter(adapter);
     }
 
-    public static void setBaseColorAdapter(CcColorAdapter adapter) {
-        CcCore.getColorManager().setBaseColorAdapter(adapter);
+    public static void setColorAdapter(CcColorAdapter adapter) {
+        CcCore.getColorManager().setColorAdapter(adapter);
     }
 
     public interface Callback {

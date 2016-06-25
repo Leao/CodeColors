@@ -130,7 +130,7 @@ public class CcColorManager {
     }
 
 
-    public synchronized void setBaseColorAdapter(CcColorAdapter adapter) {
+    public synchronized void setColorAdapter(CcColorAdapter adapter) {
         mColorAdapter = adapter;
     }
 
