@@ -1,9 +1,15 @@
 package io.leao.codecolors.sample.activity;
 
+import android.app.Dialog;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.provider.AlarmClock;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.DialogFragment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -18,16 +24,17 @@ import android.widget.Toast;
 
 import java.util.regex.Pattern;
 
-import io.leao.codecolors.CodeColors;
 import io.leao.codecolors.appcompat.app.CcAppCompatActivity;
-import io.leao.codecolors.core.res.CcColorStateList;
 import io.leao.codecolors.sample.R;
 import io.leao.codecolors.sample.color.ColorCycler;
+import io.leao.codecolors.sample.color.ColorSetter;
+import io.leao.codecolors.sample.widget.SimpleTextClock;
 
 public class MainActivity extends CcAppCompatActivity {
+    private static final String DIALOG_TAG_SET_ALARM = "dialog_set_alarm";
+
     private CheckBox mAnimationCheckBox;
 
-    private ColorCycler mColorCycler = new ColorCycler();
     private Pattern mHexPattern = Pattern.compile("^#?([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$");
 
     @SuppressWarnings("ConstantConditions")
@@ -38,17 +45,11 @@ public class MainActivity extends CcAppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        SimpleTextClock clock = (SimpleTextClock) findViewById(R.id.clock);
+        clock.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                Snackbar.make(view, R.string.snackbar_regular, Snackbar.LENGTH_LONG)
-                        .setAction("Action", new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                Toast.makeText(MainActivity.this, R.string.snackbar_action_regular, Toast.LENGTH_SHORT).show();
-                            }
-                        }).show();
+            public void onClick(View v) {
+                new SetAlarmDialogFragment().show(getSupportFragmentManager(), DIALOG_TAG_SET_ALARM);
             }
         });
 
@@ -81,15 +82,29 @@ public class MainActivity extends CcAppCompatActivity {
         });
 
         mAnimationCheckBox = (CheckBox) findViewById(android.R.id.checkbox);
+
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Snackbar.make(view, R.string.snackbar_regular, Snackbar.LENGTH_LONG)
+                        .setAction("Action", new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                Toast.makeText(MainActivity.this, R.string.snackbar_action_regular, Toast.LENGTH_SHORT).show();
+                            }
+                        }).show();
+            }
+        });
     }
 
     private void cycleColors() {
-        mColorCycler.cycle();
+        ColorCycler.cycle();
         updateColorsTo(
-                mColorCycler.getPrimary(),
-                mColorCycler.getPrimaryDark(),
-                mColorCycler.getAccent(),
-                mColorCycler.getAccentPressed());
+                ColorCycler.getPrimary(),
+                ColorCycler.getPrimaryDark(),
+                ColorCycler.getAccent(),
+                ColorCycler.getAccentPressed());
     }
 
     private void pickColor() {
@@ -107,49 +122,9 @@ public class MainActivity extends CcAppCompatActivity {
 
     private void updateColorsTo(Integer primary, Integer primaryDark, Integer accent, Integer accentPressed) {
         if (mAnimationCheckBox.isChecked()) {
-            animateColorsTo(primary, primaryDark, accent, accentPressed);
+            ColorSetter.animateColorsTo(primary, primaryDark, accent, accentPressed);
         } else {
-            setColorsTo(primary, primaryDark, accent, accentPressed);
-        }
-    }
-
-    private void setColorsTo(Integer primary, Integer primaryDark, Integer accent, Integer accentPressed) {
-        setColor(R.color.cc__color_primary, primary).submit();
-        setColor(R.color.cc__color_primary_dark, primaryDark).submit();
-        CcColorStateList.SetBuilder builder = setColor(R.color.cc__color_accent, accent);
-        if (accentPressed != null) {
-            builder.setState(new int[]{android.R.attr.state_pressed}, accentPressed);
-        } else {
-            builder.removeState(new int[]{android.R.attr.state_pressed});
-        }
-        builder.submit();
-    }
-
-    private CcColorStateList.SetBuilder setColor(int resId, Integer color) {
-        if (color != null) {
-            return CodeColors.set(resId).setColor(color);
-        } else {
-            return CodeColors.set(resId).setColor(null);
-        }
-    }
-
-    private void animateColorsTo(Integer primary, Integer primaryDark, Integer accent, Integer accentPressed) {
-        animateColorTo(R.color.cc__color_primary, primary).submit();
-        animateColorTo(R.color.cc__color_primary_dark, primaryDark).submit();
-        CcColorStateList.AnimateBuilder builder = animateColorTo(R.color.cc__color_accent, accent);
-        if (accentPressed != null) {
-            builder.setState(new int[]{android.R.attr.state_pressed}, accentPressed);
-        } else {
-            builder.removeState(new int[]{android.R.attr.state_pressed});
-        }
-        builder.submit();
-    }
-
-    private CcColorStateList.AnimateBuilder animateColorTo(int resId, Integer color) {
-        if (color != null) {
-            return CodeColors.animate(resId).setColor(color);
-        } else {
-            return CodeColors.animate(resId).setColor(null);
+            ColorSetter.setColorsTo(primary, primaryDark, accent, accentPressed);
         }
     }
 
@@ -183,5 +158,21 @@ public class MainActivity extends CcAppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public static class SetAlarmDialogFragment extends DialogFragment implements DialogInterface.OnClickListener {
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            return new AlertDialog.Builder(getActivity())
+                    .setTitle(R.string.dialog_set_alarm)
+                    .setPositiveButton(R.string.dialog_ok, this)
+                    .setNegativeButton(R.string.dialog_cancel, null)
+                    .create();
+        }
+
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            startActivity(new Intent(AlarmClock.ACTION_SET_ALARM));
+        }
     }
 }

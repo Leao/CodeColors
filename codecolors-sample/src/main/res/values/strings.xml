@@ -12,4 +12,8 @@
 
     <string name="snackbar_regular">Just your regular snackbar.</string>
     <string name="snackbar_action_regular">Just your regular action… or is it?</string>
+
+    <string name="dialog_set_alarm">Set alarm?</string>
+    <string name="dialog_ok">OK</string>
+    <string name="dialog_cancel">Cancel</string>
 </resources>

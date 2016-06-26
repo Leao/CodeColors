@@ -1,11 +1,11 @@
-package io.leao.codecolors.sample.adapter;
+package io.leao.codecolors.sample.inflate;
 
 import android.annotation.SuppressLint;
 import android.support.design.widget.CoordinatorLayout;
 import android.util.AttributeSet;
 import android.view.View;
 
-import io.leao.codecolors.core.adapter.CcDefStyleAdapter;
+import io.leao.codecolors.core.inflate.CcDefStyleAdapter;
 import io.leao.codecolors.sample.R;
 
 public class CcCoordinatorLayoutDefStyleAdapter implements CcDefStyleAdapter {

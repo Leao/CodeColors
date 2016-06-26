@@ -9,6 +9,8 @@
         <item name="colorAccent">@color/cc__color_accent</item>
 
         <item name="colorButtonNormal">@color/cc__color_accent</item>
+
+        <item name="alertDialogTheme">@style/AppTheme.Light.Dialog.Alert</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
@@ -23,5 +25,9 @@
     </style>
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/>
+
+    <style name="AppTheme.Light.Dialog.Alert" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="colorAccent">@color/cc__color_accent</item>
+    </style>
 
 </resources>

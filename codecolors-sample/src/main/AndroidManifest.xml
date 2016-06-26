@@ -2,6 +2,8 @@
 <manifest package="io.leao.codecolors.sample"
           xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM"/>
+
     <application
         android:name="io.leao.codecolors.sample.CodeColorsSample"
         android:allowBackup="true"
