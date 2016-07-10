@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.support.v7.widget.AppCompatEditText;
 import android.util.AttributeSet;
+import android.view.View;
 
 import io.leao.codecolors.core.widget.CcDrawableCallbackContextWrapper;
 
@@ -12,7 +13,8 @@ import io.leao.codecolors.core.widget.CcDrawableCallbackContextWrapper;
  * creation of interesting {@link Drawable}s and {@link android.view.View}s, and being able to properly invalidate them
  * when code-colors are updated.
  */
-public class CcAppCompatEditText extends AppCompatEditText {
+public class CcAppCompatEditText extends AppCompatEditText
+        implements CcDrawableCallbackContextWrapper.CcDrawableCallbackContextWrapperHost {
     private CcDrawableCallbackContextWrapper mContextWrapper;
 
     public CcAppCompatEditText(Context context) {
@@ -32,7 +34,7 @@ public class CcAppCompatEditText extends AppCompatEditText {
 
     private void ensureContextWrapper() {
         if (mContextWrapper == null) {
-            mContextWrapper = CcDrawableCallbackContextWrapper.init(this);
+            mContextWrapper = CcDrawableCallbackContextWrapper.init(getContext(), this);
         }
     }
 
@@ -48,5 +50,10 @@ public class CcAppCompatEditText extends AppCompatEditText {
         } else {
             getContextWrapper().invalidateDrawable(drawable);
         }
+    }
+
+    @Override
+    public boolean onAddDrawableCallbackView(View view) {
+        return view.getClass().getSimpleName().contains("HandleView");
     }
 }

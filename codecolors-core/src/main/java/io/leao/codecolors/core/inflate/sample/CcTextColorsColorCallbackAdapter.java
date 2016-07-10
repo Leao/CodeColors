@@ -5,9 +5,9 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.TextView;
 
-import io.leao.codecolors.core.inflate.CcColorCallbackAdapter;
 import io.leao.codecolors.core.callback.CcRefreshDrawableStateCallback;
-import io.leao.codecolors.core.color.CcColorStateList;
+import io.leao.codecolors.core.color.CodeColor;
+import io.leao.codecolors.core.inflate.CcColorCallbackAdapter;
 
 public class CcTextColorsColorCallbackAdapter implements CcColorCallbackAdapter<View> {
     @Override
@@ -26,9 +26,9 @@ public class CcTextColorsColorCallbackAdapter implements CcColorCallbackAdapter<
     public boolean onAdd(View view, InflateAddResult<View> outResult) {
         if (view instanceof TextView) {
             ColorStateList textColors = ((TextView) view).getTextColors();
-            if (textColors instanceof CcColorStateList) {
+            if (textColors instanceof CodeColor) {
                 outResult.set(view);
-                outResult.add((CcColorStateList) textColors);
+                outResult.add((CodeColor) textColors);
                 return true;
             }
         }

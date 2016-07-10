@@ -49,7 +49,7 @@ class DefStyleHandler {
 
     /**
      * Returns the default style attribute depending on the view class.
-     * <p/>
+     * <p>
      * Order matters: a {@link CheckBox} is also {@link Button}, so we have to be careful when returning the default
      * style attribute.
      */

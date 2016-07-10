@@ -19,6 +19,7 @@ import java.util.Set;
 
 import io.leao.codecolors.core.CcCore;
 import io.leao.codecolors.core.color.CcColorStateList;
+import io.leao.codecolors.core.color.CodeColor;
 
 import static io.leao.codecolors.core.drawable.CcDrawableUtils.getActivity;
 import static io.leao.codecolors.core.drawable.CcDrawableUtils.getContext;
@@ -29,7 +30,7 @@ import static io.leao.codecolors.core.drawable.CcDrawableUtils.getView;
  * Inspired in {@link android.graphics.drawable.ColorDrawable}, but instead of making use of a {@code int} color, it
  * makes use of a {@link CcColorStateList}.
  */
-public class CcColorDrawable extends Drawable implements CcColorStateList.SingleCallback {
+public class CcColorDrawable extends Drawable implements CodeColor.SingleCallback {
     private static final int COLOR_DEFAULT = Color.BLUE;
     private static final int ALPHA_OPAQUE = 255;
 
@@ -40,7 +41,7 @@ public class CcColorDrawable extends Drawable implements CcColorStateList.Single
 
     protected CodeColorState mCodeColorState;
     /**
-     * We store an Activity reference to be able to divide the {@link CcColorStateList.SingleCallback}s by different
+     * We store an Activity reference to be able to divide the {@link CodeColor.SingleCallback}s by different
      * activities. However, sometimes is not easy to guess the Activity to which this drawable belongs to.
      * <p>
      * When the drawable is first created, we store a reference to the last resumed Activity. This is our first guess.
@@ -49,12 +50,12 @@ public class CcColorDrawable extends Drawable implements CcColorStateList.Single
      * <p>
      * On our first drawing pass, we will try to get an Activity based on our {@link Drawable.Callback}'s Context. If we
      * are able to get a valid Activity, we will override our first guess reference with the newly found Activity
-     * reference. Otherwise, we will fallback to our first guess to add the {@link CcColorStateList.SingleCallback}s.
+     * reference. Otherwise, we will fallback to our first guess to add the {@link CodeColor.SingleCallback}s.
      * <p>
      * If, for some reason, our first guess had a null Activity referenced, and we couldn't get a valid Activity based
      * on our {@link Drawable.Callback}, we will make use of the last resumed Activity on the first drawing pass, to add
-     * the {@link CcColorStateList.SingleCallback}s. That is what happens when we pass null to
-     * {@link CcColorStateList#addCallback(Activity, CcColorStateList.SingleCallback)}.
+     * the {@link CodeColor.SingleCallback}s. That is what happens when we pass null to
+     * {@link CodeColor#addCallback(Activity, CodeColor.SingleCallback)}.
      */
     protected WeakReference<Activity> mActivityRef;
 
@@ -93,7 +94,7 @@ public class CcColorDrawable extends Drawable implements CcColorStateList.Single
      *
      * @return {@code true} if use color changed; false, otherwise.
      */
-    protected boolean updateUseColor(CcColorStateList color, int[] stateSet, int alpha) {
+    protected boolean updateUseColor(CodeColor color, int[] stateSet, int alpha) {
         // Color.
         int baseColor = color != null ?
                 color.getColorForState(stateSet, color.getDefaultColor()) :
@@ -217,16 +218,16 @@ public class CcColorDrawable extends Drawable implements CcColorStateList.Single
     }
 
     @Override
-    public void invalidateColor(CcColorStateList color) {
+    public void invalidateColor(CodeColor color) {
         if (updateUseColor(color, getState(), mCodeColorState.mAlpha)) {
             invalidateSelf();
         }
     }
 
     @Override
-    public void invalidateColors(Set<CcColorStateList> colors) {
+    public <T extends CodeColor> void invalidateColors(Set<T> colors) {
         // If everything works well this should never be called.
-        for (CcColorStateList color : colors) {
+        for (CodeColor color : colors) {
             invalidateColor(color);
         }
     }

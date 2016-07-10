@@ -4,16 +4,16 @@ import android.view.View;
 
 import java.util.Set;
 
-import io.leao.codecolors.core.color.CcColorStateList;
+import io.leao.codecolors.core.color.CodeColor;
 
-public class CcRefreshDrawableStateCallback<T extends View> implements CcColorStateList.AnchorCallback<T> {
+public class CcRefreshDrawableStateCallback<T extends View> implements CodeColor.AnchorCallback<T> {
     @Override
-    public void invalidateColor(T anchor, CcColorStateList color) {
+    public void invalidateColor(T anchor, CodeColor color) {
         refreshDrawableState(anchor);
     }
 
     @Override
-    public void invalidateColors(T anchor, Set<CcColorStateList> colors) {
+    public <U extends CodeColor> void invalidateColors(T anchor, Set<U> colors) {
         refreshDrawableState(anchor);
     }
 

@@ -20,6 +20,7 @@ import java.util.Set;
 
 import io.leao.codecolors.core.CcCore;
 import io.leao.codecolors.core.color.CcColorStateList;
+import io.leao.codecolors.core.color.CodeColor;
 import io.leao.codecolors.core.res.CcResources;
 
 import static io.leao.codecolors.core.drawable.CcDrawableUtils.forceStateChange;
@@ -28,12 +29,16 @@ import static io.leao.codecolors.core.drawable.CcDrawableUtils.getContext;
 import static io.leao.codecolors.core.drawable.CcDrawableUtils.getRootDrawable;
 import static io.leao.codecolors.core.drawable.CcDrawableUtils.getView;
 
-public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList.SingleCallback {
+public class CcDrawableWrapper extends InsetDrawable implements CodeColor.SingleCallback {
     private boolean mFirstDraw = true;
+
+    public int getId() {
+        return mState.mId;
+    }
 
     protected CcConstantState mState;
     /**
-     * We store an Activity reference to be able to divide the {@link CcColorStateList.SingleCallback}s by different
+     * We store an Activity reference to be able to divide the {@link CodeColor.SingleCallback}s by different
      * activities. However, sometimes is not easy to guess the Activity to which this drawable belongs to.
      * <p>
      * When the drawable is first created, we store a reference to the last resumed Activity. This is our first guess.
@@ -42,12 +47,12 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
      * <p>
      * On our first drawing pass, we will try to get an Activity based on our {@link Drawable.Callback}'s Context. If we
      * are able to get a valid Activity, we will override our first guess reference with the newly found Activity
-     * reference. Otherwise, we will fallback to our first guess to add the {@link CcColorStateList.SingleCallback}s.
+     * reference. Otherwise, we will fallback to our first guess to add the {@link CodeColor.SingleCallback}s.
      * <p>
      * If, for some reason, our first guess had a null Activity referenced, and we couldn't get a valid Activity based
      * on our {@link Drawable.Callback}, we will make use of the last resumed Activity on the first drawing pass, to add
-     * the {@link CcColorStateList.SingleCallback}s. That is what happens when we pass null to
-     * {@link CcColorStateList#addCallback(Activity, CcColorStateList.SingleCallback)}.
+     * the {@link CodeColor.SingleCallback}s. That is what happens when we pass null to
+     * {@link CodeColor#addCallback(Activity, CodeColor.SingleCallback)}.
      */
     protected WeakReference<Activity> mActivityRef;
     protected Drawable mDrawable;
@@ -130,14 +135,14 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
     }
 
     @Override
-    public void invalidateColor(CcColorStateList color) {
+    public void invalidateColor(CodeColor color) {
         onInvalidateColor(color);
     }
 
     /**
      * @return true, if the drawable was invalidated; false, otherwise.
      */
-    protected boolean onInvalidateColor(CcColorStateList color) {
+    protected boolean onInvalidateColor(CodeColor color) {
         if (isDependencyColor(color)) {
             invalidateDrawable();
             return true;
@@ -147,14 +152,14 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
     }
 
     @Override
-    public void invalidateColors(Set<CcColorStateList> colors) {
+    public <T extends CodeColor> void invalidateColors(Set<T> colors) {
         onInvalidateColors(colors);
     }
 
     /**
      * @return true, if the drawable was invalidated; false, otherwise.
      */
-    protected boolean onInvalidateColors(Set<CcColorStateList> colors) {
+    protected <T extends CodeColor> boolean onInvalidateColors(Set<T> colors) {
         if (hasDependencyColors(colors)) {
             invalidateDrawable();
             return true;
@@ -163,19 +168,19 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
         }
     }
 
-    protected boolean isDependencyColor(CcColorStateList color) {
-        int colorId = color.getId();
-        return colorId != CcColorStateList.NO_ID &&
-                (mState.mResolvedIds.contains(colorId) || mState.mThemeIds.contains(colorId));
-    }
-
-    protected boolean hasDependencyColors(Set<CcColorStateList> colors) {
-        for (CcColorStateList color : colors) {
+    protected <T extends CodeColor> boolean hasDependencyColors(Set<T> colors) {
+        for (CodeColor color : colors) {
             if (isDependencyColor(color)) {
                 return true;
             }
         }
         return false;
+    }
+
+    protected boolean isDependencyColor(CodeColor color) {
+        int colorId = color.getId();
+        return colorId != CodeColor.NO_ID &&
+                (mState.mResolvedIds.contains(colorId) || mState.mThemeIds.contains(colorId));
     }
 
     private void invalidateDrawable() {
@@ -227,6 +232,8 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
     }
 
     static class CcConstantState extends ConstantState {
+        protected static BaseConstantStateLoader sBaseConstantStateLoader = new BaseConstantStateLoader();
+
         Resources mResources;
         int mId;
         ConstantState mBaseConstantState;
@@ -237,14 +244,44 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
 
         int mChangingConfigurations;
 
-        private static ConstantState loadBaseConstantState(Resources res, int id) {
-            TypedValue value = new TypedValue();
-            res.getValue(id, value, true);
-            return CcResources.loadDrawableForCookie(res, value, id, null).getConstantState();
+        /**
+         * Base ConstantStates do not have DrawableWrappers inside.
+         * <p>
+         * We use this loader to synchronize our {@link #newDrawable()} methods to not return any DrawableWrappers when
+         * loading the base ConstantState.
+         */
+        protected static class BaseConstantStateLoader {
+            private boolean mIsLoadingBaseConstantState = false;
+
+            public synchronized boolean isLoadingBaseConstantState() {
+                return mIsLoadingBaseConstantState;
+            }
+
+            public synchronized void startLoadingBaseConstantState() {
+                mIsLoadingBaseConstantState = true;
+            }
+
+            public synchronized void stopLoadingBaseConstantState() {
+                mIsLoadingBaseConstantState = false;
+            }
+
+            public synchronized ConstantState loadBaseConstantState(Resources res, int id) {
+                ConstantState state;
+                TypedValue value = new TypedValue();
+                res.getValue(id, value, true);
+                if (isLoadingBaseConstantState()) {
+                    state = CcResources.loadDrawableForCookie(res, value, id, null).getConstantState();
+                } else {
+                    startLoadingBaseConstantState();
+                    state = CcResources.loadDrawableForCookie(res, value, id, null).getConstantState();
+                    stopLoadingBaseConstantState();
+                }
+                return state;
+            }
         }
 
         public CcConstantState(Resources res, int id) {
-            this(res, id, loadBaseConstantState(res, id));
+            this(res, id, sBaseConstantStateLoader.loadBaseConstantState(res, id));
         }
 
         public CcConstantState(Resources res, int id, ConstantState baseConstantState) {
@@ -280,24 +317,32 @@ public class CcDrawableWrapper extends InsetDrawable implements CcColorStateList
 
         @NonNull
         public Drawable newDrawable() {
-            return newDrawable(null);
+            if (sBaseConstantStateLoader.isLoadingBaseConstantState()) {
+                return mBaseConstantState.newDrawable();
+            } else {
+                return newDrawableInternal(mBaseConstantState.newDrawable());
+            }
         }
 
         @NonNull
         @Override
         public Drawable newDrawable(Resources res) {
-            return newDrawableInternal(mBaseConstantState.newDrawable(res));
+            if (sBaseConstantStateLoader.isLoadingBaseConstantState()) {
+                return mBaseConstantState.newDrawable(res);
+            } else {
+                return newDrawableInternal(mBaseConstantState.newDrawable(res));
+            }
         }
 
         @NonNull
         @TargetApi(Build.VERSION_CODES.LOLLIPOP)
         @Override
         public Drawable newDrawable(Resources res, Resources.Theme theme) {
-            Drawable drawable = newDrawableInternal(mBaseConstantState.newDrawable(res, theme));
-            if (theme != null) {
-                drawable.applyTheme(theme);
+            if (sBaseConstantStateLoader.isLoadingBaseConstantState()) {
+                return mBaseConstantState.newDrawable(res, theme);
+            } else {
+                return newDrawableInternal(mBaseConstantState.newDrawable(res, theme));
             }
-            return drawable;
         }
 
         protected Drawable newDrawableInternal(Drawable baseDrawable) {

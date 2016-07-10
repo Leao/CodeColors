@@ -8,10 +8,8 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 import io.leao.codecolors.core.CcCore;
-import io.leao.codecolors.core.color.CallbackHandler.PairReference;
-import io.leao.codecolors.core.color.CallbackHandler.Reference;
-import io.leao.codecolors.core.color.CcColorStateList.AnchorCallback;
-import io.leao.codecolors.core.color.CcColorStateList.SingleCallback;
+import io.leao.codecolors.core.color.CodeColor.AnchorCallback;
+import io.leao.codecolors.core.color.CodeColor.SingleCallback;
 
 class CallbackHandlerManager {
     protected CcColorStateList mColor;
@@ -88,7 +86,7 @@ class CallbackHandlerManager {
     }
 
     public synchronized void invalidate(Set<Reference<SingleCallback>> invalidatedSingleCallbacks,
-                                        Set<PairReference<AnchorCallback, Object>> invalidatedPairCallbacks) {
+                                        Set<ReferencePair<Object, AnchorCallback>> invalidatedPairCallbacks) {
         // Clear invalidated CallbackHandlers.
         mInvalidatedCallbackHandlers.clear();
 
@@ -103,7 +101,7 @@ class CallbackHandlerManager {
 
     private synchronized void invalidate(CallbackHandler callbackHandler,
                                          Set<Reference<SingleCallback>> invalidatedSingleCallbacks,
-                                         Set<PairReference<AnchorCallback, Object>> invalidatedPairCallbacks) {
+                                         Set<ReferencePair<Object, AnchorCallback>> invalidatedPairCallbacks) {
         // Add CallbackHandler as invalidated.
         mInvalidatedCallbackHandlers.add(callbackHandler);
 
@@ -118,8 +116,8 @@ class CallbackHandlerManager {
                     }
 
                     @Override
-                    public void onIteratePairCallback(PairReference<AnchorCallback, Object> pairReference,
-                                                      AnchorCallback callback, Object anchor) {
+                    public void onIteratePairCallback(ReferencePair<Object, AnchorCallback> referencePair,
+                                                      Object anchor, AnchorCallback callback) {
                         callback.invalidateColor(anchor, mColor);
                     }
                 }
@@ -128,7 +126,7 @@ class CallbackHandlerManager {
 
     public synchronized void invalidateMultiple(final Set<CcColorStateList> colors,
                                                 Set<Reference<SingleCallback>> invalidatedSingleCallbacks,
-                                                Set<PairReference<AnchorCallback, Object>> invalidatedPairCallbacks,
+                                                Set<ReferencePair<Object, AnchorCallback>> invalidatedPairCallbacks,
                                                 final Set<CcColorStateList> invalidateColors) {
         // Clear invalidated CallbackHandlers.
         mInvalidatedCallbackHandlers.clear();
@@ -155,7 +153,7 @@ class CallbackHandlerManager {
     private synchronized void invalidateMultiple(CallbackHandler callbackHandler,
                                                  final Set<CcColorStateList> colors,
                                                  Set<Reference<SingleCallback>> invalidatedSingleCallbacks,
-                                                 Set<PairReference<AnchorCallback, Object>> invalidatedPairCallbacks,
+                                                 Set<ReferencePair<Object, AnchorCallback>> invalidatedPairCallbacks,
                                                  final Set<CcColorStateList> invalidateColors) {
         // Add CallbackHandler as invalidated.
         mInvalidatedCallbackHandlers.add(callbackHandler);
@@ -185,13 +183,13 @@ class CallbackHandlerManager {
                     }
 
                     @Override
-                    public void onIteratePairCallback(PairReference<AnchorCallback, Object> pairReference,
-                                                      AnchorCallback callback, Object anchor) {
+                    public void onIteratePairCallback(ReferencePair<Object, AnchorCallback> referencePair,
+                                                      Object anchor, AnchorCallback callback) {
                         CcColorStateList lastInvalidateColor = null;
 
                         invalidateColors.clear();
                         for (CcColorStateList c : colors) {
-                            if (c == mColor || c.getCallbackHandlerManager().containsPairCallback(pairReference)) {
+                            if (c == mColor || c.getCallbackHandlerManager().containsPairCallback(referencePair)) {
                                 invalidateColors.add(c);
                                 lastInvalidateColor = c;
                             }
@@ -245,28 +243,28 @@ class CallbackHandlerManager {
         }
     }
 
-    public synchronized void addPairCallback(Activity activity, AnchorCallback callback, Object anchor) {
+    public synchronized void addPairCallback(Activity activity, Object anchor, AnchorCallback callback) {
         if (activity == null) {
             activity = CcCore.getActivityManager().getLastResumedActivity();
         }
         if (activity != null) {
-            getCallbackHandler(activity).addPairCallback(callback, anchor);
+            getCallbackHandler(activity).addPairCallback(anchor, callback);
         }
     }
 
-    public synchronized boolean containsPairCallback(Activity activity, AnchorCallback callback, Object anchor) {
+    public synchronized boolean containsPairCallback(Activity activity, Object anchor, AnchorCallback callback) {
         if (activity == null) {
             activity = CcCore.getActivityManager().getLastResumedActivity();
         }
-        return activity != null && getCallbackHandler(activity).containsPairCallback(callback, anchor);
+        return activity != null && getCallbackHandler(activity).containsPairCallback(anchor, callback);
     }
 
-    synchronized boolean containsPairCallback(PairReference<AnchorCallback, Object> pairReference) {
+    synchronized boolean containsPairCallback(ReferencePair<Object, AnchorCallback> referencePair) {
         if (mCallbackHandler != null) {
-            return mCallbackHandler.containsPairCallback(pairReference);
+            return mCallbackHandler.containsPairCallback(referencePair);
         } else if (mCallbackHandlers.size() > 0) {
             for (CallbackHandler callbackHandler : mCallbackHandlers) {
-                if (callbackHandler.containsPairCallback(pairReference)) {
+                if (callbackHandler.containsPairCallback(referencePair)) {
                     return true;
                 }
             }
@@ -274,21 +272,12 @@ class CallbackHandlerManager {
         return false;
     }
 
-    public synchronized void removePairCallback(Activity activity, AnchorCallback callback, Object anchor) {
+    public synchronized void removePairCallback(Activity activity, Object anchor, AnchorCallback callback) {
         if (activity == null) {
             activity = CcCore.getActivityManager().getLastResumedActivity();
         }
         if (activity != null) {
-            getCallbackHandler(activity).removePairCallback(callback, anchor);
-        }
-    }
-
-    public synchronized void removeCallback(Activity activity, AnchorCallback callback) {
-        if (activity == null) {
-            activity = CcCore.getActivityManager().getLastResumedActivity();
-        }
-        if (activity != null) {
-            getCallbackHandler(activity).removeCallback(callback);
+            getCallbackHandler(activity).removePairCallback(anchor, callback);
         }
     }
 
@@ -298,6 +287,15 @@ class CallbackHandlerManager {
         }
         if (activity != null) {
             getCallbackHandler(activity).removeAnchor(anchor);
+        }
+    }
+
+    public synchronized void removeCallback(Activity activity, AnchorCallback callback) {
+        if (activity == null) {
+            activity = CcCore.getActivityManager().getLastResumedActivity();
+        }
+        if (activity != null) {
+            getCallbackHandler(activity).removeCallback(callback);
         }
     }
 }

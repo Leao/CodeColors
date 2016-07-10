@@ -8,7 +8,8 @@ import android.view.View;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.leao.codecolors.core.color.CcColorStateList;
+import io.leao.codecolors.core.color.CodeColor;
+import io.leao.codecolors.core.color.CodeColor.AnchorCallback;
 
 class ColorCallbackHandler {
     protected List<CcColorCallbackAdapter> mAdapters = new ArrayList<>();
@@ -55,30 +56,28 @@ class ColorCallbackHandler {
 
     protected void processResults(CacheResult cacheResult, InflateAddResult result) {
         // Get default callback for view.
-        CcColorStateList.AnchorCallback defaultCallback =
-                cacheResult != null ? cacheResult.defaultCallback : null;
+        AnchorCallback defaultCallback = cacheResult != null ? cacheResult.defaultCallback : null;
 
         for (int j = 0; j < result.colors.size(); j++) {
-            CcColorStateList color = (CcColorStateList) result.colors.get(j);
+            CodeColor color = (CodeColor) result.colors.get(j);
 
-            CcColorStateList.AnchorCallback callback =
-                    (CcColorStateList.AnchorCallback) result.callbacks.get(j);
+            AnchorCallback callback = (AnchorCallback) result.callbacks.get(j);
             // If no callback was specified, use the default callback (might be null).
             if (callback == null) {
                 callback = defaultCallback;
             }
             // Set callback, if valid.
             if (callback != null) {
-                color.addAnchorCallback(null, callback, result.anchor);
+                color.addAnchorCallback(null, result.anchor, callback);
             }
         }
     }
 
     protected static class CacheResult<T> implements CcColorCallbackAdapter.CacheResult<T> {
-        public CcColorStateList.AnchorCallback<T> defaultCallback;
+        public AnchorCallback<T> defaultCallback;
 
         @Override
-        public void set(@Nullable CcColorStateList.AnchorCallback<T> defaultCallback) {
+        public void set(@Nullable AnchorCallback<T> defaultCallback) {
             this.defaultCallback = defaultCallback;
         }
 
@@ -90,8 +89,8 @@ class ColorCallbackHandler {
 
     protected static class InflateAddResult<T> implements CcColorCallbackAdapter.InflateAddResult<T> {
         public T anchor;
-        public List<CcColorStateList> colors = new ArrayList<>();
-        public List<CcColorStateList.AnchorCallback<T>> callbacks = new ArrayList<>();
+        public List<CodeColor> colors = new ArrayList<>();
+        public List<AnchorCallback<T>> callbacks = new ArrayList<>();
 
         @Override
         public void set(@NonNull T anchor) {
@@ -99,12 +98,12 @@ class ColorCallbackHandler {
         }
 
         @Override
-        public void add(@NonNull CcColorStateList color) {
+        public void add(@NonNull CodeColor color) {
             add(color, null);
         }
 
         @Override
-        public void add(@NonNull CcColorStateList color, @Nullable CcColorStateList.AnchorCallback<T> callback) {
+        public void add(@NonNull CodeColor color, @Nullable AnchorCallback<T> callback) {
             colors.add(color);
             callbacks.add(callback);
         }

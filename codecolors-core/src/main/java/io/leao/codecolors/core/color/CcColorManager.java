@@ -12,8 +12,8 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Set;
 
-import io.leao.codecolors.core.color.CallbackHandler.PairReference;
-import io.leao.codecolors.core.color.CallbackHandler.Reference;
+import io.leao.codecolors.core.color.CodeColor.AnchorCallback;
+import io.leao.codecolors.core.color.CodeColor.SingleCallback;
 import io.leao.codecolors.core.util.CcTempUtils;
 import io.leao.codecolors.plugin.CcConst;
 
@@ -44,35 +44,35 @@ public class CcColorManager {
     }
 
     public synchronized void onActivityCreated(Activity activity) {
-        for (int colorResId : getColors()) {
+        for (int colorResId : getColorIds()) {
             CcColorStateList color = getColor(colorResId);
             color.onActivityCreated(activity);
         }
     }
 
     public synchronized void onActivityResumed(Activity activity) {
-        for (int colorResId : getColors()) {
+        for (int colorResId : getColorIds()) {
             CcColorStateList color = getColor(colorResId);
             color.onActivityResumed(activity);
         }
     }
 
     public synchronized void onActivityPaused(Activity activity) {
-        for (int colorResId : getColors()) {
+        for (int colorResId : getColorIds()) {
             CcColorStateList color = getColor(colorResId);
             color.onActivityPaused(activity);
         }
     }
 
     public synchronized void onActivityDestroyed(Activity activity) {
-        for (int colorResId : getColors()) {
+        for (int colorResId : getColorIds()) {
             CcColorStateList color = getColor(colorResId);
             color.onActivityDestroyed(activity);
         }
     }
 
     public synchronized void onConfigurationCreated(Resources resources, Configuration configuration) {
-        for (int colorResId : getColors()) {
+        for (int colorResId : getColorIds()) {
             CcColorStateList color = getColor(colorResId);
             // Update color base color.
             updateBaseColor(resources, color, colorResId);
@@ -85,7 +85,7 @@ public class CcColorManager {
     }
 
     public synchronized void onConfigurationChanged(Resources resources, Configuration configuration) {
-        for (int colorResId : getColors()) {
+        for (int colorResId : getColorIds()) {
             CcColorStateList color = getColor(colorResId);
             // Update color base color.
             updateBaseColor(resources, color, colorResId);
@@ -116,7 +116,7 @@ public class CcColorManager {
         color.onBaseColorChanged(baseColor);
     }
 
-    public synchronized Set<Integer> getColors() {
+    public synchronized Set<Integer> getColorIds() {
         return mColorValue.keySet();
     }
 
@@ -129,16 +129,13 @@ public class CcColorManager {
         return color;
     }
 
-
     public synchronized void setColorAdapter(CcColorAdapter adapter) {
         mColorAdapter = adapter;
     }
 
     public synchronized void invalidate(CcColorStateList color) {
-        Set<Reference<CcColorStateList.SingleCallback>> invalidatedSingleCallbacks =
-                CallbackTempUtils.getSingleCallbackSet();
-        Set<PairReference<CcColorStateList.AnchorCallback, Object>> invalidatedPairCallbacks =
-                CallbackTempUtils.getPairCallbackSet();
+        Set<Reference<SingleCallback>> invalidatedSingleCallbacks = CallbackTempUtils.getSingleCallbackSet();
+        Set<ReferencePair<Object, AnchorCallback>> invalidatedPairCallbacks = CallbackTempUtils.getPairCallbackSet();
 
         color.getCallbackHandlerManager().invalidate(invalidatedSingleCallbacks, invalidatedPairCallbacks);
 
@@ -147,10 +144,8 @@ public class CcColorManager {
     }
 
     public synchronized void invalidateMultiple(Set<CcColorStateList> colors) {
-        Set<Reference<CcColorStateList.SingleCallback>> invalidatedSingleCallbacks =
-                CallbackTempUtils.getSingleCallbackSet();
-        Set<PairReference<CcColorStateList.AnchorCallback, Object>> invalidatedPairCallbacks =
-                CallbackTempUtils.getPairCallbackSet();
+        Set<Reference<SingleCallback>> invalidatedSingleCallbacks = CallbackTempUtils.getSingleCallbackSet();
+        Set<ReferencePair<Object, AnchorCallback>> invalidatedPairCallbacks = CallbackTempUtils.getPairCallbackSet();
         final Set<CcColorStateList> invalidateColors = CcTempUtils.getColorSet();
 
         for (CcColorStateList color : colors) {

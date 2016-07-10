@@ -3,7 +3,6 @@ package io.leao.codecolors.core.color;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
@@ -11,25 +10,19 @@ import android.support.annotation.Nullable;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 
-import java.util.Set;
-
 import io.leao.codecolors.core.CcCore;
 import io.leao.codecolors.core.editor.CcEditor;
 import io.leao.codecolors.core.editor.CcEditorAnimate;
 import io.leao.codecolors.core.editor.CcEditorSet;
 
-public class CcColorStateList extends ColorStateList {
-    public static final int NO_ID = 0;
+public class CcColorStateList extends ColorStateList implements CodeColor {
     public static final int DEFAULT_ANIMATION_DURATION_MS = 400;
     public static final Interpolator DEFAULT_ANIMATION_INTERPOLATOR = new DecelerateInterpolator();
 
-    private static final int DEFAULT_COLOR = Color.BLUE;
-    private static final int[][] EMPTY = new int[][]{new int[0]};
+    protected int mId;
+    protected AnimatedBaseColorHandler mColorHandler;
 
-    private int mId;
-    private AnimatedBaseColorHandler mColorHandler;
-
-    private CallbackHandlerManager mCallbackHandlerManager;
+    protected CallbackHandlerManager mCallbackHandlerManager;
 
     public CcColorStateList() {
         this(NO_ID);
@@ -39,29 +32,35 @@ public class CcColorStateList extends ColorStateList {
         this(id, new AnimatedBaseColorHandler());
     }
 
-    private CcColorStateList(int id, AnimatedBaseColorHandler colorHandler) {
-        super(EMPTY, new int[]{DEFAULT_COLOR});
+    protected CcColorStateList(int id, AnimatedBaseColorHandler colorHandler) {
+        super(EMPTY_STATES, DEFAULT_COLORS);
         mId = id;
         mColorHandler = colorHandler;
         mCallbackHandlerManager = new CallbackHandlerManager(this);
     }
 
-    private CcColorStateList(Parcel source) {
-        this(source.readInt(), AnimatedBaseColorHandler.CREATOR.createFromParcel(source));
-    }
-
-    public int getId() {
-        return mId;
+    protected CcColorStateList(Parcel source) {
+        this(NO_ID, AnimatedBaseColorHandler.CREATOR.createFromParcel(source));
     }
 
     protected void onBaseColorChanged(ColorStateList baseColor) {
         mColorHandler.setBaseColor(baseColor);
     }
 
+    @Override
+    public int getId() {
+        return mId;
+    }
+
     @NonNull
     @Override
     public CcColorStateList withAlpha(int alpha) {
         return new CcColorStateList(NO_ID, mColorHandler.withAlpha(alpha));
+    }
+
+    //@Override
+    public boolean canApplyTheme() {
+        return false;
     }
 
     @Override
@@ -75,15 +74,28 @@ public class CcColorStateList extends ColorStateList {
     }
 
     @Override
+    public int getColorForState(int[] stateSet, int defaultColor) {
+        return mColorHandler.getColorForState(stateSet, defaultColor);
+    }
+
+    @Override
     public int getDefaultColor() {
         Integer defaultColor = mColorHandler.getDefaultColor();
         return defaultColor != null ? defaultColor : DEFAULT_COLOR;
     }
 
     @Override
-    public int getColorForState(int[] stateSet, int defaultColor) {
-        return mColorHandler.getColorForState(stateSet, defaultColor);
+    public String toString() {
+        return getClass().getName() + "@" + Integer.toHexString(hashCode());
     }
+
+    public void invalidateSelf() {
+        CcCore.getColorManager().invalidate(this);
+    }
+
+    /*
+     * Setters and animation setters.
+     */
 
     public CcEditorSet set() {
         return CcCore.getEditorManager().getEditorSet(this);
@@ -145,7 +157,7 @@ public class CcColorStateList extends ColorStateList {
     }
 
     /*
-     * Callbacks.
+     * Activity lifecycle.
      */
 
     CallbackHandlerManager getCallbackHandlerManager() {
@@ -168,95 +180,53 @@ public class CcColorStateList extends ColorStateList {
         mCallbackHandlerManager.onActivityDestroyed(activity);
     }
 
-    /**
-     * The library will keep a weak reference to the callback.
-     * <p/>
-     * Make sure to maintain a strong reference while it is needed.
-     *
-     * @param activity if null, the library will use the most recently created or resumed activity.
+    /*
+     * Callbacks.
      */
+
+    @Override
     public void addCallback(@Nullable Activity activity, SingleCallback callback) {
         mCallbackHandlerManager.addCallback(activity, callback);
     }
 
-    /**
-     * @param activity if null, the library will use the most recently created or resumed activity.
-     */
-    public boolean containsCallback(@Nullable Activity activity, CcColorStateList.SingleCallback callback) {
+    @Override
+    public boolean containsCallback(@Nullable Activity activity, SingleCallback callback) {
         return mCallbackHandlerManager.containsCallback(activity, callback);
     }
 
-    /**
-     * @param activity if null, the library will use the most recently created or resumed activity.
-     */
+    @Override
     public void removeCallback(@Nullable Activity activity, SingleCallback callback) {
         mCallbackHandlerManager.removeCallback(activity, callback);
     }
 
-    /**
-     * The library will keep a weak reference to both callback and anchor.
-     * <p/>
-     * Make sure to maintain a strong reference while they are needed.
-     *
-     * @param activity if null, the library will use the most recently created or resumed activity.
-     * @param callback the callback.
-     * @param anchor   the anchor object to which the callback is dependent.
-     */
-    public void addAnchorCallback(@Nullable Activity activity, AnchorCallback callback, Object anchor) {
-        mCallbackHandlerManager.addPairCallback(activity, callback, anchor);
+    @Override
+    public void addAnchorCallback(@Nullable Activity activity, Object anchor, AnchorCallback callback) {
+        mCallbackHandlerManager.addPairCallback(activity, anchor, callback);
     }
 
-    /**
-     * @param activity if null, the library will use the most recently created or resumed activity.
-     */
-    public boolean containsAnchorCallback(@Nullable Activity activity, CcColorStateList.AnchorCallback callback,
-                                          Object anchor) {
-        return mCallbackHandlerManager.containsPairCallback(activity, callback, anchor);
+    @Override
+    public boolean containsAnchorCallback(@Nullable Activity activity, Object anchor, AnchorCallback callback) {
+        return mCallbackHandlerManager.containsPairCallback(activity, anchor, callback);
     }
 
-    /**
-     * @param activity if null, the library will use the most recently created or resumed activity.
-     */
-    public void removeAnchorCallback(@Nullable Activity activity, AnchorCallback callback, Object anchor) {
-        mCallbackHandlerManager.removePairCallback(activity, callback, anchor);
+    @Override
+    public void removeAnchorCallback(@Nullable Activity activity, Object anchor, AnchorCallback callback) {
+        mCallbackHandlerManager.removePairCallback(activity, anchor, callback);
     }
 
-    /**
-     * @param activity if null, the library will use the most recently created or resumed activity.
-     */
-    public void removeCallback(@Nullable Activity activity, AnchorCallback callback) {
-        mCallbackHandlerManager.removeCallback(activity, callback);
-    }
-
-    /**
-     * @param activity if null, the library will use the most recently created or resumed activity.
-     */
+    @Override
     public void removeAnchor(@Nullable Activity activity, Object anchor) {
         mCallbackHandlerManager.removeAnchor(activity, anchor);
     }
 
-    public void invalidateSelf() {
-        CcCore.getColorManager().invalidate(this);
+    @Override
+    public void removeCallback(@Nullable Activity activity, AnchorCallback callback) {
+        mCallbackHandlerManager.removeCallback(activity, callback);
     }
 
     /*
      * Interfaces.
      */
-
-    public interface SingleCallback extends Callback {
-        void invalidateColor(CcColorStateList color);
-
-        void invalidateColors(Set<CcColorStateList> colors);
-    }
-
-    public interface AnchorCallback<T> extends Callback {
-        void invalidateColor(T anchor, CcColorStateList color);
-
-        void invalidateColors(T anchor, Set<CcColorStateList> colors);
-    }
-
-    interface Callback {
-    }
 
     public interface ColorGetter<T extends ColorGetter> {
         T withAlpha(int alpha);
@@ -306,8 +276,6 @@ public class CcColorStateList extends ColorStateList {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeInt(mId);
-
         mColorHandler.writeToParcel(dest, flags);
     }
 
@@ -322,8 +290,4 @@ public class CcColorStateList extends ColorStateList {
             return new CcColorStateList(source);
         }
     };
-
-    public String toString() {
-        return getClass().getName() + "@" + Integer.toHexString(hashCode());
-    }
 }

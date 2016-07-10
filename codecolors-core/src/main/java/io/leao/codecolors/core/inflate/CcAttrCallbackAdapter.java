@@ -5,13 +5,14 @@ import android.view.View;
 
 import io.leao.codecolors.CodeColors;
 import io.leao.codecolors.core.color.CcColorStateList;
+import io.leao.codecolors.core.color.CodeColor.AnchorCallback;
 
 /**
- * Adapter to set a {@link CcColorStateList.AnchorCallback} on every {@link CcColorStateList} that is a dependency of
- * the given attributes.
+ * Adapter to set a {@link AnchorCallback} on every {@link CcColorStateList} that is a dependency of the given
+ * attributes.
  * <p>
- * For instance, if a drawable is dependent on two {@link CcColorStateList}s, a {@link CcColorStateList.AnchorCallback}
- * is set for each color.
+ * For instance, if a drawable is dependent on two {@link CcColorStateList}s, a {@link AnchorCallback} is set for each
+ * color.
  * <p>
  * Tip: initialize in {@link CodeColors.Callback#onCodeColorsStarted()}.
  */
@@ -32,10 +33,10 @@ public interface CcAttrCallbackAdapter<T> {
         /**
          * @param attrs    the attributes to be resolved on inflation; if the resolved attributes are instances of
          *                 {@link CcColorStateList}, the callback is set.
-         * @param callback the {@link CcColorStateList.AnchorCallback} to set, if the resolved attributes are instances
-         *                 of {@link CcColorStateList}.
+         * @param callback the {@link AnchorCallback} to set, if the resolved attributes are instances of
+         *                 {@link CcColorStateList}.
          */
-        void set(@NonNull int[] attrs, @NonNull CcColorStateList.AnchorCallback<T> callback);
+        void set(@NonNull int[] attrs, @NonNull AnchorCallback<T> callback);
     }
 
     interface InflateResult<T> {

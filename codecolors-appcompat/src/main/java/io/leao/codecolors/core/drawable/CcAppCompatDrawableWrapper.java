@@ -19,6 +19,7 @@ import java.util.Set;
 import io.leao.codecolors.appcompat.tint.CcTintManager;
 import io.leao.codecolors.core.CcCore;
 import io.leao.codecolors.core.color.CcColorStateList;
+import io.leao.codecolors.core.color.CodeColor;
 
 import static io.leao.codecolors.core.drawable.CcDrawableUtils.getContext;
 import static io.leao.codecolors.core.drawable.CcDrawableUtils.getRootDrawable;
@@ -58,7 +59,7 @@ public class CcAppCompatDrawableWrapper extends CcDrawableWrapper {
     }
 
     @Override
-    protected boolean onInvalidateColor(CcColorStateList color) {
+    protected boolean onInvalidateColor(CodeColor color) {
         boolean isTintColor = isTintColor(color);
         if (isTintColor) {
             mUpdateTintList = true;
@@ -70,7 +71,7 @@ public class CcAppCompatDrawableWrapper extends CcDrawableWrapper {
     }
 
     @Override
-    protected boolean onInvalidateColors(Set<CcColorStateList> colors) {
+    protected <T extends CodeColor> boolean onInvalidateColors(Set<T> colors) {
         boolean hasTintColors = hasTintColors(colors);
         if (hasTintColors) {
             mUpdateTintList = true;
@@ -98,19 +99,19 @@ public class CcAppCompatDrawableWrapper extends CcDrawableWrapper {
         }
     }
 
-    protected boolean isTintColor(CcColorStateList color) {
-        int colorId = color.getId();
-        return colorId != CcColorStateList.NO_ID &&
-                ((CcAppCompatConstantState) mState).mTintIds.contains(color.getId());
-    }
-
-    protected boolean hasTintColors(Set<CcColorStateList> colors) {
-        for (CcColorStateList color : colors) {
+    protected <T extends CodeColor> boolean hasTintColors(Set<T> colors) {
+        for (CodeColor color : colors) {
             if (isTintColor(color)) {
                 return true;
             }
         }
         return false;
+    }
+
+    protected boolean isTintColor(CodeColor color) {
+        int colorId = color.getId();
+        return colorId != CodeColor.NO_ID &&
+                ((CcAppCompatConstantState) mState).mTintIds.contains(color.getId());
     }
 
     @Override
@@ -159,11 +160,6 @@ public class CcAppCompatDrawableWrapper extends CcDrawableWrapper {
 
         public CcAppCompatConstantState(Resources res, int id, int[] attrs) {
             super(res, id);
-            init(attrs, new HashSet<Integer>());
-        }
-
-        public CcAppCompatConstantState(Resources res, int id, ConstantState baseConstantState, int[] attrs) {
-            super(res, id, baseConstantState);
             init(attrs, new HashSet<Integer>());
         }
 

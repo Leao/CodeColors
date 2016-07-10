@@ -1,20 +1,30 @@
 package io.leao.codecolors.core.res;
 
 import android.annotation.SuppressLint;
+import android.content.res.AssetManager;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.util.TypedValue;
 
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
+
+import io.leao.codecolors.core.color.CcColorStateListList;
 
 /**
  * Util class to retrieve drawables without tampering with {@link Resources} caches.
  */
 public class CcResources {
+    private static Map<Long, Integer> mKeyId = new HashMap<>();
+
     private static TypedValue sTempValue;
 
     public static long createKey(Resources resources, int resId) {
@@ -25,11 +35,15 @@ public class CcResources {
         return (((long) value.assetCookie) << 32) | value.data;
     }
 
-    public static TypedValue getValue(Resources resources, int id, boolean resolveRefs) {
-        TypedValue value = sTempValue;
-        if (value == null) {
-            sTempValue = value = new TypedValue();
+    public static TypedValue getValue() {
+        if (sTempValue == null) {
+            sTempValue = new TypedValue();
         }
+        return sTempValue;
+    }
+
+    public static TypedValue getValue(Resources resources, int id, boolean resolveRefs) {
+        TypedValue value = getValue();
         resources.getValue(id, value, resolveRefs);
         return value;
     }
@@ -48,8 +62,6 @@ public class CcResources {
         }
     }
 
-    @SuppressWarnings("deprecation")
-    @SuppressLint("NewApi")
     protected static ColorStateList loadColorStateListForCookie(Resources resources, TypedValue value, int id,
                                                                 Resources.Theme theme) {
         if (value.string == null) {
@@ -62,11 +74,7 @@ public class CcResources {
 
         if (file.endsWith(".xml")) {
             try {
-                final XmlResourceParser rp = resources.getXml(id);
-                csl = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ?
-                        ColorStateList.createFromXml(resources, rp, theme) :
-                        ColorStateList.createFromXml(resources, rp);
-                rp.close();
+                csl = CcColorStateListList.createFromXml(resources, id, theme);
             } catch (Exception e) {
                 final Resources.NotFoundException rnf = new Resources.NotFoundException(
                         "File " + file + " from color state list resource ID #0x" + Integer.toHexString(id));
@@ -111,12 +119,52 @@ public class CcResources {
                 is.close();
             }
         } catch (Exception e) {
-            final Resources.NotFoundException rnf = new Resources.NotFoundException(
-                    "File " + file + " from drawable resource ID #0x" + Integer.toHexString(id));
+            final Resources.NotFoundException rnf = new Resources.NotFoundException(e.toString());
             rnf.initCause(e);
             throw rnf;
         }
 
         return dr;
+    }
+
+    public static int getId(Resources resources, String appPackageName, long key) {
+        if (mKeyId.containsKey(key)) {
+            return mKeyId.get(key);
+        }
+
+        int assetCookie = (int) (key >> 32);
+        int data = (int) key;
+        int id;
+        try {
+            id = retrieveId(resources, appPackageName, assetCookie, data);
+        } catch (Exception e) {
+            id = 0;
+        }
+
+        // Cache key-id pair.
+        mKeyId.put(key, id);
+
+        return id;
+    }
+
+    public static int retrieveId(Resources resources, String appPackageName, int assetCookie, int data)
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        AssetManager assetManager = resources.getAssets();
+        String getPooledStringMethodName =
+                Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ? "getPooledString" : "getPooledStringForCookie";
+        Method getPooledStringMethod =
+                assetManager.getClass().getDeclaredMethod(getPooledStringMethodName, int.class, int.class);
+        getPooledStringMethod.setAccessible(true);
+        CharSequence pooledString = (CharSequence) getPooledStringMethod.invoke(assetManager, assetCookie, data);
+        String file = pooledString.toString();
+        int lastFileSeparator = file.lastIndexOf("/");
+        String name = file.substring(lastFileSeparator + 1, file.indexOf("."));
+        String defTypeWithModifiers =
+                file.substring(file.substring(0, lastFileSeparator).lastIndexOf("/") + 1, lastFileSeparator);
+        int modifierSeparator = defTypeWithModifiers.indexOf("-");
+        String defType =
+                modifierSeparator != -1 ? defTypeWithModifiers.substring(0, modifierSeparator) : defTypeWithModifiers;
+        String packageName = assetCookie == 1 ? "android" : appPackageName;
+        return resources.getIdentifier(name, defType, packageName);
     }
 }

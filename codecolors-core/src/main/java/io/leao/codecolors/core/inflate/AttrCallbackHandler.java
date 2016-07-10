@@ -1,6 +1,7 @@
 package io.leao.codecolors.core.inflate;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
@@ -14,6 +15,8 @@ import java.util.Set;
 
 import io.leao.codecolors.core.CcCore;
 import io.leao.codecolors.core.color.CcColorStateList;
+import io.leao.codecolors.core.color.CodeColor;
+import io.leao.codecolors.core.color.CodeColor.AnchorCallback;
 import io.leao.codecolors.core.util.CcTempUtils;
 
 class AttrCallbackHandler {
@@ -78,30 +81,46 @@ class AttrCallbackHandler {
                 int attr = mAttrs[index];
                 List<CcAttrCallbackAdapter> adapters = mAdapters.get(attr);
                 if (adapters != null) {
-                    int resourceId = ta.getResourceId(index, 0);
+//                    int resourceId = ta.getResourceId(index, 0);
+//                    ColorStateList color = ta.getColorStateList(index);
+
+                    boolean resolved = false;
+                    Set<Integer> resolvedIds = null;
+                    CodeColor resolvedColor = null;
 
                     List<CacheResult> cacheResults = mCacheResults.get(attr);
-                    Set<Integer> resolvedIds = null;
                     for (int j = 0; j < adapters.size(); j++) {
                         CcAttrCallbackAdapter adapter = adapters.get(j);
                         InflateResult inflateResult = mTempInflateResult.reuse();
                         if (adapter.onInflate(view, attr, inflateResult)) {
                             CacheResult cacheResult = cacheResults.get(j);
 
-                            if (resolvedIds == null) {
-                                resolvedIds = CcTempUtils.getIntegerSet();
-                                resolvedIds.add(resourceId);
-                                CcCore.getDependencyManager().resolveDependencies(
-                                        context.getTheme(), context.getResources(), resourceId, resolvedIds);
+                            if (!resolved) {
+                                resolved = true;
+
+                                ColorStateList color = ta.getColorStateList(index);
+                                if (color instanceof CodeColor) {
+                                    resolvedColor = (CodeColor) color;
+                                } else {
+                                    int resourceId = ta.getResourceId(index, 0);
+                                    resolvedIds = CcTempUtils.getIntegerSet();
+                                    resolvedIds.add(resourceId);
+                                    CcCore.getDependencyManager().resolveDependencies(
+                                            context.getTheme(), context.getResources(), resourceId, resolvedIds);
+                                }
                             }
 
-                            // Add callbacks to all dependencies of resourceId.
-                            // If there are dependencies, resourceId is included in the set.
-                            // Otherwise, the set is empty.
-                            for (Integer dependency : resolvedIds) {
-                                CcColorStateList codeColor = CcCore.getColorManager().getColor(dependency);
-                                if (codeColor != null) {
-                                    codeColor.addAnchorCallback(null, cacheResult.callback, inflateResult.anchor);
+                            if (resolvedColor != null) {
+                                resolvedColor.addAnchorCallback(null, inflateResult.anchor, cacheResult.callback);
+                            } else {
+                                // Add callbacks to all dependencies of resourceId.
+                                // If there are dependencies, resourceId is included in the set.
+                                // Otherwise, the set is empty.
+                                for (Integer dependency : resolvedIds) {
+                                    CcColorStateList codeColor = CcCore.getColorManager().getColor(dependency);
+                                    if (codeColor != null) {
+                                        codeColor.addAnchorCallback(null, inflateResult.anchor, cacheResult.callback);
+                                    }
                                 }
                             }
                         }
@@ -120,10 +139,10 @@ class AttrCallbackHandler {
 
     protected static class CacheResult<T> implements CcAttrCallbackAdapter.CacheResult<T> {
         public int[] attrs;
-        public CcColorStateList.AnchorCallback<T> callback;
+        public AnchorCallback<T> callback;
 
         @Override
-        public void set(@NonNull int[] attrs, @NonNull CcColorStateList.AnchorCallback<T> callback) {
+        public void set(@NonNull int[] attrs, @NonNull AnchorCallback<T> callback) {
             this.attrs = attrs;
             this.callback = callback;
         }

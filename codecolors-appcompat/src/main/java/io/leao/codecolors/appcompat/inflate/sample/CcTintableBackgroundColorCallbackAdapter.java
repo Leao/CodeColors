@@ -11,7 +11,7 @@ import java.lang.ref.WeakReference;
 import java.util.Set;
 
 import io.leao.codecolors.core.CcCore;
-import io.leao.codecolors.core.color.CcColorStateList;
+import io.leao.codecolors.core.color.CodeColor;
 import io.leao.codecolors.core.inflate.CcColorCallbackAdapter;
 
 @SuppressLint("PrivateResource")
@@ -31,10 +31,10 @@ public class CcTintableBackgroundColorCallbackAdapter implements CcColorCallback
     public boolean onAdd(View view, InflateAddResult<View> outResult) {
         if (view instanceof TintableBackgroundView) {
             ColorStateList backgroundTintList = ((TintableBackgroundView) view).getSupportBackgroundTintList();
-            if (backgroundTintList instanceof CcColorStateList) {
+            if (backgroundTintList instanceof CodeColor) {
                 outResult.set(view);
                 outResult.add(
-                        (CcColorStateList) backgroundTintList,
+                        (CodeColor) backgroundTintList,
                         new TintableBackgroundCallback(backgroundTintList));
                 return true;
             }
@@ -42,7 +42,7 @@ public class CcTintableBackgroundColorCallbackAdapter implements CcColorCallback
         return false;
     }
 
-    private static class TintableBackgroundCallback implements CcColorStateList.AnchorCallback<View> {
+    private static class TintableBackgroundCallback implements CodeColor.AnchorCallback<View> {
         private ColorStateList mBackgroundTintList;
         private WeakReference<Activity> mActivityRef;
 
@@ -52,16 +52,16 @@ public class CcTintableBackgroundColorCallbackAdapter implements CcColorCallback
         }
 
         @Override
-        public void invalidateColor(View view, CcColorStateList color) {
+        public void invalidateColor(View view, CodeColor color) {
             if (!refreshDrawableState(view)) {
                 color.removeCallback(mActivityRef.get(), this);
             }
         }
 
         @Override
-        public void invalidateColors(View view, Set<CcColorStateList> colors) {
+        public <U extends CodeColor> void invalidateColors(View view, Set<U> colors) {
             if (!refreshDrawableState(view)) {
-                for (CcColorStateList color : colors) {
+                for (CodeColor color : colors) {
                     color.removeCallback(mActivityRef.get(), this);
                 }
             }

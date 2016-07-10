@@ -8,15 +8,11 @@ import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.util.StateSet;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 class ColorHandler implements CcColorStateList.ColorGetter<ColorHandler>, CcColorStateList.ColorSetter, Parcelable {
-    private static Field sStateSpecsField;
-    private static Field sColorsField;
-
     private ColorStateList mColor;
     private int[] mColors;
 
@@ -88,25 +84,8 @@ class ColorHandler implements CcColorStateList.ColorGetter<ColorHandler>, CcColo
     @SuppressWarnings("TryWithIdenticalCatches")
     private void onNewColor(ColorStateList color) {
         mColor = color;
-
-        int[][] stateSpecs;
-        try {
-            if (sStateSpecsField == null) {
-                sStateSpecsField = ColorStateList.class.getDeclaredField("mStateSpecs");
-                sStateSpecsField.setAccessible(true);
-            }
-            stateSpecs = (int[][]) sStateSpecsField.get(mColor);
-
-            if (sColorsField == null) {
-                sColorsField = ColorStateList.class.getDeclaredField("mColors");
-                sColorsField.setAccessible(true);
-            }
-            mColors = (int[]) sColorsField.get(mColor);
-        } catch (NoSuchFieldException e) {
-            throw new IllegalStateException("Failed to initialize ColorHandler", e);
-        } catch (IllegalAccessException e) {
-            throw new IllegalStateException("Failed to initialize ColorHandler", e);
-        }
+        int[][] stateSpecs = ColorStateListUtils.getStateSpecs(mColor);
+        mColors = ColorStateListUtils.getColors(mColor);
 
         // Backup previous list to restore custom states.
         List<StateIndexValue> oldStateIndexValueList = mStateIndexValueList;

@@ -14,7 +14,7 @@ import io.leao.codecolors.core.CcCore;
 
 /**
  * Receives the Activity life-cycle, and propagates its calls.
- * <p/>
+ * <p>
  * Configuration updates. Called by the initial setup and by activities when the configuration possibly changed, and
  * propagates the call if it truly changed.
  */
