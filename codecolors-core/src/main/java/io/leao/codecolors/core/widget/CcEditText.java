@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.view.View;
 import android.widget.EditText;
 
 /**
@@ -12,7 +13,8 @@ import android.widget.EditText;
  * creation of interesting {@link Drawable}s and {@link android.view.View}s, and being able to properly invalidate them
  * when code-colors are updated.
  */
-public class CcEditText extends EditText {
+public class CcEditText extends EditText implements
+        CcDrawableCallbackContextWrapper.CcDrawableCallbackContextWrapperHost {
     private CcDrawableCallbackContextWrapper mContextWrapper;
 
     public CcEditText(Context context) {
@@ -38,7 +40,7 @@ public class CcEditText extends EditText {
 
     private void ensureContextWrapper() {
         if (mContextWrapper == null) {
-            mContextWrapper = CcDrawableCallbackContextWrapper.init(this);
+            mContextWrapper = CcDrawableCallbackContextWrapper.init(getContext(), this);
         }
     }
 
@@ -54,5 +56,10 @@ public class CcEditText extends EditText {
         } else {
             getContextWrapper().invalidateDrawable(drawable);
         }
+    }
+
+    @Override
+    public boolean onAddDrawableCallbackView(View view) {
+        return view.getClass().getSimpleName().contains("HandleView");
     }
 }

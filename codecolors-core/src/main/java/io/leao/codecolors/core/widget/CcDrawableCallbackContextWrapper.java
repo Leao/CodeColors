@@ -24,10 +24,10 @@ import io.leao.codecolors.core.drawable.CcDrawableWrapper;
  * view when the code-colors are updated.
  */
 public class CcDrawableCallbackContextWrapper extends ContextWrapper {
-    private WeakReference<View> mView;
+    private WeakReference<CcDrawableCallbackContextWrapperHost> mHost;
 
-    private DrawableCallbackResourcesWrapper mResources;
-    private DrawableCallbackWindowManagerWrapper mWindowManager;
+    private CcDrawableCallbackResourcesWrapper mResources;
+    private CcDrawableCallbackWindowManagerWrapper mWindowManager;
 
     public static Context wrap(Context context) {
         if (!(context instanceof CcDrawableCallbackContextWrapper)) {
@@ -36,10 +36,10 @@ public class CcDrawableCallbackContextWrapper extends ContextWrapper {
         return context;
     }
 
-    public static CcDrawableCallbackContextWrapper init(View view) {
-        CcDrawableCallbackContextWrapper context = get(view.getContext());
-        context.setView(view);
-        return context;
+    public static CcDrawableCallbackContextWrapper init(Context context, CcDrawableCallbackContextWrapperHost host) {
+        CcDrawableCallbackContextWrapper contextWrapper = get(context);
+        contextWrapper.setHost(host);
+        return contextWrapper;
     }
 
     private static CcDrawableCallbackContextWrapper get(Context context) {
@@ -56,18 +56,18 @@ public class CcDrawableCallbackContextWrapper extends ContextWrapper {
         super(base);
     }
 
-    private View getView() {
-        return mView != null ? mView.get() : null;
+    private CcDrawableCallbackContextWrapperHost getHost() {
+        return mHost != null ? mHost.get() : null;
     }
 
-    private void setView(View view) {
-        mView = new WeakReference<>(view);
+    private void setHost(CcDrawableCallbackContextWrapperHost host) {
+        mHost = new WeakReference<>(host);
     }
 
     @Override
-    public DrawableCallbackResourcesWrapper getResources() {
+    public CcDrawableCallbackResourcesWrapper getResources() {
         if (mResources == null) {
-            mResources = new DrawableCallbackResourcesWrapper(super.getResources());
+            mResources = new CcDrawableCallbackResourcesWrapper(super.getResources());
         }
         return mResources;
     }
@@ -78,7 +78,7 @@ public class CcDrawableCallbackContextWrapper extends ContextWrapper {
 
         if (WINDOW_SERVICE.equals(name)) {
             if (mWindowManager == null || mWindowManager.getBaseWindowManager() != systemService) {
-                mWindowManager = new DrawableCallbackWindowManagerWrapper((WindowManager) systemService);
+                mWindowManager = new CcDrawableCallbackWindowManagerWrapper((WindowManager) systemService);
             }
             return mWindowManager;
         } else {
@@ -95,7 +95,7 @@ public class CcDrawableCallbackContextWrapper extends ContextWrapper {
      */
     @SuppressWarnings("JavadocReference")
     public void invalidateDrawable(Drawable drawable) {
-        if (mWindowManager != null && mResources.verifyDrawable(drawable)) {
+        if (mWindowManager != null && mWindowManager.hasViews() && mResources.verifyDrawable(drawable)) {
             mWindowManager.invalidateViews();
         }
     }
@@ -104,10 +104,10 @@ public class CcDrawableCallbackContextWrapper extends ContextWrapper {
      * Intercepts the creation of drawables that are related with the original view, making sure they have a proper
      * callback, which allows the CodeColors wrappers to properly tint and invalidate them.
      */
-    public class DrawableCallbackResourcesWrapper extends ResourcesWrapper {
+    public class CcDrawableCallbackResourcesWrapper extends ResourcesWrapper {
         private Set<Drawable> mDrawables = Collections.newSetFromMap(new WeakHashMap<Drawable, Boolean>());
 
-        public DrawableCallbackResourcesWrapper(Resources resources) {
+        public CcDrawableCallbackResourcesWrapper(Resources resources) {
             super(resources);
         }
 
@@ -128,9 +128,9 @@ public class CcDrawableCallbackContextWrapper extends ContextWrapper {
 
         private void ensureDrawableCallback(Drawable drawable) {
             if (drawable instanceof CcDrawableWrapper && drawable.getCallback() == null) {
-                View view = getView();
-                if (view != null) {
-                    drawable.setCallback(view);
+                CcDrawableCallbackContextWrapperHost host = getHost();
+                if (host != null) {
+                    drawable.setCallback(host);
                     mDrawables.add(drawable);
                 }
             }
@@ -147,10 +147,10 @@ public class CcDrawableCallbackContextWrapper extends ContextWrapper {
      * making it possible to invalidate them when some drawables are updated.
      */
     @SuppressWarnings("JavadocReference")
-    public class DrawableCallbackWindowManagerWrapper extends WindowManagerWrapper {
+    public class CcDrawableCallbackWindowManagerWrapper extends WindowManagerWrapper {
         private Set<View> mViews = Collections.newSetFromMap(new WeakHashMap<View, Boolean>());
 
-        public DrawableCallbackWindowManagerWrapper(WindowManager windowManager) {
+        public CcDrawableCallbackWindowManagerWrapper(WindowManager windowManager) {
             super(windowManager);
         }
 
@@ -158,10 +158,57 @@ public class CcDrawableCallbackContextWrapper extends ContextWrapper {
         public void addView(View view, ViewGroup.LayoutParams params) {
             super.addView(view, params);
 
-            // Store only "simple" views, and not ViewGroups, as they could be very expensive to invalidate.
-            if (!(view instanceof ViewGroup)) {
-                mViews.add(view);
+            addChildViews(view);
+        }
+
+        public void addChildViews(View view) {
+            if (view != null) {
+                if (view instanceof ViewGroup) {
+                    ViewGroup viewGroup = (ViewGroup) view;
+                    int N = viewGroup.getChildCount();
+                    for (int i = 0; i < N; i++) {
+                        addChildViews(viewGroup.getChildAt(i));
+                    }
+                } else {
+                    CcDrawableCallbackContextWrapperHost host = getHost();
+                    // Store only views accepted by the host view, to reduce the impact of views' invalidation.
+                    if (host != null && host.onAddDrawableCallbackView(view)) {
+                        mViews.add(view);
+                    }
+                }
             }
+        }
+
+        @Override
+        public void removeView(View view) {
+            removeChildViews(view);
+
+            super.removeView(view);
+        }
+
+        @Override
+        public void removeViewImmediate(View view) {
+            removeChildViews(view);
+
+            super.removeViewImmediate(view);
+        }
+
+        public void removeChildViews(View view) {
+            if (view != null) {
+                if (view instanceof ViewGroup) {
+                    ViewGroup viewGroup = (ViewGroup) view;
+                    int N = viewGroup.getChildCount();
+                    for (int i = 0; i < N; i++) {
+                        removeChildViews(viewGroup.getChildAt(i));
+                    }
+                } else {
+                    mViews.remove(view);
+                }
+            }
+        }
+
+        public boolean hasViews() {
+            return mViews.size() > 0;
         }
 
         public void invalidateViews() {
@@ -169,5 +216,9 @@ public class CcDrawableCallbackContextWrapper extends ContextWrapper {
                 view.invalidate();
             }
         }
+    }
+
+    public interface CcDrawableCallbackContextWrapperHost extends Drawable.Callback {
+        boolean onAddDrawableCallbackView(View view);
     }
 }
