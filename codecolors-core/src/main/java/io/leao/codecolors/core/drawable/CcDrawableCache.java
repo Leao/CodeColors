@@ -65,9 +65,13 @@ public class CcDrawableCache extends LongSparseArray<Drawable.ConstantState> {
         } else if (mCheckDependenciesKeys.contains(key)) {
             // Each key only needs to be checked once for dependencies.
             mCheckDependenciesKeys.remove(key);
-            // If the key has dependencies, replace its value with a wrapper.
             int id = CcResources.getId(mResources, mPackageName, key);
             if (id != 0) {
+                // If the key has dependencies, replace its value with a wrapper.
+                // Even though we only place a wrapper around the base drawable, we can't reuse the cached drawable,
+                // because the cached drawable might make use of ColorStateLists that have code-colors dependencies.
+                // In that sense, we will recreate the base drawable from its xml, to make sure it makes use of our
+                // code-colors when needed.
                 cs = onCreateDrawableWrapperConstantState(id, cs);
                 put(key, cs);
             }
