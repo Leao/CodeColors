@@ -19,6 +19,7 @@
         android:paddingBottom="@dimen/clock_vertical_padding"
         android:paddingTop="@dimen/clock_vertical_padding"
         android:textAlignment="center"
+        android:textColor="@color/clock_text_color"
         android:textSize="@dimen/clock_size"/>
 
     <Button

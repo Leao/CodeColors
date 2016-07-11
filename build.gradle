@@ -18,7 +18,7 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:2.1.2'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
-        classpath 'io.leao:codecolors-plugin:0.2.0'
+        classpath 'io.leao:codecolors-plugin:0.3.0'
     }
 }
 

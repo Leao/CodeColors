@@ -5,23 +5,23 @@ import android.view.View;
 
 import java.util.Set;
 
-import io.leao.codecolors.core.color.CcColorStateList;
+import io.leao.codecolors.core.color.CodeColor;
 import io.leao.codecolors.core.inflate.CcAttrCallbackAdapter;
 import io.leao.codecolors.sample.R;
 
-public class CcStatusBarColorAnchorCallbackAdapter implements CcAttrCallbackAdapter<CoordinatorLayout> {
+public class CcStatusBarBackgroundAttrCallbackAdapter implements CcAttrCallbackAdapter<CoordinatorLayout> {
     @Override
     public boolean onCache(CacheResult<CoordinatorLayout> outResult) {
         outResult.set(
                 new int[]{R.attr.statusBarBackground},
-                new CcColorStateList.AnchorCallback<CoordinatorLayout>() {
+                new CodeColor.AnchorCallback<CoordinatorLayout>() {
                     @Override
-                    public void invalidateColor(CoordinatorLayout layout, CcColorStateList color) {
+                    public void invalidateColor(CoordinatorLayout layout, CodeColor color) {
                         invalidate(layout);
                     }
 
                     @Override
-                    public void invalidateColors(CoordinatorLayout layout, Set<CcColorStateList> colors) {
+                    public <U extends CodeColor> void invalidateColors(CoordinatorLayout layout, Set<U> colors) {
                         invalidate(layout);
                     }
 
