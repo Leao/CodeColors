@@ -81,9 +81,6 @@ class AttrCallbackHandler {
                 int attr = mAttrs[index];
                 List<CcAttrCallbackAdapter> adapters = mAdapters.get(attr);
                 if (adapters != null) {
-//                    int resourceId = ta.getResourceId(index, 0);
-//                    ColorStateList color = ta.getColorStateList(index);
-
                     boolean resolved = false;
                     Set<Integer> resolvedIds = null;
                     CodeColor resolvedColor = null;
