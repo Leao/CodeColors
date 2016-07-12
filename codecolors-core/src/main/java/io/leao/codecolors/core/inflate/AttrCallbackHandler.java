@@ -71,8 +71,9 @@ class AttrCallbackHandler {
     }
 
     @SuppressWarnings("unchecked")
-    public void onCreateView(Context context, AttributeSet attrs, View view, int defStyleAttr, int defStyleRes) {
+    public void onCreateView(AttributeSet attrs, View view, int defStyleAttr, int defStyleRes) {
         ensureAttrs();
+        Context context = view.getContext();
         TypedArray ta = context.obtainStyledAttributes(attrs, mAttrs, defStyleAttr, defStyleRes);
         try {
             final int N = ta.getIndexCount();

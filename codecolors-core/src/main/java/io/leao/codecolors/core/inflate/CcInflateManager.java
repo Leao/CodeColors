@@ -40,10 +40,10 @@ public class CcInflateManager {
         mDefStyleHandler.addAdapter(adapter);
     }
 
-    public synchronized void onCreateView(@NonNull Context context, @NonNull AttributeSet attrs, @NonNull View view) {
+    public synchronized void onCreateView(@NonNull AttributeSet attrs, @NonNull View view) {
         DefStyleHandler.InflateResult defStyle = mDefStyleHandler.onCreateView(attrs, view);
         mColorCallbackHandler.onCreateView(attrs, view, defStyle.attr, defStyle.res);
-        mAttrCallbackHandler.onCreateView(context, attrs, view, defStyle.attr, defStyle.res);
+        mAttrCallbackHandler.onCreateView(attrs, view, defStyle.attr, defStyle.res);
     }
 
     public synchronized void addView(@NonNull View view) {
