@@ -48,7 +48,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'io.leao:codecolors-plugin:0.1.5'
+        classpath 'io.leao:codecolors-plugin:0.3.0'
     }
 }
 ```
@@ -66,7 +66,7 @@ Declare the library as dependency on the **module's** `build.gradle` file.
 
 ```groovy
 dependencies {
-    compile 'io.leao:codecolors:0.1.5'
+    compile 'io.leao:codecolors:0.3.0'
 }
 ```
 
@@ -74,7 +74,7 @@ If you need AppCompat support in your application, use codecolors-appcompat (ins
 
 ```groovy
 dependencies {
-    compile 'io.leao:codecolors-appcompat:0.1.5'
+    compile 'io.leao:codecolors-appcompat:0.3.0'
 }
 ```
 
